@@ -1,5 +1,12 @@
 import React, { useContext, useState } from 'react';
 import {
+  useDispatch,
+  useSelector
+} from "react-redux";
+
+import { logout }
+  from "../../redux/authSlice";
+import {
   UsergroupAddOutlined,
   HomeOutlined,
   SettingOutlined,
@@ -12,10 +19,13 @@ import { AuthContext } from '../context/auth.context';
 const Header = () => {
   const navigate = useNavigate();
 
-  const { auth, setAuth } = useContext(AuthContext);
+  // const { auth, setAuth } = useContext(AuthContext);
 
-  console.log('>>> check auth: ', auth);
-
+  // console.log('>>> check auth: ', auth);
+  const auth = useSelector(
+    state => state.auth
+  );
+  const dispatch = useDispatch();
   const [current, setCurrent] = useState('home');
 
   const onClick = (e) => {
@@ -32,12 +42,12 @@ const Header = () => {
 
     ...(auth.isAuthenticated
       ? [
-          {
-            label: <Link to="/user">Users</Link>,
-            key: 'user',
-            icon: <UsergroupAddOutlined />,
-          },
-        ]
+        {
+          label: <Link to="/user">Users</Link>,
+          key: 'user',
+          icon: <UsergroupAddOutlined />,
+        },
+      ]
       : []),
 
     {
@@ -47,36 +57,28 @@ const Header = () => {
 
       children: auth.isAuthenticated
         ? [
-            {
-              label: (
-                <span
-                  onClick={() => {
-                    localStorage.removeItem('access_token');
+          {
+            label: (
+              <span
+                onClick={() => {
+                  localStorage.removeItem('access_token');
+                  dispatch(logout());
+                  navigate('/login');
+                }}
+              >
+                Logout
+              </span>
+            ),
 
-                    setAuth({
-                      isAuthenticated: false,
-                      user: {
-                        email: '',
-                        name: '',
-                      },
-                    });
-
-                    navigate('/login');
-                  }}
-                >
-                  Logout
-                </span>
-              ),
-
-              key: 'logout',
-            },
-          ]
+            key: 'logout',
+          },
+        ]
         : [
-            {
-              label: <Link to="/login">Đăng nhập</Link>,
-              key: 'login',
-            },
-          ],
+          {
+            label: <Link to="/login">Đăng nhập</Link>,
+            key: 'login',
+          },
+        ],
     },
   ];
 

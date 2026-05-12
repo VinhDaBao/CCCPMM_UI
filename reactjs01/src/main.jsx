@@ -2,7 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/global.css';
+import { Provider } from "react-redux";
 
+import { store } from "./redux/store";
 import {
 createBrowserRouter,
 RouterProvider,
@@ -40,8 +42,10 @@ element: <UserPage />
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthWrapper>
+ <Provider store={store}>
+
       <RouterProvider router={router} />
-    </AuthWrapper>
+
+    </Provider>
   </React.StrictMode>,
 )
