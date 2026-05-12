@@ -1,30 +1,67 @@
 import axios from './axios.customize';
 
+
 const createUserApi = (name, email, password) => {
-const URL_API = "/api/auth/register";
-const data = {
-name, email, password
-
-}
-
-return axios.post(URL_API, data)
-
-}
+    return axios.post("/api/auth/register", {
+        name,
+        email,
+        password
+    });
+};
 
 const loginApi = (email, password) => {
-const URL_API = "/api/auth/login";
-const data = {
-email, password
-}
-return axios.post(URL_API, data)
-
-}
+    return axios.post("/api/auth/login", {
+        email,
+        password
+    });
+};
 
 const getUserApi = () => {
-const URL_API = "/api/auth/user/profile";
-return axios.get (URL_API)
+    return axios.get("/api/auth/user/profile");
+};
 
-}
+const forgotPasswordApi = (email) => {
+    return axios.post("/api/auth/forgot-password", { email });
+};
+
+const verifyOtpApi = (email, otp) => {
+    return axios.post("/api/auth/verify-forgot-password-otp", {
+        email,
+        otp
+    });
+};
+
+const resetPasswordApi = (email, newPassword) => {
+    return axios.post("/api/auth/reset-password", {
+        email,
+        newPassword
+    });
+};
+
+
+const updateProfileApi = (fullName, avatarFile) => {
+    const formData = new FormData();
+    formData.append("fullName", fullName);
+    if (avatarFile && typeof avatarFile !== "string") {
+        formData.append("avatar", avatarFile); 
+    } else if (typeof avatarFile === "string") {
+        formData.append("avatar", avatarFile);
+    }
+
+    return axios.put("/api/auth/edit-profile", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        }
+    });
+};
+
 
 export {
-createUserApi, loginApi, getUserApi}
+    createUserApi,
+    loginApi,
+    getUserApi,
+    forgotPasswordApi,
+    verifyOtpApi,
+    resetPasswordApi,
+    updateProfileApi
+};
