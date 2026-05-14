@@ -28,10 +28,21 @@ const Header = () => {
   const dispatch = useDispatch();
   const [current, setCurrent] = useState('home');
 
+//hàm click
   const onClick = (e) => {
-    console.log('click ', e);
-    setCurrent(e.key);
-  };
+      setCurrent(e.key);
+
+      // Kiểm tra nếu key là 'logout' thì mới thực hiện đăng xuất
+      if (e.key === 'logout') {
+        handleLogout();
+      }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('access_token'); // Xóa token
+        dispatch(logout()); // Cập nhật Redux (isAuthenticated = false)
+        navigate('/login'); // Chuyển hướng
+      };
 
   const items = [
     {
@@ -62,30 +73,19 @@ const Header = () => {
             label: <Link to="/profile">Profile</Link>,
             key: 'profile',
           },
-
           {
-            label: (
-              <span
-                onClick={() => {
-                  localStorage.removeItem('access_token');
-                  dispatch(logout());
-                  navigate('/login');
-                }}
-              >
-                Logout
-              </span>
-            ),
-
+            label: 'Logout', // Chỉ để text thuần ở đây
             key: 'logout',
+            danger: true,
           },
         ]
-        : [
-          {
-            label: <Link to="/login">Đăng nhập</Link>,
-            key: 'login',
+          : [
+              {
+                  label: <Link to="/login">Đăng nhập</Link>,
+                              key: 'login',
+              },
+            ],
           },
-        ],
-    },
   ];
 
   return (

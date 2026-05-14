@@ -9,6 +9,10 @@ const createUserApi = (name, email, password) => {
     });
 };
 
+const verifyRegisterOtpApi = (email, otp) => {
+    return axios.post("/api/auth/verify-otp", { email, otp });
+};
+
 const loginApi = (email, password) => {
     return axios.post("/api/auth/login", {
         email,
@@ -63,5 +67,6 @@ export {
     forgotPasswordApi,
     verifyOtpApi,
     resetPasswordApi,
-    updateProfileApi
+    updateProfileApi,
+    verifyRegisterOtpApi
 };

@@ -13,12 +13,14 @@
   "dependencies": {
     "@ant-design/icons": "^6.2.2",
     "@reduxjs/toolkit": "^2.11.2",
+    "@tailwindcss/vite": "^4.3.0",
     "antd": "^6.3.7",
     "axios": "^1.16.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^7.15.0"
+    "react-router-dom": "^7.15.0",
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

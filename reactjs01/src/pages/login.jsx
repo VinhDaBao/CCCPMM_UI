@@ -1,109 +1,73 @@
-import React, { useContext } from 'react';
-import { Button, Col, Divider, Form, Input, notification, Row } from 'antd';
+import React, { useState } from 'react';
+import { notification } from 'antd'; // Chỉ lấy logic thông báo
 import { loginApi } from '../util/api';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../components/context/auth.context';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice";
+import CustomInput from '../components/common/CustomInput';
+
 const LoginPage = () => {
     const navigate = useNavigate();
-    //const { setAuth } = useContext(AuthContext);
     const dispatch = useDispatch();
-    const onFinish = async (values) => {
-        const { email, password } = values;
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         const res = await loginApi(email, password);
-        console.log("LOGIN RESPONSE:", res);
         if (res && res.token) {
             localStorage.setItem("access_token", res.token);
-            notification.success({
-                message: "LOGIN USER",
-                description: "Success"
-            });
-            dispatch(
-                loginSuccess({
-                    email: res?.user?.email ?? "",
-                    name: res?.user?.name ?? "",
-                })
-            );
+            notification.success({ message: "Đăng nhập thành công" });
+            dispatch(loginSuccess({ email: res?.user?.email ?? "", name: res?.user?.name ?? "" }));
             navigate("/user");
         } else {
-            notification.error({
-                message: "LOGIN USER",
-                description: res?.message ?? "Error"
-            })
+            notification.error({ message: "Lỗi đăng nhập", description: res?.message || "Lỗi hệ thống" });
         }
     };
+
     return (
-        <Row justify={"center"} style={{ marginTop: "30px" }}>
-            <Col xs={24} md={16} lg={8}>
-                <fieldset style={{
-                    padding: "15px",
-                    margin: "5px",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px"
-                }}>
-                    <legend>Đăng Nhập</legend>
-                    <Form
-                        name="basic"
-                        onFinish={onFinish}
-                        autoComplete="off"
-                        layout='vertical'
-                    >
-                        <Form.Item
-                            label="Email"
-                            name="email"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your email!',
-                                },
-                            ]}
-                        >
-                            <Input />
-                        </Form.Item>
-                        <Form.Item
-                            label="Password"
-                            name="password"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your password!',
-                                },
-                            ]}
-                        >
-                            <Input.Password />
-                        </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block>
-                                Login
-                            </Button>
-                        </Form.Item>
+        <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] p-6">
+            <div className="bg-white !p-10 md:!p-12 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-[400px] border border-gray-100">
 
-                    </Form>
-                    <Link to={"/"}><ArrowLeftOutlined /> Back to Home </Link>
-                    <Divider />
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center"
-                        }}
-                    >
-                        <Link to={"/forgot-password"}>
-                            Forgot Password?
-                        </Link>
+                <div className="!mb-10 text-center">
+                    <h2 className="text-xl font-bold text-gray-800 tracking-tight">Đăng Nhập</h2>
+                    <p className="text-gray-400 text-[12px] mt-1">Chào mừng bạn đến với SSM</p>
+                </div>
 
-                        <div>
-                            <span>Don't have an account? </span>
-                            <Link to={"/register"}>Register now</Link>
-                        </div>
-                    </div>
-                </fieldset>
-            </Col>
-        </Row>
-    )
+                <form onSubmit={handleSubmit} className="flex flex-col">
+                    <CustomInput label="Email" type="email" placeholder="Nhập email..." value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <CustomInput label="Mật khẩu" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+
+                    <button type="submit" className="w-full !mt-8 bg-[#1677ff] hover:bg-[#4096ff] text-white !text-base !font-bold !py-3.5 rounded-xl shadow-lg shadow-blue-100 transition-all active:scale-[0.98]">
+                        Đăng Nhập
+                    </button>
+                </form>
+
+
+                <div className="!mt-10 text-center">
+                    <Link to="/" className="text-[13px] text-gray-500 hover:text-[#1677ff] flex items-center justify-center gap-2">
+                        <ArrowLeftOutlined className="text-[10px]" /> Quay về trang chủ
+                    </Link>
+                </div>
+
+                <div className="flex items-center !my-8">
+                    <div className="flex-grow h-[1px] bg-gray-100"></div>
+                    <span className="!mx-4 text-gray-300 text-[10px] uppercase font-bold tracking-widest">Hoặc</span>
+                    <div className="flex-grow h-[1px] bg-gray-100"></div>
+                </div>
+
+
+                <div className="text-center !pb-4">
+                    <span className="text-gray-400 text-[13px]">Bạn chưa có tài khoản? </span>
+                    <Link to="/register" className="text-[#1677ff] font-bold hover:underline text-[13px]">
+                        Đăng ký ngay
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default LoginPage;
