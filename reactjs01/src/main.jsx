@@ -37,6 +37,14 @@ path: "/login",
 element: <LoginPage />
 },
 {
+    path: "/user/profile",
+    element: <ProfilePage />
+},
+{
+    path: "/admin/profile",
+    element: <ProfilePage />
+},
+{
 path: "/user",
 element: <UserPage />
 }
@@ -54,10 +62,7 @@ element: <VerifyOtpPage />
 path: "/reset-password",
 element: <ResetPasswordPage />
 },
-{
-    path: "/profile",
-    element: <ProfilePage />
-}
+
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(

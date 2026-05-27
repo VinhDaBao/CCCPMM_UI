@@ -4,7 +4,9 @@ const initialState = {
   isAuthenticated: false,
   user: {
     email: "",
-    name: "",
+    role: "",
+    fullName: "",
+    avatar: ""
   },
     registerLoading: false,
 
@@ -33,7 +35,9 @@ const authSlice = createSlice({
 
       state.user = {
         email: "",
-        name: "",
+        role: "",
+        fullName: "",
+        avatar: ""
       };
     },
       registerStart: (state) => {

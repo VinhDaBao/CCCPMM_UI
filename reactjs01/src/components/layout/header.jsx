@@ -25,6 +25,7 @@ const Header = () => {
   const auth = useSelector(
     state => state.auth
   );
+  console.log(">>> CHECK TOÀN BỘ AUTH ĐỂ DEBUG ADMIN:", auth);
   const dispatch = useDispatch();
   const [current, setCurrent] = useState('home');
 
@@ -40,7 +41,7 @@ const Header = () => {
       icon: <HomeOutlined />,
     },
 
-    ...(auth.isAuthenticated
+    ...(auth.isAuthenticated && auth.user?.role === "admin"
       ? [
         {
           label: <Link to="/user">Users</Link>,
@@ -59,7 +60,7 @@ const Header = () => {
       ? [
 
           {
-            label: <Link to="/profile">Profile</Link>,
+            label: <Link to={auth?.user?.role === "admin" ? "/admin/profile" : "/user/profile"}>Profile</Link>,
             key: 'profile',
           },
 

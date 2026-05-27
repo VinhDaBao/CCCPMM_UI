@@ -7,7 +7,7 @@ import {
   useSelector
 } from "react-redux";
 
-import { getUserApi } from "../util/api";
+import { getAllUsersApi } from "../util/api";
 
 import {
 
@@ -20,6 +20,7 @@ import {
 const UserPage = () => {
 
   const dispatch = useDispatch();
+  const auth = useSelector(state => state.auth);
 
 
   const {
@@ -37,24 +38,20 @@ const UserPage = () => {
 
   useEffect(() => {
 
+    if (!auth?.user?.role) return;
+
     const fetchUser = async () => {
 
       try {
 
         dispatch(getProfileStart());
 
-        const res = await getUserApi();
+        const res = await getAllUsersApi();
 
-        if (res && res.user) {
-
-          console.log(
-            "FETCH USER RESPONSE:",
-            res.user.user
-          );
-
+        if (res && res.users) {
           dispatch(
             getProfileSuccess(
-              res.user.user
+              res.users
             )
           );
 
@@ -113,8 +110,8 @@ const UserPage = () => {
     },
 
     {
-      title: "Name",
-      dataIndex: "name",
+      title: "Full Name",
+      dataIndex: "fullName",
     },
 
     {
@@ -147,11 +144,7 @@ const UserPage = () => {
 
         loading={profileLoading}
 
-        dataSource={
-          profileData
-            ? [profileData]
-            : []
-        }
+        dataSource={profileData || []}
 
         columns={columns}
 
@@ -162,4 +155,4 @@ const UserPage = () => {
   );
 };
 
-export default UserPage;
+export default UserPage; 

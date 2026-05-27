@@ -9,6 +9,10 @@ const createUserApi = (name, email, password) => {
     });
 };
 
+const verifyRegisterOtpApi = (email, otp) => {
+    return axios.post("/api/auth/verify-otp", { email, otp });
+};
+
 const loginApi = (email, password) => {
     return axios.post("/api/auth/login", {
         email,
@@ -16,8 +20,13 @@ const loginApi = (email, password) => {
     });
 };
 
-const getUserApi = () => {
-    return axios.get("/api/auth/user/profile");
+const getUserApi = (role) => {
+    const endpoint =
+        role === "admin"
+            ? "/api/auth/admin/profile"
+            : "/api/auth/user/profile";
+
+    return axios.get(endpoint);
 };
 
 const forgotPasswordApi = (email) => {
@@ -41,18 +50,20 @@ const resetPasswordApi = (email, newPassword) => {
 
 const updateProfileApi = (fullName, avatarFile) => {
     const formData = new FormData();
-    formData.append("fullName", fullName);
+    
+    formData.append("fullName", fullName ?? ""); 
+    
     if (avatarFile && typeof avatarFile !== "string") {
         formData.append("avatar", avatarFile); 
     } else if (typeof avatarFile === "string") {
         formData.append("avatar", avatarFile);
     }
 
-    return axios.put("/api/auth/edit-profile", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        }
-    });
+    return axios.put("/api/auth/edit-profile", formData);
+};
+
+const getAllUsersApi = () => {
+    return axios.get("/api/auth/all-users");
 };
 
 
@@ -63,5 +74,7 @@ export {
     forgotPasswordApi,
     verifyOtpApi,
     resetPasswordApi,
-    updateProfileApi
+    updateProfileApi,
+    verifyRegisterOtpApi,
+    getAllUsersApi
 };
