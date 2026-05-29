@@ -1,16 +1,15 @@
-import React, { useContext } from 'react';
-import { Button, Col, Divider, Form, Input, notification, Row } from 'antd';
+import React from 'react';
+import { Button, Form, Input, notification } from 'antd';
 import { loginApi } from '../util/api';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../components/context/auth.context';
-import { ArrowLeftOutlined, ShoppingOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice";
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    //const { setAuth } = useContext(AuthContext);
     const dispatch = useDispatch();
+
     const onFinish = async (values) => {
         const { email, password } = values;
 
@@ -26,23 +25,27 @@ const LoginPage = () => {
             if (res.redirectUrl) {
                 navigate(res.redirectUrl);
             } else {
-                navigate("/");
+                navigate("/workspace/editor"); // Đã cập nhật trỏ về Workspace
             }
         } else {
             notification.error({
                 message: "LOGIN USER",
                 description: res?.message ?? "Error"
-            })
+            });
         }
     };
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">
             <div className="w-full max-w-md bg-white/80 backdrop-blur-lg shadow-2xl rounded-3xl p-8 border border-white/40">
                 <div className="text-center mb-8">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-blue-500 flex items-center justify-center text-white text-4xl shadow-lg mb-4">
-                        <ShoppingOutlined />
+                    {/* Logo Custom giống hình ảnh */}
+                    <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-orange-400 to-amber-700 flex items-center justify-center text-white shadow-lg mb-4">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
+                        </svg>
                     </div>
-                    <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome Back</h1>
+                    <h1 className="text-4xl font-bold text-gray-800 mb-2">CreatorSpace</h1>
                     <p className="text-gray-500">Login to your account</p>
                 </div>
 
@@ -56,19 +59,20 @@ const LoginPage = () => {
                     </Form.Item>
 
                     <div className="flex justify-between text-sm mb-6">
-                        <Link to="/forgot-password" className="text-blue-500 hover:text-blue-700 font-medium">Forgot Password?</Link>
-                        <Link to="/register" className="text-blue-500 hover:text-blue-700 font-medium">Create Account</Link>
+                        <Link to="/forgot-password" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">Forgot Password?</Link>
+                        <Link to="/register" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">Create Account</Link>
                     </div>
 
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" block size="large" className="!h-12 !rounded-xl !font-semibold !text-lg">
+                        {/* Nút bấm chuyển sang màu Cam/Nâu */}
+                        <Button type="primary" htmlType="submit" block size="large" className="!h-12 !rounded-xl !font-semibold !text-lg !bg-gradient-to-r !from-orange-500 !to-amber-600 !border-none hover:!opacity-90">
                             Login
                         </Button>
                     </Form.Item>
                 </Form>
 
                 <div className="text-center mt-6 text-gray-500">
-                    <Link to="/" className="inline-flex items-center gap-2 hover:text-blue-600 transition">
+                    <Link to="/" className="inline-flex items-center gap-2 hover:text-orange-600 transition-colors">
                         <ArrowLeftOutlined /> Back to Home
                     </Link>
                 </div>
