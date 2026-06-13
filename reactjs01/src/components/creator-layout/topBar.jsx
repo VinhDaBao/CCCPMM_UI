@@ -17,6 +17,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
   const avatarUrl = user.avatar ? (user.avatar.startsWith("data:") ? user.avatar : `${BACKEND_URL}${user.avatar}`) : null;
   const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
+  
   const handleGoToProfile = () => {
     navigate('/users/profile');
   };
