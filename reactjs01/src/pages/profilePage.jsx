@@ -9,6 +9,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const ProfilePage = () => {
     const [form] = Form.useForm();
+    const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [fileObject, setFileObject] = useState(null);
     const [imageUrl, setImageUrl] = useState(null);
@@ -74,6 +75,7 @@ const ProfilePage = () => {
                 message: "THÀNH CÔNG",
                 description: "Cập nhật hồ sơ thành công!"
             });
+            dispatch(loginSuccess(res.user));
 
             if (res.user) {
                 form.setFieldsValue({
