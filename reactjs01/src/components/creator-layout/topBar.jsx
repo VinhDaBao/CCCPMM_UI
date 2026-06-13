@@ -18,7 +18,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
   const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const handleGoToProfile = () => {
-    navigate('/workspace/profile');
+    navigate('/users/profile');
   };
 
   // 3. Hàm chuyển đổi ngôn ngữ
