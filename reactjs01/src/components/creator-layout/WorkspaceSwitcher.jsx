@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Divider, Dropdown, Empty, Form, Input, Modal, Select, Spin, notification } from 'antd';
-import { DatabaseOutlined, DownOutlined, LoadingOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, DownOutlined, LoadingOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import useWorkspaces from '../../hooks/useWorkspaces';
 import useCreateWorkspace from '../../hooks/useCreateWorkspace';
 import useDeleteWorkspace from '../../hooks/useDeleteWorkspace';
-
+import useUpdateWorkspace from '../../hooks/useUpdateWorkspace';
 const STORAGE_KEY = 'active_workspace_id';
 
 const WorkspaceSwitcher = () => {
@@ -16,6 +16,10 @@ const WorkspaceSwitcher = () => {
   const [form] = Form.useForm();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState(null);
+
+  const [updateForm] = Form.useForm();
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem(STORAGE_KEY) || '');
   const lastErrorRef = useRef('');
 
@@ -28,12 +32,20 @@ const WorkspaceSwitcher = () => {
 
   const createWorkspaceMutation = useCreateWorkspace(ownerId);
   const deleteWorkspaceMutation = useDeleteWorkspace();
-
+  const updateWorkspaceMutation = useUpdateWorkspace();
   const workspaceList = Array.isArray(workspaces) ? workspaces : [];
   const firstWorkspaceId = String(workspaceList[0]?._id || workspaceList[0]?.id || '');
   const hasStoredWorkspace = workspaceList.some((workspace) => String(workspace?._id || workspace?.id) === String(activeWorkspaceId));
   const selectedWorkspaceId = activeWorkspaceId && hasStoredWorkspace ? activeWorkspaceId : firstWorkspaceId;
 
+  useEffect(() => {
+  if (updateOpen && editingWorkspace) {
+    updateForm.setFieldsValue({
+      name: editingWorkspace.name,
+      description: editingWorkspace.description,
+    });
+  }
+}, [updateOpen, editingWorkspace, updateForm]);
   useEffect(() => {
     if (selectedWorkspaceId && selectedWorkspaceId !== activeWorkspaceId) {
       localStorage.setItem(STORAGE_KEY, selectedWorkspaceId);
@@ -79,7 +91,31 @@ const WorkspaceSwitcher = () => {
       return submitError;
     }
   };
+  const handleUpdateWorkspace = (workspace) => {
+    setEditingWorkspace(workspace);
 
+    updateForm.setFieldsValue({
+      name: workspace?.name,
+      description: workspace?.description,
+    });
+
+    setDropdownOpen(false);
+    setUpdateOpen(true);
+  };
+  const handleUpdateWorkspaceSubmit = async (values) => {
+    try {
+      await updateWorkspaceMutation.mutateAsync({
+        workspaceId: editingWorkspace._id,
+        data: values,
+      });
+
+      setUpdateOpen(false);
+      setEditingWorkspace(null);
+      updateForm.resetFields();
+    } catch (error) {
+      return error;
+    }
+  };
   const handleDeleteWorkspace = (workspace) => {
     const workspaceId = String(workspace?._id || workspace?.id || '');
     const workspaceName = workspace?.name || 'Untitled workspace';
@@ -118,14 +154,24 @@ const WorkspaceSwitcher = () => {
   const buildWorkspaceMenu = (workspace) => ({
     items: [
       {
-        key: 'delete',
-        label: 'Delete workspace',
+        key: "update",
+        label: "Update workspace",
+        icon: <EditOutlined />,
+      },
+      {
+        key: "delete",
+        label: "Delete workspace",
         danger: true,
         icon: <DeleteOutlined />,
       },
     ],
+
     onClick: ({ key }) => {
-      if (key === 'delete') {
+      if (key === "update") {
+        handleUpdateWorkspace(workspace);
+      }
+
+      if (key === "delete") {
         handleDeleteWorkspace(workspace);
       }
     },
@@ -137,89 +183,89 @@ const WorkspaceSwitcher = () => {
   }));
 
   const dropdownContent = (
-  <div style={{ width: '100%', maxWidth: 260 }}>
-    
-    <Button
-      block
-      type="text"
-      icon={<PlusOutlined />}
-      onClick={handleOpenCreateWorkspace}
-      style={{
-        justifyContent: 'flex-start',
-        padding: '8px 10px',
-        height: 'auto',
-        color: 'var(--accent-amber)',
-        fontWeight: 600,
-      }}
-    >
-      Create workspace
-    </Button>
+    <div style={{ width: '100%', maxWidth: 260 }}>
 
-    <Divider style={{ margin: '8px 0' }} />
+      <Button
+        block
+        type="text"
+        icon={<PlusOutlined />}
+        onClick={handleOpenCreateWorkspace}
+        style={{
+          justifyContent: 'flex-start',
+          padding: '8px 10px',
+          height: 'auto',
+          color: 'var(--accent-amber)',
+          fontWeight: 600,
+        }}
+      >
+        Create workspace
+      </Button>
 
-    {/* 🔥 ADD THIS */}
-    {workspaceList.length > 0 && (
-      <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-        {workspaceList.map((ws) => (
-          <Dropdown
-            key={ws._id || ws.id}
-            trigger={['contextMenu']}
-            menu={buildWorkspaceMenu(ws)}
-            placement="bottomLeft"
-          >
-            <div
-              onClick={() => {
-                handleWorkspaceChange(String(ws._id || ws.id));
-                setDropdownOpen(false);
-              }}
-              style={{
-                padding: '8px 10px',
-                cursor: 'pointer',
-                borderRadius: 6,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = 'var(--bg-hover)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = 'transparent')
-              }
+      <Divider style={{ margin: '8px 0' }} />
+
+      {/* 🔥 ADD THIS */}
+      {workspaceList.length > 0 && (
+        <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+          {workspaceList.map((ws) => (
+            <Dropdown
+              key={ws._id || ws.id}
+              trigger={['contextMenu']}
+              menu={buildWorkspaceMenu(ws)}
+              placement="bottomLeft"
             >
-              <span style={{ fontSize: 13 }}>
-                {ws.name || 'Untitled workspace'}
-              </span>
-
-              {String(ws._id || ws.id) === selectedWorkspaceId && (
-                <span style={{ fontSize: 10, color: 'var(--accent-amber)' }}>
-                  ACTIVE
+              <div
+                onClick={() => {
+                  handleWorkspaceChange(String(ws._id || ws.id));
+                  setDropdownOpen(false);
+                }}
+                style={{
+                  padding: '8px 10px',
+                  cursor: 'pointer',
+                  borderRadius: 6,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = 'var(--bg-hover)')
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = 'transparent')
+                }
+              >
+                <span style={{ fontSize: 13 }}>
+                  {ws.name || 'Untitled workspace'}
                 </span>
-              )}
-            </div>
-          </Dropdown>
-        ))}
-      </div>
-    )}
 
-    {isLoading && (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 12 }}>
-        <Spin indicator={<LoadingOutlined spin />} />
-      </div>
-    )}
+                {String(ws._id || ws.id) === selectedWorkspaceId && (
+                  <span style={{ fontSize: 10, color: 'var(--accent-amber)' }}>
+                    ACTIVE
+                  </span>
+                )}
+              </div>
+            </Dropdown>
+          ))}
+        </div>
+      )}
 
-    {!isLoading && workspaceList.length === 0 && (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={
-          <span style={{ color: 'var(--text-muted)' }}>
-            No workspaces yet
-          </span>
-        }
-      />
-    )}
-  </div>
-);
+      {isLoading && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 12 }}>
+          <Spin indicator={<LoadingOutlined spin />} />
+        </div>
+      )}
+
+      {!isLoading && workspaceList.length === 0 && (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span style={{ color: 'var(--text-muted)' }}>
+              No workspaces yet
+            </span>
+          }
+        />
+      )}
+    </div>
+  );
   return (
     <div style={{ padding: '12px 12px 14px', borderBottom: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -238,7 +284,7 @@ const WorkspaceSwitcher = () => {
         loading={isLoading}
         placeholder="Select workspace"
         suffixIcon={<DownOutlined style={{ color: 'var(--text-muted)' }} />}
-        dropdownRender={() => dropdownContent}
+        popupRender={() => dropdownContent}
         style={{ width: '100%' }}
         variant="filled"
         allowClear={false}
@@ -261,7 +307,7 @@ const WorkspaceSwitcher = () => {
         onOk={() => form.submit()}
         okText="Create workspace"
         confirmLoading={createWorkspaceMutation.isPending}
-        destroyOnClose
+        destroyOnHidden
         afterClose={() => form.resetFields()}
       >
         <Form form={form} layout="vertical" onFinish={handleCreateWorkspace} preserve={false}>
@@ -278,7 +324,55 @@ const WorkspaceSwitcher = () => {
           </Form.Item>
         </Form>
       </Modal>
+      <Modal
+        title="Update workspace"
+        open={updateOpen}
+        onCancel={() => {
+          setUpdateOpen(false);
+          setEditingWorkspace(null);
+          updateForm.resetFields();
+        }}
+        onOk={() => updateForm.submit()}
+        okText="Update workspace"
+        confirmLoading={updateWorkspaceMutation.isPending}
+      >
+        <Form
+          form={updateForm}
+          layout="vertical"
+          onFinish={handleUpdateWorkspaceSubmit}
+          preserve={false}
+        >
+          <Form.Item
+            label="Workspace name"
+            name="name"
+            rules={[
+              {
+                required: true,
+                message: 'Please enter a workspace name',
+              },
+            ]}
+          >
+            <Input
+              placeholder="e.g. Story Universe"
+              maxLength={120}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Description"
+            name="description"
+          >
+            <Input.TextArea
+              placeholder="Optional workspace description"
+              rows={4}
+              maxLength={500}
+              showCount
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
+
   );
 };
 
