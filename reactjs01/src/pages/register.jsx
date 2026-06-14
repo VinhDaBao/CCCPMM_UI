@@ -1,43 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Form, Input, notification } from 'antd';
 import { createUserApi } from '../util/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftOutlined, UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
-import { useDispatch, useSelector } from "react-redux";
-import { registerStart, registerSuccess, registerFail } from "../redux/authSlice";
 
 const RegisterPage = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const registerLoading = useSelector(
-        state => state.auth.registerLoading
-    );
+    const [isLoading, setIsLoading] = useState(false);
 
     const onFinish = async (values) => {
         const { name, email, password } = values;
-        dispatch(registerStart());
 
-        const res = await createUserApi(name, email, password);
+        setIsLoading(true);
 
-        if (res && res.email) {
-            dispatch(registerSuccess());
+        try {
+            const res = await createUserApi(name, email, password);
 
-            notification.success({
-                message: "REGISTRATION SUCCESSFUL",
-                description: res.message || "Please check your email to receive the OTP code."
-            });
-            
-            navigate("/verify-otp", { state: { email: email, type: "register" } });
+            if (res && res.email) {
+                notification.success({
+                    message: "REGISTRATION SUCCESSFUL",
+                    description: res.message || "Please check your email to receive the OTP code."
+                });
 
-        } else {
-            dispatch(registerFail("Failed to create user"));
-            
-            const errorMsg = res?.errors ? res.errors[0].msg : res?.message || "Registration failed, please try again!";
-            
+                navigate("/verify-otp", {
+                    state: {
+                        email: email,
+                        type: "register"
+                    }
+                });
+            } else {
+                const errorMsg =
+                    res?.errors
+                        ? res.errors[0].msg
+                        : res?.message || "Registration failed, please try again!";
+
+                notification.error({
+                    message: "REGISTRATION FAILED",
+                    description: errorMsg
+                });
+            }
+        } catch (error) {
             notification.error({
-                message: "REGISTRATION FAILED",
-                description: errorMsg
+                message: "SYSTEM ERROR",
+                description: "Cannot connect to server."
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -86,7 +94,7 @@ const RegisterPage = () => {
 
                     <Form.Item className="mt-8 mb-0">
                         <Button 
-                            loading={registerLoading} 
+                            loading={isLoading}
                             type="primary" 
                             htmlType="submit" 
                             block 

@@ -15,8 +15,11 @@ const LoginPage = () => {
 
         const res = await loginApi(email, password);
         console.log("LOGIN RESPONSE:", res);
-        if (res && res.token) {
-            localStorage.setItem("access_token", res.token);
+        
+        if (res && res.accessToken) {
+            localStorage.setItem("access_token", res.accessToken);
+            localStorage.setItem("refresh_token", res.refreshToken); 
+            
             notification.success({
                 message: "LOGIN USER",
                 description: "Success"
@@ -25,7 +28,7 @@ const LoginPage = () => {
             if (res.redirectUrl) {
                 navigate(res.redirectUrl);
             } else {
-                navigate("/workspace/editor"); // Đã cập nhật trỏ về Workspace
+                navigate("/workspace/editor"); 
             }
         } else {
             notification.error({

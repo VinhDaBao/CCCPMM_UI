@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Form, Input, notification } from 'antd';
 import { ArrowLeftOutlined, MailOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,29 +6,38 @@ import { forgotPasswordApi } from '../util/api';
 
 const ForgotPasswordPage = () => {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
 
     const onFinish = async (values) => {
         const { email } = values;
-        console.log("EMAIL:", email);
 
-        const res = await forgotPasswordApi(email);
+        setIsLoading(true);
 
-        if (res && res.errCode === 0) {
-            notification.success({
-                message: "SEND OTP",
-                description: res.message
-            });
+        try {
+            const res = await forgotPasswordApi(email);
 
-            navigate("/verify-otp", {
-                state: {
-                    email
-                }
-            });
-        } else {
+            if (res && res.errCode === 0) {
+                notification.success({
+                    message: "SEND OTP",
+                    description: res.message
+                });
+
+                navigate("/verify-otp", {
+                    state: { email }
+                });
+            } else {
+                notification.error({
+                    message: "SEND OTP FAILED",
+                    description: res?.message ?? "Error"
+                });
+            }
+        } catch (error) {
             notification.error({
-                message: "SEND OTP",
-                description: res?.message ?? "Error"
+                message: "ERROR",
+                description: "System error"
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -62,6 +71,7 @@ const ForgotPasswordPage = () => {
 
                     <Form.Item className="mt-8 mb-0">
                         <Button 
+                            loading={isLoading}
                             type="primary" 
                             htmlType="submit" 
                             block 
