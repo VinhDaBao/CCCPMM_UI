@@ -7,17 +7,21 @@ import { verifyOtpApi, verifyRegisterOtpApi, forgotPasswordApi } from '../util/a
 const VerifyOtpPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const email = location?.state?.email;
-    const type = location?.state?.type; 
+    const type = location?.state?.type;
 
     const [countdown, setCountdown] = useState(300);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
     useEffect(() => {
         if (countdown <= 0) return;
+
         const timer = setInterval(() => {
             setCountdown(prev => prev - 1);
         }, 1000);
+
         return () => clearInterval(timer);
     }, [countdown]);
 
@@ -30,50 +34,80 @@ const VerifyOtpPage = () => {
     const onFinish = async (values) => {
         const { otp } = values;
 
-        if (type === "register") {
-            const res = await verifyRegisterOtpApi(email, otp);
-            if (res && res.errCode === 0) {
-                notification.success({ 
-                    message: "ACCOUNT ACTIVATED", 
-                    description: res.message || "Your account has been successfully activated!" 
-                });
-                navigate("/login"); 
+        setIsVerifying(true);
+
+        try {
+            if (type === "register") {
+                const res = await verifyRegisterOtpApi(email, otp);
+
+                if (res && res.errCode === 0) {
+                    notification.success({
+                        message: "ACCOUNT ACTIVATED",
+                        description: res.message || "Success!"
+                    });
+
+                    navigate("/login");
+                } else {
+                    notification.error({
+                        message: "ACTIVATION FAILED",
+                        description: res?.message || "Invalid OTP!"
+                    });
+                }
             } else {
-                notification.error({ 
-                    message: "ACTIVATION FAILED", 
-                    description: res?.message || "Invalid or expired OTP!" 
-                });
+                const res = await verifyOtpApi(email, otp);
+
+                if (res && res.errCode === 0) {
+                    notification.success({
+                        message: "VERIFICATION SUCCESSFUL",
+                        description: res.message || "Success!"
+                    });
+
+                    navigate("/reset-password", {
+                        state: { email }
+                    });
+                } else {
+                    notification.error({
+                        message: "VERIFICATION FAILED",
+                        description: res?.message || "Invalid OTP!"
+                    });
+                }
             }
-        } else {
-            const res = await verifyOtpApi(email, otp);
-            if (res && res.errCode === 0) {
-                notification.success({ 
-                    message: "VERIFICATION SUCCESSFUL", 
-                    description: res.message || "OTP verified successfully." 
-                });
-                navigate("/reset-password", { state: { email } });
-            } else {
-                notification.error({ 
-                    message: "VERIFICATION FAILED", 
-                    description: res?.message || "Error verifying OTP." 
-                });
-            }
+        } catch (error) {
+            notification.error({
+                message: "ERROR",
+                description: "System error"
+            });
+        } finally {
+            setIsVerifying(false);
         }
     };
 
     const handleResendOtp = async () => {
-        const res = await forgotPasswordApi(email);
-        if (res && res.errCode === 0) {
-            notification.success({ 
-                message: "RESEND OTP", 
-                description: res.message 
+        setIsResending(true);
+
+        try {
+            const res = await forgotPasswordApi(email);
+
+            if (res && res.errCode === 0) {
+                notification.success({
+                    message: "RESEND OTP",
+                    description: res.message
+                });
+
+                setCountdown(120);
+            } else {
+                notification.error({
+                    message: "RESEND OTP",
+                    description: res?.message ?? "Error resending OTP."
+                });
+            }
+        } catch (error) {
+            notification.error({
+                message: "ERROR",
+                description: "System error"
             });
-            setCountdown(120);
-        } else {
-            notification.error({ 
-                message: "RESEND OTP", 
-                description: res?.message ?? "Error resending OTP." 
-            });
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -111,6 +145,7 @@ const VerifyOtpPage = () => {
 
                     <Form.Item className="mb-0">
                         <Button 
+                            loading={isVerifying}
                             type='primary' 
                             htmlType='submit' 
                             block 
@@ -126,9 +161,9 @@ const VerifyOtpPage = () => {
                     <div className="mb-4">
                         Didn't receive OTP?{" "}
                         <button 
-                            disabled={countdown > 0} 
+                            disabled={countdown > 0 || isResending} 
                             onClick={handleResendOtp}
-                            className={`font-medium transition-colors bg-transparent border-none p-0 ${countdown > 0 ? "text-gray-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700 cursor-pointer"}`}
+                            className={`font-medium transition-colors bg-transparent border-none p-0 ${(countdown > 0 || isResending) ? "text-gray-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700 cursor-pointer"}`}
                         >
                             Resend OTP
                         </button>

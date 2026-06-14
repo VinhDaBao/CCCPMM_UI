@@ -1,6 +1,5 @@
 import axios from './axios.customize';
 
-
 const createUserApi = (name, email, password) => {
     return axios.post("/api/auth/register", {
         name,
@@ -66,6 +65,52 @@ const getAllUsersApi = () => {
     return axios.get("/api/auth/all-users");
 };
 
+const refreshTokenApi = (refreshToken) => {
+    return axios.post("/api/auth/refresh-token", { refreshToken });
+};
+
+const logoutApi = () => {
+    return axios.post("/api/auth/logout");
+};
+
+// ==========================================
+// ĐÃ BỎ CHỮ 'export' Ở TRƯỚC CÁC HÀM NÀY
+// ==========================================
+const getAllAssetsApi = (workspaceId, filterOptions = {}) => {
+    return axios.get('/api/assets', {
+        params: {
+            workspaceId,
+            ...filterOptions
+        }
+    });
+};
+
+const uploadAssetApi = (workspaceId, file, tags) => {
+    const formData = new FormData();
+    formData.append('workspaceId', workspaceId);
+    formData.append('fileMedia', file);
+    if (tags) formData.append('tags', tags);
+
+    return axios.post('/api/assets/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
+const getWorkspaceTagsApi = (workspaceId) => {
+    return axios.get('/api/assets/tags', {
+        params: { workspaceId }
+    });
+};
+
+const updateAssetApi = (assetId, data) => {
+    return axios.put(`/api/assets/${assetId}`, data);
+};
+
+const deleteAssetApi = (assetId) => {
+    return axios.delete(`/api/assets/${assetId}`);
+};
 
 export {
     createUserApi,
@@ -76,5 +121,12 @@ export {
     resetPasswordApi,
     updateProfileApi,
     verifyRegisterOtpApi,
-    getAllUsersApi
+    getAllUsersApi,
+    refreshTokenApi,
+    logoutApi,
+    getAllAssetsApi,
+    uploadAssetApi,
+    getWorkspaceTagsApi,
+    updateAssetApi,
+    deleteAssetApi
 };
