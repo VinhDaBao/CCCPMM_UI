@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/authSlice';
 import Icon from './Icons';
+import WorkspaceSwitcher from './WorkspaceSwitcher';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,7 +19,7 @@ const Sidebar = () => {
   // Mảng menu mặc định
   const navItems = [
     { id: "dashboard", path: "/workspace/dashboard", label: "Dashboard", icon: "kanban" },
-    { id: "editor", path: "/workspace/editor", label: "Workspace", icon: "grid" },
+    { id: "project", path: "/workspace/editor", label: "Project", icon: "grid" },
     { id: "assets", path: "/workspace/assets", label: "Assets", icon: "assets" },
     { id: "settings", path: "/workspace/settings", label: "Settings", icon: "settings" },
   ];
@@ -31,6 +32,7 @@ const Sidebar = () => {
   // Hàm Logout từ Header cũ
   const handleLogout = () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('active_workspace_id');
     dispatch(logout());
     navigate('/login');
   };
@@ -64,6 +66,8 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
+
+      <WorkspaceSwitcher />
 
       {/* Nav Menu */}
       <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>

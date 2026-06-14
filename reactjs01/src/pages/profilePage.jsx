@@ -4,7 +4,8 @@ import { ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { getUserApi, updateProfileApi } from '../util/api';
-
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../redux/authSlice";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const ProfilePage = () => {
@@ -66,6 +67,7 @@ const ProfilePage = () => {
             avatarToSend = imageUrl;
         }
 
+
         const res = await updateProfileApi(directFullName, avatarToSend);
 
         setLoading(false);
@@ -75,6 +77,7 @@ const ProfilePage = () => {
                 message: "THÀNH CÔNG",
                 description: "Cập nhật hồ sơ thành công!"
             });
+            
             dispatch(loginSuccess(res.user));
 
             if (res.user) {

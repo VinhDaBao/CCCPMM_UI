@@ -1,10 +1,11 @@
-import React from 'react'
+import React from 'react';
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/global.css';
 import { Provider } from "react-redux";
 import { store } from "./redux/store";  
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import Pages
 import RegisterPage from './pages/register.jsx';
@@ -21,12 +22,9 @@ import WorkspacePage from './pages/WorkspacePage.jsx';
 import AssetLibraryPage from './pages/AssetLibraryPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import './i18n';
-// Component Bảo vệ Route
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("access_token");
-  if (!token) return <Navigate to="/login" replace />;
-  return children;
-};
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
@@ -64,7 +62,9 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </Provider>
   </React.StrictMode>,
 )
