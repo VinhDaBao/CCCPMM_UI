@@ -160,7 +160,7 @@ const workspaceInviteApi = {
         axios.post("/api/workspace-invites/accept", {token}),
 
     cancel: (token) =>
-        axios.delete(`/api/workspace-invites/${token}`),
+        axios.delete(`/api/workspace-invites/invite/${token}`),
 };
 
 
