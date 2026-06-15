@@ -3,22 +3,17 @@ import axios from './axios.customize';
 
 const createCrudApi = (basePath) => ({
     create: (data) => axios.post(basePath, data),
-    getAll: () => axios.get(basePath),
+    getAll: (params) => axios.get(basePath, { params }),
     getById: (id) => axios.get(`${basePath}/${id}`),
     update: (id, data) => axios.put(`${basePath}/${id}`, data),
     delete: (id) => axios.delete(`${basePath}/${id}`)
 });
 
 const workspaceApi = createCrudApi('/api/workspaces');
-const projectApi = createCrudApi('/api/projects');
-const characterApi = createCrudApi('/api/characters');
-const blockApi = createCrudApi('/api/blocks');
 const notificationApi = createCrudApi('/api/notifications');
 const paymentApi = createCrudApi('/api/payments');
 const planApi = createCrudApi('/api/plans');
-const snippetApi = createCrudApi('/api/snippets');
 const subscriptionApi = createCrudApi('/api/subscriptions');
-const projectAssetApi = createCrudApi('/api/project-assets');
 
 
 const createUserApi = (name, email, password) => {
@@ -92,23 +87,24 @@ const getWorkspaceByIdApi = (id) => workspaceApi.getById(id);
 const updateWorkspaceApi = (id, data) => workspaceApi.update(id, data);
 const deleteWorkspaceApi = (id) => workspaceApi.delete(id);
 
-const createProjectApi = (data) => projectApi.create(data);
-const getAllProjectsApi = () => projectApi.getAll();
-const getProjectByIdApi = (id) => projectApi.getById(id);
-const updateProjectApi = (id, data) => projectApi.update(id, data);
-const deleteProjectApi = (id) => projectApi.delete(id);
+const createProjectApi = (workspaceId, data) => axios.post(`/api/workspaces/${workspaceId}/projects`, data);
+const getAllProjectsApi = (workspaceId, params) => axios.get(`/api/workspaces/${workspaceId}/projects`, { params });
+const getProjectByIdApi = (workspaceId, id) => axios.get(`/api/workspaces/${workspaceId}/projects/${id}`);
+const updateProjectApi = (workspaceId, id, data) => axios.put(`/api/workspaces/${workspaceId}/projects/${id}`, data);
+const deleteProjectApi = (workspaceId, id) => axios.delete(`/api/workspaces/${workspaceId}/projects/${id}`);
+const duplicateProjectApi = (workspaceId, id) => axios.post(`/api/workspaces/${workspaceId}/projects/${id}/duplicate`);
 
-const createCharacterApi = (data) => characterApi.create(data);
-const getAllCharactersApi = () => characterApi.getAll();
-const getCharacterByIdApi = (id) => characterApi.getById(id);
-const updateCharacterApi = (id, data) => characterApi.update(id, data);
-const deleteCharacterApi = (id) => characterApi.delete(id);
+const createCharacterApi = (workspaceId, data) => axios.post(`/api/workspaces/${workspaceId}/characters`, data);
+const getAllCharactersApi = (workspaceId, params) => axios.get(`/api/workspaces/${workspaceId}/characters`, { params });
+const getCharacterByIdApi = (workspaceId, id) => axios.get(`/api/workspaces/${workspaceId}/characters/${id}`);
+const updateCharacterApi = (workspaceId, id, data) => axios.put(`/api/workspaces/${workspaceId}/characters/${id}`, data);
+const deleteCharacterApi = (workspaceId, id) => axios.delete(`/api/workspaces/${workspaceId}/characters/${id}`);
 
-const createBlockApi = (data) => blockApi.create(data);
-const getAllBlocksApi = () => blockApi.getAll();
-const getBlockByIdApi = (id) => blockApi.getById(id);
-const updateBlockApi = (id, data) => blockApi.update(id, data);
-const deleteBlockApi = (id) => blockApi.delete(id);
+const createBlockApi = (workspaceId, projectId, data) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/blocks`, data);
+const getAllBlocksApi = (workspaceId, projectId, params) => axios.get(`/api/workspaces/${workspaceId}/projects/${projectId}/blocks`, { params });
+const getBlockByIdApi = (workspaceId, projectId, id) => axios.get(`/api/workspaces/${workspaceId}/projects/${projectId}/blocks/${id}`);
+const updateBlockApi = (workspaceId, projectId, id, data) => axios.put(`/api/workspaces/${workspaceId}/projects/${projectId}/blocks/${id}`, data);
+const deleteBlockApi = (workspaceId, projectId, id) => axios.delete(`/api/workspaces/${workspaceId}/projects/${projectId}/blocks/${id}`);
 
 const createNotificationApi = (data) => notificationApi.create(data);
 const getAllNotificationsApi = () => notificationApi.getAll();
@@ -128,11 +124,11 @@ const getPlanByIdApi = (id) => planApi.getById(id);
 const updatePlanApi = (id, data) => planApi.update(id, data);
 const deletePlanApi = (id) => planApi.delete(id);
 
-const createSnippetApi = (data) => snippetApi.create(data);
-const getAllSnippetsApi = () => snippetApi.getAll();
-const getSnippetByIdApi = (id) => snippetApi.getById(id);
-const updateSnippetApi = (id, data) => snippetApi.update(id, data);
-const deleteSnippetApi = (id) => snippetApi.delete(id);
+const createSnippetApi = (workspaceId, data) => axios.post(`/api/workspaces/${workspaceId}/snippets`, data);
+const getAllSnippetsApi = (workspaceId, params) => axios.get(`/api/workspaces/${workspaceId}/snippets`, { params });
+const getSnippetByIdApi = (workspaceId, id) => axios.get(`/api/workspaces/${workspaceId}/snippets/${id}`);
+const updateSnippetApi = (workspaceId, id, data) => axios.put(`/api/workspaces/${workspaceId}/snippets/${id}`, data);
+const deleteSnippetApi = (workspaceId, id) => axios.delete(`/api/workspaces/${workspaceId}/snippets/${id}`);
 
 const createSubscriptionApi = (data) => subscriptionApi.create(data);
 const getAllSubscriptionsApi = () => subscriptionApi.getAll();
@@ -140,15 +136,22 @@ const getSubscriptionByIdApi = (id) => subscriptionApi.getById(id);
 const updateSubscriptionApi = (id, data) => subscriptionApi.update(id, data);
 const deleteSubscriptionApi = (id) => subscriptionApi.delete(id);
 
-const createProjectAssetApi = (data) => projectAssetApi.create(data);
-const getAllProjectAssetsApi = () => projectAssetApi.getAll();
-const getProjectAssetByIdApi = (id) => projectAssetApi.getById(id);
-const updateProjectAssetApi = (id, data) => projectAssetApi.update(id, data);
-const deleteProjectAssetApi = (id) => projectAssetApi.delete(id);
+const createProjectAssetApi = (workspaceId, projectId, data) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets`, data);
+const attachProjectAssetsApi = (workspaceId, projectId, assetIds) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets/attach`, { assetIds });
+const getAllProjectAssetsApi = (workspaceId, projectId, params) => axios.get(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets`, { params });
+const getProjectAssetByIdApi = (workspaceId, projectId, id) => axios.get(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets/${id}`);
+const updateProjectAssetApi = (workspaceId, projectId, id, data) => axios.put(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets/${id}`, data);
+const deleteProjectAssetApi = (workspaceId, projectId, id) => axios.delete(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets/${id}`);
+
+const createProjectSnapshotApi = (workspaceId, projectId) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots`);
+const getProjectSnapshotsApi = (workspaceId, projectId) => axios.get(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots`);
+const restoreProjectSnapshotApi = (workspaceId, projectId, snapshotId) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots/${snapshotId}/restore`);
+
+const getWorkspaceActivityLogsApi = (workspaceId) => axios.get(`/api/workspaces/${workspaceId}/activity-logs`);
 
 const workspaceInviteApi = {
     invite: (data) =>
-        axios.post("/api/workspace-invites/invite", data),
+        axios.post(`/api/workspace-invites/${data.workspaceId}/invite`, data),
 
     getByWorkspace: (workspaceId) =>
         axios.get(`/api/workspace-invites/workspace/${workspaceId}`),
@@ -159,8 +162,8 @@ const workspaceInviteApi = {
     accept: (token) =>
         axios.post("/api/workspace-invites/accept", {token}),
 
-    cancel: (token) =>
-        axios.delete(`/api/workspace-invites/invite/${token}`),
+    cancel: (workspaceId, token) =>
+        axios.delete(`/api/workspace-invites/${workspaceId}/invite/${token}`),
 };
 
 
@@ -233,6 +236,20 @@ const deleteAssetApi = (assetId) => {
     return axios.delete(`/api/assets/${assetId}`);
 };
 
+const getAssetUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  let normalized = url.replace(/\\/g, '/');
+  normalized = normalized.replace(/^(src\/public\/images|public\/images|src\/images|public)/, '/images');
+  if (!normalized.startsWith('/images') && !normalized.startsWith('/')) {
+    normalized = '/' + normalized;
+  }
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8088';
+  return `${backendUrl.replace(/\/$/, '')}${normalized}`;
+};
+
 export {
     createUserApi,
     loginApi,
@@ -289,20 +306,27 @@ export {
     updateSubscriptionApi,
     deleteSubscriptionApi,
     createProjectAssetApi,
+    attachProjectAssetsApi,
     getAllProjectAssetsApi,
     getProjectAssetByIdApi,
     updateProjectAssetApi,
     deleteProjectAssetApi,
+    duplicateProjectApi,
+    createProjectSnapshotApi,
+    getProjectSnapshotsApi,
+    restoreProjectSnapshotApi,
+    getWorkspaceActivityLogsApi,
     workspaceInviteApi,
-getWorkspaceMembers,
-changeMemberRole,
-removeMember,
-leaveWorkspace,
+    getWorkspaceMembers,
+    changeMemberRole,
+    removeMember,
+    leaveWorkspace,
     refreshTokenApi,
     logoutApi,
     getAllAssetsApi,
     uploadAssetApi,
     getWorkspaceTagsApi,
     updateAssetApi,
-    deleteAssetApi
+    deleteAssetApi,
+    getAssetUrl
 };

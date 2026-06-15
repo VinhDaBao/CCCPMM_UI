@@ -22,6 +22,8 @@ import WorkspacePage from './pages/WorkspacePage.jsx';
 import AssetLibraryPage from './pages/AssetLibraryPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import InvitePage from './pages/InvitePage.jsx';
+import ScriptEditorPage from './pages/ScriptEditorPage.jsx';
+import ProjectsPage from './pages/ProjectsPage.jsx';
 import './i18n';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
@@ -39,7 +41,7 @@ const router = createBrowserRouter([
       { path: "forgot-password", element: <ForgotPasswordPage /> },
       { path: "verify-otp", element: <VerifyOtpPage /> },
       { path: "reset-password", element: <ResetPasswordPage /> },
-    { path: "invite/:token", element: <InvitePage /> },
+      { path: "invite/:token", element: <InvitePage /> },
 
       // NHÓM GIAO DIỆN CÓ SIDEBAR (CREATOR LAYOUT)
       {
@@ -47,9 +49,10 @@ const router = createBrowserRouter([
         children: [
           // Nhánh Workspace
           { path: "workspace/dashboard", element: <DashboardPage /> },
-          { path: "workspace/editor", element: <WorkspacePage /> },
+          { path: "workspace/projects", element: <ProjectsPage /> },
           { path: "workspace/assets", element: <AssetLibraryPage /> },
           { path: "workspace/settings", element: <SettingsPage /> },
+          { path: "projects/:projectId", element: <ScriptEditorPage /> },
           
           // Giữ nguyên 2 link Profile độc lập của bạn tại đây
           { path: "user/profile", element: <ProfilePage /> },
