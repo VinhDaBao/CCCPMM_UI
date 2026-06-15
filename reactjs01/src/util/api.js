@@ -164,11 +164,6 @@ const workspaceInviteApi = {
         axios.delete(`/api/workspace-invites/${token}`),
 };
 
-const createWorkspaceInviteApi = (data) => workspaceInviteApi.create(data);
-const getAllWorkspaceInvitesApi = () => workspaceInviteApi.getAll();
-const getWorkspaceInviteByIdApi = (id) => workspaceInviteApi.getById(id);
-const updateWorkspaceInviteApi = (id, data) => workspaceInviteApi.update(id, data);
-const deleteWorkspaceInviteApi = (id) => workspaceInviteApi.delete(id);
 
 const createWorkspaceMemberApi = (data) => workspaceMemberApi.create(data);
 const getAllWorkspaceMembersApi = () => workspaceMemberApi.getAll();
@@ -283,11 +278,7 @@ export {
     getProjectAssetByIdApi,
     updateProjectAssetApi,
     deleteProjectAssetApi,
-    createWorkspaceInviteApi,
-    getAllWorkspaceInvitesApi,
-    getWorkspaceInviteByIdApi,
-    updateWorkspaceInviteApi,
-    deleteWorkspaceInviteApi,
+    workspaceInviteApi,
     createWorkspaceMemberApi,
     getAllWorkspaceMembersApi,
     getWorkspaceMemberByIdApi,
