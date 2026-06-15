@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/authSlice';
 import Icon from './Icons';
+
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;

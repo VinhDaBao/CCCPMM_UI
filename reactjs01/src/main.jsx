@@ -21,6 +21,7 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import WorkspacePage from './pages/WorkspacePage.jsx';
 import AssetLibraryPage from './pages/AssetLibraryPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
+import InvitePage from './pages/InvitePage.jsx';
 import './i18n';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import WorkspaceWorldPage from './pages/workspaceWorldPage';
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: "forgot-password", element: <ForgotPasswordPage /> },
       { path: "verify-otp", element: <VerifyOtpPage /> },
       { path: "reset-password", element: <ResetPasswordPage /> },
+    { path: "invite/:token", element: <InvitePage /> },
 
       // NHÓM GIAO DIỆN CÓ SIDEBAR (CREATOR LAYOUT)
       {

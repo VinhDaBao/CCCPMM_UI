@@ -19,7 +19,6 @@ const planApi = createCrudApi('/api/plans');
 const snippetApi = createCrudApi('/api/snippets');
 const subscriptionApi = createCrudApi('/api/subscriptions');
 const projectAssetApi = createCrudApi('/api/project-assets');
-const workspaceMemberApi = createCrudApi('/api/workspace-members');
 
 
 const createUserApi = (name, email, password) => {
@@ -161,20 +160,31 @@ const workspaceInviteApi = {
         axios.post("/api/workspace-invites/accept", {token}),
 
     cancel: (token) =>
-        axios.delete(`/api/workspace-invites/${token}`),
+        axios.delete(`/api/workspace-invites/invite/${token}`),
 };
 
-const createWorkspaceInviteApi = (data) => workspaceInviteApi.create(data);
-const getAllWorkspaceInvitesApi = () => workspaceInviteApi.getAll();
-const getWorkspaceInviteByIdApi = (id) => workspaceInviteApi.getById(id);
-const updateWorkspaceInviteApi = (id, data) => workspaceInviteApi.update(id, data);
-const deleteWorkspaceInviteApi = (id) => workspaceInviteApi.delete(id);
 
-const createWorkspaceMemberApi = (data) => workspaceMemberApi.create(data);
-const getAllWorkspaceMembersApi = () => workspaceMemberApi.getAll();
-const getWorkspaceMemberByIdApi = (id) => workspaceMemberApi.getById(id);
-const updateWorkspaceMemberApi = (id, data) => workspaceMemberApi.update(id, data);
-const deleteWorkspaceMemberApi = (id) => workspaceMemberApi.delete(id);
+const getWorkspaceMembers = async (workspaceId) => {
+  return axios.get(`/api/workspace-members/${workspaceId}/members`);
+};
+
+const changeMemberRole = async ({ workspaceId, memberId, role }) => {
+  return axios.patch(
+    `/api/workspace-members/${workspaceId}/members/${memberId}/role`,
+    { role }
+  );
+};
+
+const removeMember = async ({ workspaceId, memberId }) => {
+  return axios.delete(
+    `/api/workspace-members/${workspaceId}/members/${memberId}`
+  );
+};
+
+const leaveWorkspace = async (workspaceId) => {
+  return axios.post(`/api/workspace-members/${workspaceId}/leave`);
+};
+
 
 const refreshTokenApi = (refreshToken) => {
     return axios.post("/api/auth/refresh-token", { refreshToken });
@@ -298,16 +308,11 @@ export {
     getProjectAssetByIdApi,
     updateProjectAssetApi,
     deleteProjectAssetApi,
-    createWorkspaceInviteApi,
-    getAllWorkspaceInvitesApi,
-    getWorkspaceInviteByIdApi,
-    updateWorkspaceInviteApi,
-    deleteWorkspaceInviteApi,
-    createWorkspaceMemberApi,
-    getAllWorkspaceMembersApi,
-    getWorkspaceMemberByIdApi,
-    updateWorkspaceMemberApi,
-    deleteWorkspaceMemberApi,
+    workspaceInviteApi,
+getWorkspaceMembers,
+changeMemberRole,
+removeMember,
+leaveWorkspace,
     refreshTokenApi,
     logoutApi,
     getAllAssetsApi,
