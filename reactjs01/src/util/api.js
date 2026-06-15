@@ -19,7 +19,6 @@ const planApi = createCrudApi('/api/plans');
 const snippetApi = createCrudApi('/api/snippets');
 const subscriptionApi = createCrudApi('/api/subscriptions');
 const projectAssetApi = createCrudApi('/api/project-assets');
-const workspaceMemberApi = createCrudApi('/api/workspace-members');
 
 
 const createUserApi = (name, email, password) => {
@@ -165,11 +164,27 @@ const workspaceInviteApi = {
 };
 
 
-const createWorkspaceMemberApi = (data) => workspaceMemberApi.create(data);
-const getAllWorkspaceMembersApi = () => workspaceMemberApi.getAll();
-const getWorkspaceMemberByIdApi = (id) => workspaceMemberApi.getById(id);
-const updateWorkspaceMemberApi = (id, data) => workspaceMemberApi.update(id, data);
-const deleteWorkspaceMemberApi = (id) => workspaceMemberApi.delete(id);
+const getWorkspaceMembers = async (workspaceId) => {
+  return axios.get(`/api/workspace-members/${workspaceId}/members`);
+};
+
+const changeMemberRole = async ({ workspaceId, memberId, role }) => {
+  return axios.patch(
+    `/api/workspace-members/${workspaceId}/members/${memberId}/role`,
+    { role }
+  );
+};
+
+const removeMember = async ({ workspaceId, memberId }) => {
+  return axios.delete(
+    `/api/workspace-members/${workspaceId}/members/${memberId}`
+  );
+};
+
+const leaveWorkspace = async (workspaceId) => {
+  return axios.post(`/api/workspace-members/${workspaceId}/leave`);
+};
+
 
 const refreshTokenApi = (refreshToken) => {
     return axios.post("/api/auth/refresh-token", { refreshToken });
@@ -279,11 +294,10 @@ export {
     updateProjectAssetApi,
     deleteProjectAssetApi,
     workspaceInviteApi,
-    createWorkspaceMemberApi,
-    getAllWorkspaceMembersApi,
-    getWorkspaceMemberByIdApi,
-    updateWorkspaceMemberApi,
-    deleteWorkspaceMemberApi,
+getWorkspaceMembers,
+changeMemberRole,
+removeMember,
+leaveWorkspace,
     refreshTokenApi,
     logoutApi,
     getAllAssetsApi,

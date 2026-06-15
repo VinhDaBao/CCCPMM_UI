@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Divider, Dropdown, Empty, Form, Input, Modal, Select, Spin, notification } from 'antd';
-import { DatabaseOutlined, DownOutlined, LoadingOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, DownOutlined, LoadingOutlined, PlusOutlined, DeleteOutlined, EditOutlined, CrownOutlined, SwapOutlined, UserSwitchOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
+import { getWorkspaceMembers } from '../../util/api';
 import useWorkspaces from '../../hooks/useWorkspaces';
 import useCreateWorkspace from '../../hooks/useCreateWorkspace';
 import useDeleteWorkspace from '../../hooks/useDeleteWorkspace';
 import useUpdateWorkspace from '../../hooks/useUpdateWorkspace';
+
+import useWorkspaceMembers from '../../hooks/useWorkspaceMember';
+import useChangeMemberRole from '../../hooks/useChangeRole';
+import useRemoveMember from '../../hooks/useRemoveMember';
+import useLeaveWorkspace from '../../hooks/useLeave';
 const STORAGE_KEY = 'active_workspace_id';
 
 const WorkspaceSwitcher = () => {
@@ -22,14 +28,33 @@ const WorkspaceSwitcher = () => {
   const [updateForm] = Form.useForm();
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem(STORAGE_KEY) || '');
   const lastErrorRef = useRef('');
+  const [memberOpen, setMemberOpen] = useState(false);
+  const [memberWorkspace, setMemberWorkspace] = useState(null);
+  const { data: members = [] } = useWorkspaceMembers(
+    memberWorkspace?._id || memberWorkspace?.id
+  );
+  const myMember = members.find(
+  (m) => m.userId?._id === user?._id
+);
+const [confirmState, setConfirmState] = useState({
+  open: false,
+  type: null, 
+  member: null,
+});
+const myRole = myMember?.role;
 
+const canManage = myRole === "OWNER";
+const canChangeRole = myRole === "OWNER";
+const canRemove = myRole === "OWNER";
   const {
     data: workspaces = [],
     isLoading,
     isError,
     error,
   } = useWorkspaces();
-
+  const changeRole = useChangeMemberRole();
+  const removeMember = useRemoveMember();
+  const leaveWorkspaceMutation = useLeaveWorkspace();
   const createWorkspaceMutation = useCreateWorkspace(ownerId);
   const deleteWorkspaceMutation = useDeleteWorkspace();
   const updateWorkspaceMutation = useUpdateWorkspace();
@@ -39,13 +64,13 @@ const WorkspaceSwitcher = () => {
   const selectedWorkspaceId = activeWorkspaceId && hasStoredWorkspace ? activeWorkspaceId : firstWorkspaceId;
 
   useEffect(() => {
-  if (updateOpen && editingWorkspace) {
-    updateForm.setFieldsValue({
-      name: editingWorkspace.name,
-      description: editingWorkspace.description,
-    });
-  }
-}, [updateOpen, editingWorkspace, updateForm]);
+    if (updateOpen && editingWorkspace) {
+      updateForm.setFieldsValue({
+        name: editingWorkspace.name,
+        description: editingWorkspace.description,
+      });
+    }
+  }, [updateOpen, editingWorkspace, updateForm]);
   useEffect(() => {
     if (selectedWorkspaceId && selectedWorkspaceId !== activeWorkspaceId) {
       localStorage.setItem(STORAGE_KEY, selectedWorkspaceId);
@@ -71,7 +96,37 @@ const WorkspaceSwitcher = () => {
   }, [error, isError]);
 
   const activeWorkspace = workspaceList.find((workspace) => String(workspace?._id || workspace?.id) === String(selectedWorkspaceId));
+const openConfirm = (type, member) => {
+  setConfirmState({
+    open: true,
+    type,
+    member,
+  });
+};
+const handleConfirm = async () => {
+  const { type, member } = confirmState;
 
+  if (!member || !memberWorkspace) return;
+
+  const workspaceId = memberWorkspace._id || memberWorkspace.id;
+
+  if (type === "remove") {
+    await removeMember.mutateAsync({
+      workspaceId,
+      memberId: member._id,
+    });
+  }
+
+  if (type === "transfer") {
+    await changeRole.mutateAsync({
+      workspaceId,
+      memberId: member._id,
+      role: "OWNER",
+    });
+  }
+
+  setConfirmState({ open: false, type: null, member: null });
+};
   const handleWorkspaceChange = (workspaceId) => {
     setActiveWorkspaceId(workspaceId);
     localStorage.setItem(STORAGE_KEY, workspaceId);
@@ -151,8 +206,25 @@ const WorkspaceSwitcher = () => {
     });
   };
 
-  const buildWorkspaceMenu = (workspace) => ({
-    items: [
+ const buildWorkspaceMenu = (workspace) => {
+  const myMember = members.find(
+    (m) => m.userId?._id === user?._id
+  );
+
+  const myRole = myMember?.role;
+
+  const canManage = myRole === "OWNER" || myRole === "ADMIN";
+
+  const items = [
+    {
+      key: "members",
+      label: "Manage members",
+      icon: <DatabaseOutlined />,
+    },
+  ];
+
+  if (canManage) {
+    items.push(
       {
         key: "update",
         label: "Update workspace",
@@ -163,10 +235,18 @@ const WorkspaceSwitcher = () => {
         label: "Delete workspace",
         danger: true,
         icon: <DeleteOutlined />,
-      },
-    ],
+      }
+    );
+  }
 
+  return {
+    items,
     onClick: ({ key }) => {
+      if (key === "members") {
+        setMemberWorkspace(workspace);
+        setMemberOpen(true);
+      }
+
       if (key === "update") {
         handleUpdateWorkspace(workspace);
       }
@@ -175,8 +255,8 @@ const WorkspaceSwitcher = () => {
         handleDeleteWorkspace(workspace);
       }
     },
-  });
-
+  };
+};
   const workspaceOptions = workspaceList.map((workspace) => ({
     value: String(workspace?._id || workspace?.id || ''),
     label: workspace?.name || 'Untitled workspace',
@@ -371,6 +451,134 @@ const WorkspaceSwitcher = () => {
           </Form.Item>
         </Form>
       </Modal>
+     <Modal
+  title="Workspace members"
+  open={memberOpen}
+  onCancel={() => {
+    setMemberOpen(false);
+    setMemberWorkspace(null);
+  }}
+  footer={null}
+  width={650}
+>
+  {members.length === 0 ? (
+    <Empty description="No members" />
+  ) : (
+    <div className="flex flex-col gap-2">
+      {members.map((m) => (
+        <div
+          key={m._id}
+          className="grid grid-cols-[1fr_140px_40px] items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+        >
+          {/* USER INFO */}
+          <div className="flex flex-col min-w-0">
+            <div className="font-medium text-gray-900 truncate text-2xl ">
+              {m.userId?.fullName || m.userId?.email}
+            </div>
+
+            <div className="text-xl text-gray-500 truncate">
+              {m.userId?.email}
+            </div>
+          </div>
+
+          {/* ROLE SELECT */}
+          <div className="flex justify-center">
+            {m.role === "OWNER" ? (
+  <span className="text-amber-500 font-semibold">OWNER</span>
+) : (
+            <Select
+              value={m.role}
+              disabled={!canChangeRole || m.role === "OWNER"}
+              className="w-[130px]"
+              size="middle"
+              onChange={(role) =>
+                changeRole.mutate({
+                  memberId: m._id,
+                  role,
+                })
+              }
+              options={[
+                { value: "ADMIN", label: "ADMIN" },
+                { value: "EDITOR", label: "EDITOR" },
+                { value: "VIEWER", label: "VIEWER" },
+              ]}
+            />)}
+          </div>
+
+          {/* REMOVE ICON (FIX ALIGN) */}
+<div className="flex justify-end gap-1">
+  {/* TRANSFER OWNER */}
+  {canChangeRole && m.role !== "OWNER" ? (
+    <button
+      onClick={() => openConfirm("transfer", m)}
+      className="
+        w-8 h-8 flex items-center justify-center
+        rounded-md
+        text-amber-500
+        hover:bg-amber-100
+        hover:text-amber-600
+        transition
+        relative
+        group
+      "
+      title="Transfer owner"
+    >
+      <CrownOutlined className="text-lg group-hover:scale-110 transition" />
+    </button>
+  ) : (
+    <div className="w-8 h-8" />
+  )}
+
+  {/* REMOVE */}
+  {canRemove && m.role !== "OWNER" ? (
+    <button
+      onClick={() => openConfirm("remove", m)}
+      className="
+        w-8 h-8 flex items-center justify-center
+        rounded-md
+        text-red-500
+        hover:bg-red-100
+        hover:text-red-600
+        transition
+        text-base
+      "
+      title="Remove member"
+    >
+      <DeleteOutlined className="text-lg group-hover:scale-110 transition"  />
+    </button>
+  ) : (
+    <div className="w-8 h-8" />
+  )}
+</div>
+        </div>
+      ))}
+    </div>
+  )}
+  <Modal
+  open={confirmState.open}
+  onCancel={() =>
+    setConfirmState({ open: false, type: null, member: null })
+  }
+  onOk={handleConfirm}
+  okText="Confirm"
+  cancelText="Cancel"
+  centered
+>
+  {confirmState.type === "remove" && (
+    <p>
+      Remove <b>{confirmState.member?.userId?.fullName}</b> from workspace?
+    </p>
+  )}
+
+  {confirmState.type === "transfer" && (
+    <p>
+      Transfer <b>OWNER</b> role to{" "}
+      <b>{confirmState.member?.userId?.fullName}</b>?<br />
+      You will lose owner permissions.
+    </p>
+  )}
+</Modal>
+</Modal>
     </div>
 
   );
