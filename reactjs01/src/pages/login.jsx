@@ -15,20 +15,33 @@ const LoginPage = () => {
 
         const res = await loginApi(email, password);
         console.log("LOGIN RESPONSE:", res);
-        
+
         if (res && res.accessToken) {
             localStorage.setItem("access_token", res.accessToken);
-            localStorage.setItem("refresh_token", res.refreshToken); 
-            
+            localStorage.setItem("refresh_token", res.refreshToken);
+
             notification.success({
                 message: "LOGIN USER",
                 description: "Success"
             });
             dispatch(loginSuccess(res.user));
+            const inviteToken = localStorage.getItem(
+                "pendingInviteToken"
+            );
+
+            if (inviteToken) {
+                localStorage.removeItem(
+                    "pendingInviteToken"
+                );
+
+                navigate(`/invite/${inviteToken}`);
+                return;
+            }
+
             if (res.redirectUrl) {
                 navigate(res.redirectUrl);
             } else {
-                navigate("/workspace/editor"); 
+                navigate("/workspace/editor");
             }
         } else {
             notification.error({
@@ -45,7 +58,7 @@ const LoginPage = () => {
                     {/* Logo Custom giống hình ảnh */}
                     <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-orange-400 to-amber-700 flex items-center justify-center text-white shadow-lg mb-4">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
                         </svg>
                     </div>
                     <h1 className="text-4xl font-bold text-gray-800 mb-2">CreatorSpace</h1>

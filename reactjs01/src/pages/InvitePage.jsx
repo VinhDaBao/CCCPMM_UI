@@ -6,17 +6,19 @@ import {
   workspaceInviteApi,
 } from "../util/api";
 
+import { useSelector } from "react-redux";
+import { useEffect } from "react";
 export default function InvitePage() {
   const { token } = useParams();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
+const { user, isAuthenticated } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (!user) {
-      localStorage.setItem("pendingInviteToken", token);
-      navigate("/login");
-    }
-  }, [user, token]);
+useEffect(() => {
+  if (!isAuthenticated && token) {
+    localStorage.setItem("pendingInviteToken", token);
+    navigate("/login");
+  }
+}, [isAuthenticated, token, navigate]);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["invite", token],
     queryFn: () => workspaceInviteApi.getByToken(token),
@@ -61,6 +63,7 @@ export default function InvitePage() {
   }
 
   const invite = data;
+  console.log("Invite data:", invite);
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">

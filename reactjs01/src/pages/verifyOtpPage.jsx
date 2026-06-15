@@ -5,111 +5,136 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { verifyOtpApi, verifyRegisterOtpApi, forgotPasswordApi } from '../util/api';
 
 const VerifyOtpPage = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
+const navigate = useNavigate();
+const location = useLocation();
 
-    const email = location?.state?.email;
-    const type = location?.state?.type;
+const email =
+    location?.state?.email ||
+    sessionStorage.getItem("reset_email");
 
-    const [countdown, setCountdown] = useState(300);
-    const [isVerifying, setIsVerifying] = useState(false);
-    const [isResending, setIsResending] = useState(false);
+const type = location?.state?.type;
 
-    useEffect(() => {
-        if (countdown <= 0) return;
+const [countdown, setCountdown] = useState(300);
+const [isVerifying, setIsVerifying] = useState(false);
+const [isResending, setIsResending] = useState(false);
 
-        const timer = setInterval(() => {
-            setCountdown(prev => prev - 1);
-        }, 1000);
+useEffect(() => {
+    if (!email) {
+        notification.warning({
+            message: "Session expired",
+            description: "Please restart the process",
+        });
 
-        return () => clearInterval(timer);
-    }, [countdown]);
+        navigate("/forgot-password");
+    }
+}, [email, navigate]);
 
-    const formatTime = (time) => {
-        const minutes = Math.floor(time / 60);
-        const seconds = time % 60;
-        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    };
+useEffect(() => {
+    if (countdown <= 0) return;
 
-    const onFinish = async (values) => {
-        const { otp } = values;
+    const timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+    }, 1000);
 
-        setIsVerifying(true);
+    return () => clearInterval(timer);
+}, [countdown]);
 
-        try {
-            if (type === "register") {
-                const res = await verifyRegisterOtpApi(email, otp);
+const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
 
-                if (res && res.errCode === 0) {
-                    notification.success({
-                        message: "ACCOUNT ACTIVATED",
-                        description: res.message || "Success!"
-                    });
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+};
 
-                    navigate("/login");
-                } else {
-                    notification.error({
-                        message: "ACTIVATION FAILED",
-                        description: res?.message || "Invalid OTP!"
-                    });
-                }
-            } else {
-                const res = await verifyOtpApi(email, otp);
+const onFinish = async (values) => {
+    const { otp } = values;
 
-                if (res && res.errCode === 0) {
-                    notification.success({
-                        message: "VERIFICATION SUCCESSFUL",
-                        description: res.message || "Success!"
-                    });
+    if (!email) return;
 
-                    navigate("/reset-password", {
-                        state: { email }
-                    });
-                } else {
-                    notification.error({
-                        message: "VERIFICATION FAILED",
-                        description: res?.message || "Invalid OTP!"
-                    });
-                }
-            }
-        } catch (error) {
-            notification.error({
-                message: "ERROR",
-                description: "System error"
+    setIsVerifying(true);
+
+    try {
+        if (type === "register") {
+            const res =
+                await verifyRegisterOtpApi(
+                    email,
+                    otp
+                );
+
+            notification.success({
+                message: "ACCOUNT ACTIVATED",
+                description:
+                    res.message || "Success!",
             });
-        } finally {
-            setIsVerifying(false);
-        }
-    };
 
-    const handleResendOtp = async () => {
-        setIsResending(true);
+            navigate("/login");
+        } else {
+            const res =
+                await verifyOtpApi(
+                    email,
+                    otp
+                );
 
-        try {
-            const res = await forgotPasswordApi(email);
+            sessionStorage.setItem(
+                "reset_email",
+                email
+            );
 
-            if (res && res.errCode === 0) {
-                notification.success({
-                    message: "RESEND OTP",
-                    description: res.message
-                });
-
-                setCountdown(120);
-            } else {
-                notification.error({
-                    message: "RESEND OTP",
-                    description: res?.message ?? "Error resending OTP."
-                });
-            }
-        } catch (error) {
-            notification.error({
-                message: "ERROR",
-                description: "System error"
+            notification.success({
+                message:
+                    "VERIFICATION SUCCESSFUL",
+                description:
+                    res.message || "Success!",
             });
-        } finally {
-            setIsResending(false);
+
+            navigate("/reset-password");
         }
-    };
+    } catch (error) {
+        notification.error({
+            message:
+                type === "register"
+                    ? "ACTIVATION FAILED"
+                    : "VERIFICATION FAILED",
+
+            description:
+                error?.response?.data
+                    ?.message ||
+                error?.message ||
+                "System error",
+        });
+    } finally {
+        setIsVerifying(false);
+    }
+};
+
+const handleResendOtp = async () => {
+    if (!email) return;
+
+    setIsResending(true);
+
+    try {
+        const res =
+            await forgotPasswordApi(email);
+
+        notification.success({
+            message: "RESEND OTP",
+            description: res.message,
+        });
+
+        setCountdown(120);
+    } catch (error) {
+        notification.error({
+            message: "RESEND OTP FAILED",
+            description:
+                error?.response?.data
+                    ?.message ||
+                error?.message ||
+                "Error resending OTP",
+        });
+    } finally {
+        setIsResending(false);
+    }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">

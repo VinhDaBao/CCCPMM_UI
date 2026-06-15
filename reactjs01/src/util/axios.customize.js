@@ -1,63 +1,88 @@
 import axios from "axios";
 
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL
+  baseURL: import.meta.env.VITE_BACKEND_URL,
 });
 
-instance.interceptors.request.use(function (config) {
+instance.interceptors.request.use(
+  (config) => {
     const token = localStorage.getItem("access_token");
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-}, function (error) {
-    return Promise.reject(error);
-});
 
-instance.interceptors.response.use(function (response) {
-    if (response && response.data) return response.data;
-    return response;
-}, async function (error) {
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+instance.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+
+  async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && error.response?.data?.message === 'jwt expired' && !originalRequest._retry) {
-        
-        originalRequest._retry = true; 
+    if (
+      error.response?.status === 401 &&
+      error.response?.data?.message === "jwt expired" &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
 
-        try {
-            const refreshToken = localStorage.getItem("refresh_token");
-            if (!refreshToken) {
-                throw new Error("Không có Refresh Token");
-            }
+      try {
+        const refreshToken =
+          localStorage.getItem("refresh_token");
 
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/refresh-token`, {
-                refreshToken: refreshToken
-            });
-
-            if (res.data && res.data.accessToken) {
-                localStorage.setItem("access_token", res.data.accessToken);
-                localStorage.setItem("refresh_token", res.data.refreshToken);
-
-                originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
-                
-                return instance(originalRequest);
-            }
-        } catch (refreshError) {
-            console.error("Refresh Token thất bại, bắt buộc đăng nhập lại:", refreshError);
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            window.location.href = "/login"; 
-            return Promise.reject(refreshError);
+        if (!refreshToken) {
+          throw new Error("No refresh token");
         }
-    }
 
-    if (error?.response?.status === 401 && error.response?.data?.message !== 'jwt expired') {
+        const res = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/refresh-token`,
+          {
+            refreshToken,
+          }
+        );
+
+        localStorage.setItem(
+          "access_token",
+          res.data.accessToken
+        );
+
+        localStorage.setItem(
+          "refresh_token",
+          res.data.refreshToken
+        );
+
+        originalRequest.headers.Authorization =
+          `Bearer ${res.data.accessToken}`;
+
+        return instance(originalRequest);
+      } catch (refreshError) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        window.location.href = "/login"; 
+
+        window.location.href = "/login";
+
+        return Promise.reject(refreshError);
+      }
     }
 
-    return error.response && error.response.data ? error.response.data : Promise.reject(error);
-});
+    if (
+      error.response?.status === 401 &&
+      error.response?.data?.message !== "jwt expired"
+    ) {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+
+      window.location.href = "/login";
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default instance;

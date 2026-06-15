@@ -61,14 +61,11 @@ const ProfilePage = () => {
     };
 
     const handleDirectUpdate = async () => {
-        setLoading(true);
+    setLoading(true);
 
-        const directFullName = form.getFieldValue("fullName");
-
-        console.log(
-            "==== DỮ LIỆU ĐÃ BẮT TRỰC TIẾP TỪ INPUT ====",
-            directFullName
-        );
+    try {
+        const directFullName =
+            form.getFieldValue("fullName");
 
         let avatarToSend = fileObject;
 
@@ -85,33 +82,36 @@ const ProfilePage = () => {
             avatarToSend
         );
 
-        setLoading(false);
+        notification.success({
+            message: "THÀNH CÔNG",
+            description:
+                res?.message ??
+                "Cập nhật hồ sơ thành công!",
+        });
 
-        if (res && res.errCode === 0) {
-            notification.success({
-                message: "THÀNH CÔNG",
-                description: "Cập nhật hồ sơ thành công!"
+        dispatch(loginSuccess(res.user));
+
+        if (res.user) {
+            form.setFieldsValue({
+                fullName: res.user.fullName,
+                avatar: res.user.avatar,
             });
-            
-            dispatch(loginSuccess(res.user));
 
-            if (res.user) {
-                form.setFieldsValue({
-                    fullName: res.user.fullName,
-                    avatar: res.user.avatar
-                });
-
-                setImageUrl(res.user.avatar);
-                setFileObject(null);
-            }
-        } else {
-            notification.error({
-                message: "THẤT BẠI",
-                description:
-                    res?.message ?? "Cập nhật hồ sơ thất bại!"
-            });
+            setImageUrl(res.user.avatar);
+            setFileObject(null);
         }
-    };
+    } catch (error) {
+        notification.error({
+            message: "THẤT BẠI",
+            description:
+                error?.response?.data?.message ||
+                error?.message ||
+                "Cập nhật hồ sơ thất bại!",
+        });
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <Row justify={"center"} className="mt-8">

@@ -5,41 +5,38 @@ import { Link, useNavigate } from 'react-router-dom';
 import { forgotPasswordApi } from '../util/api';
 
 const ForgotPasswordPage = () => {
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-    const onFinish = async (values) => {
-        const { email } = values;
+  const onFinish = async (values) => {
+    const { email } = values;
 
-        setIsLoading(true);
+    setIsLoading(true);
 
-        try {
-            const res = await forgotPasswordApi(email);
+    try {
+      const res = await forgotPasswordApi(email);
 
-            if (res && res.errCode === 0) {
-                notification.success({
-                    message: "SEND OTP",
-                    description: res.message
-                });
+      notification.success({
+        message: "SEND OTP",
+        description: res.message,
+      });
 
-                navigate("/verify-otp", {
-                    state: { email }
-                });
-            } else {
-                notification.error({
-                    message: "SEND OTP FAILED",
-                    description: res?.message ?? "Error"
-                });
-            }
-        } catch (error) {
-            notification.error({
-                message: "ERROR",
-                description: "System error"
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      navigate("/verify-otp", {
+        state: { email },
+      });
+
+    } catch (error) {
+      notification.error({
+        message: "SEND OTP FAILED",
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          "System error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">

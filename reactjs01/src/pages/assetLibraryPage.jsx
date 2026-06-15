@@ -120,113 +120,191 @@ const AssetLibraryPage = () => {
     const fileInputRef = useRef(null);
 
     const fetchAssets = async (searchQuery = searchText) => {
-        if (!CURRENT_WORKSPACE_ID) return;
-        setIsLoading(true);
-        try {
-            const res = await getAllAssetsApi(CURRENT_WORKSPACE_ID, { 
-                type: filter === "all" ? "" : filter,
-                search: searchQuery,
-                sort: sortOrder
-            });
-            if (res && res.errCode === 0) setAssets(res.data);
-        } catch (error) {
-            notification.error({ message: "Lỗi tải dữ liệu" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  if (!CURRENT_WORKSPACE_ID) return;
 
-    const fetchAvailableTags = async () => {
-        if (!CURRENT_WORKSPACE_ID) return;
-        try {
-            const res = await getWorkspaceTagsApi(CURRENT_WORKSPACE_ID);
-            if (res && res.errCode === 0) setAvailableTags(res.data);
-        } catch (error) {
-            console.error("Lỗi tải tags", error);
-        }
-    };
+  setIsLoading(true);
 
-    useEffect(() => {
-        fetchAssets();
-        fetchAvailableTags();
-    }, [filter, sortOrder, CURRENT_WORKSPACE_ID]);
+  try {
+    const assets = await getAllAssetsApi(
+      CURRENT_WORKSPACE_ID,
+      {
+        type:
+          filter === "all"
+            ? ""
+            : filter,
+        search: searchQuery,
+        sort: sortOrder,
+      }
+    );
 
-    const handleFileUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file || !CURRENT_WORKSPACE_ID) return;
+    setAssets(
+      assets?.data || assets
+    );
+  } catch (error) {
+    notification.error({
+      message: "Lỗi tải dữ liệu",
+      description:
+        error?.response?.data
+          ?.message,
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-        setIsUploading(true);
-        try {
-            const res = await uploadAssetApi(CURRENT_WORKSPACE_ID, file, "new_upload");
-            if (res && res.errCode === 0) {
-                notification.success({ message: "Upload thành công!" });
-                fetchAssets(); 
-                fetchAvailableTags();
-            } else {
-                notification.error({ message: res?.message || "Lỗi upload." });
-            }
-        } catch (error) {
-            notification.error({ message: "Có lỗi xảy ra khi upload." });
-        } finally {
-            setIsUploading(false);
-            e.target.value = null; 
-        }
-    };
+const fetchAvailableTags = async () => {
+  if (!CURRENT_WORKSPACE_ID) return;
 
-    const handleOpenEdit = (asset) => {
-        setEditingAssetId(asset._id);
-        setEditFileName(asset.fileName);
-        setEditTags(asset.tags || []);
-        setIsEditModalVisible(true);
-    };
+  try {
+    const tags =
+      await getWorkspaceTagsApi(
+        CURRENT_WORKSPACE_ID
+      );
 
-    const handleSaveEdit = async () => {
-        if (!editFileName.trim()) {
-            return notification.warning({ message: "Tên file không được để trống!" });
-        }
-        
-        try {
-            const res = await updateAssetApi(editingAssetId, {
-                fileName: editFileName,
-                tags: editTags
-            });
+    setAvailableTags(
+      tags?.data || tags
+    );
+  } catch (error) {
+    notification.error({
+      message: "Lỗi tải tags",
+      description:
+        error?.response?.data
+          ?.message,
+    });
+  }
+};
 
-            if (res && res.errCode === 0) {
-                notification.success({ message: "Đã cập nhật tài nguyên!" });
-                setIsEditModalVisible(false);
-                fetchAssets();
-                fetchAvailableTags(); 
-            } else {
-                notification.error({ message: res?.message || "Lỗi cập nhật." });
-            }
-        } catch (error) {
-            notification.error({ message: "Lỗi hệ thống khi cập nhật." });
-        }
-    };
+useEffect(() => {
+  fetchAssets();
+  fetchAvailableTags();
+}, [
+  filter,
+  sortOrder,
+  CURRENT_WORKSPACE_ID,
+]);
 
-    const handleDelete = (asset) => {
-        confirm({
-            title: 'Bạn có chắc chắn muốn xóa file này?',
-            icon: <ExclamationCircleOutlined />,
-            content: `File "${asset.fileName}" sẽ bị xóa vĩnh viễn.`,
-            okText: 'Xóa',
-            okType: 'danger',
-            cancelText: 'Hủy',
-            onOk: async () => {
-                try {
-                    const res = await deleteAssetApi(asset._id);
-                    if (res && res.errCode === 0) {
-                        notification.success({ message: "Đã xóa thành công!" });
-                        fetchAssets();
-                    } else {
-                        notification.error({ message: res?.message || "Không thể xóa file." });
-                    }
-                } catch (error) {
-                    notification.error({ message: "Lỗi hệ thống khi xóa." });
-                }
-            }
+const handleFileUpload = async (e) => {
+  const file = e.target.files[0];
+
+  if (
+    !file ||
+    !CURRENT_WORKSPACE_ID
+  )
+    return;
+
+  setIsUploading(true);
+
+  try {
+    await uploadAssetApi(
+      CURRENT_WORKSPACE_ID,
+      file,
+      "new_upload"
+    );
+
+    notification.success({
+      message:
+        "Upload thành công!",
+    });
+
+    fetchAssets();
+    fetchAvailableTags();
+  } catch (error) {
+    notification.error({
+      message: "Lỗi upload",
+      description:
+        error?.response?.data
+          ?.message,
+    });
+  } finally {
+    setIsUploading(false);
+    e.target.value = null;
+  }
+};
+
+const handleOpenEdit = (
+  asset
+) => {
+  setEditingAssetId(asset._id);
+  setEditFileName(asset.fileName);
+  setEditTags(asset.tags || []);
+  setIsEditModalVisible(true);
+};
+
+const handleSaveEdit = async () => {
+  if (!editFileName.trim()) {
+    return notification.warning({
+      message:
+        "Tên file không được để trống!",
+    });
+  }
+
+  try {
+    await updateAssetApi(
+      editingAssetId,
+      {
+        fileName:
+          editFileName,
+        tags: editTags,
+      }
+    );
+
+    notification.success({
+      message:
+        "Đã cập nhật tài nguyên!",
+    });
+
+    setIsEditModalVisible(false);
+
+    fetchAssets();
+    fetchAvailableTags();
+  } catch (error) {
+    notification.error({
+      message:
+        "Lỗi cập nhật",
+      description:
+        error?.response?.data
+          ?.message,
+    });
+  }
+};
+
+const handleDelete = (
+  asset
+) => {
+  confirm({
+    title:
+      "Bạn có chắc chắn muốn xóa file này?",
+    icon:
+      <ExclamationCircleOutlined />,
+    content: `File "${asset.fileName}" sẽ bị xóa vĩnh viễn.`,
+    okText: "Xóa",
+    okType: "danger",
+    cancelText: "Hủy",
+
+    onOk: async () => {
+      try {
+        await deleteAssetApi(
+          asset._id
+        );
+
+        notification.success({
+          message:
+            "Đã xóa thành công!",
         });
-    };
+
+        fetchAssets();
+      } catch (error) {
+        notification.error({
+          message:
+            "Lỗi xóa file",
+          description:
+            error?.response?.data
+              ?.message,
+        });
+      }
+    },
+  });
+};
 
     return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
