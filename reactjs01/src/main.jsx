@@ -23,6 +23,7 @@ import AssetLibraryPage from './pages/AssetLibraryPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import './i18n';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import WorkspaceWorldPage from './pages/workspaceWorldPage';
 
 const queryClient = new QueryClient();
 
@@ -52,7 +53,9 @@ const router = createBrowserRouter([
           // Giữ nguyên 2 link Profile độc lập của bạn tại đây
           { path: "user/profile", element: <ProfilePage /> },
           { path: "admin/profile", element: <ProfilePage /> },
-          { path: "user", element: <UserPage /> } // Nếu trang này cũng cần Sidebar
+          { path: "user", element: <UserPage /> }, // Nếu trang này cũng cần Sidebar
+
+          { path: "workspace/world/:worldId", element: <WorkspaceWorldPage /> }
         ]
       }
     ]

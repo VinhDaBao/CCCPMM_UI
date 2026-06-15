@@ -223,6 +223,21 @@ const deleteAssetApi = (assetId) => {
     return axios.delete(`/api/assets/${assetId}`);
 };
 
+
+//WORLD BUILDING
+// Hàm 1: Lấy toàn bộ cấu trúc sơ đồ (Nodes + Edges) từ Backend dựa vào WorldId
+const getWorldGraphApi = (worldId) => {
+    return axios.get(`/api/worlds/graph/${worldId}`);
+};
+
+// Hàm 2: Gửi toàn bộ mảng sơ đồ hiện tại xuống để Backend lưu đè vào MongoDB
+const saveWorldGraphApi = (worldId, nodes, edges) => {
+    return axios.post(`/api/worlds/graph/save/${worldId}`, {
+        nodes,
+        edges
+    });
+};
+
 export {
     createUserApi,
     loginApi,
@@ -299,5 +314,7 @@ export {
     uploadAssetApi,
     getWorkspaceTagsApi,
     updateAssetApi,
-    deleteAssetApi
+    deleteAssetApi,
+    getWorldGraphApi,
+    saveWorldGraphApi
 };
