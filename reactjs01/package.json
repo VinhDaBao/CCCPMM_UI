@@ -21,6 +21,7 @@
     "@tiptap/react": "^3.26.1",
     "@tiptap/starter-kit": "^3.26.1",
     "@tiptap/y-tiptap": "^3.0.5",
+    "@xyflow/react": "^12.11.0",
     "antd": "^6.3.7",
     "axios": "^1.16.0",
     "i18next": "^26.3.0",

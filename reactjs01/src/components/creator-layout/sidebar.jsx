@@ -5,6 +5,7 @@ import { logout } from '../../redux/authSlice';
 import Icon from './Icons';
 
 import WorkspaceSwitcher from './WorkspaceSwitcher';
+import { logoutApi } from '../../util/api';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,9 +19,15 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   const user = auth?.user || {};
 
   // Menu Navigation List
+  // Đọc mã Không gian làm việc đang hoạt động của nhóm từ localStorage
+    const activeWorkspaceId = localStorage.getItem('active_workspace_id') || "6a2e999a3c0cbd9d2589efb4";
+
+  // Mảng menu mặc định
   const navItems = [
     { id: "dashboard", path: "/workspace/dashboard", label: "Dashboard", icon: "kanban" },
     { id: "project", path: "/workspace/projects", label: "Project", icon: "grid" },
+    // Sử dụng dấu nháy ngược (Backticks) để truyền biến động
+    { id: "world", path: `/workspace/world/${activeWorkspaceId}`, label: "Relationship diagram", icon: "grid" },
     { id: "assets", path: "/workspace/assets", label: "Assets", icon: "assets" },
     { id: "settings", path: "/workspace/settings", label: "Settings", icon: "settings" },
   ];
@@ -30,12 +37,23 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
     navItems.push({ id: "users", path: "/user", label: "Quản lý Users", icon: "user" });
   }
 
-  // Handle Logout
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('active_workspace_id');
-    dispatch(logout());
-    navigate('/login');
+  const handleLogout = async () => {
+      try {
+          await logoutApi();
+      } catch (error) {
+          console.log(
+              "Lỗi khi gọi API logout, nhưng vẫn ép đăng xuất ở Frontend",
+              error
+          );
+      } finally {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('active_workspace_id');
+
+          dispatch(logout());
+
+          navigate('/login');
+      }
   };
 
   // Avatar / Display name fallbacks

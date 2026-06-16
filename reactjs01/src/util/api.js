@@ -1,6 +1,5 @@
 import axios from './axios.customize';
 
-
 const createCrudApi = (basePath) => ({
     create: (data) => axios.post(basePath, data),
     getAll: (params) => axios.get(basePath, { params }),
@@ -77,8 +76,13 @@ const updateProfileApi = (fullName, avatarFile) => {
     return axios.put("/api/auth/edit-profile", formData);
 };
 
-const getAllUsersApi = () => {
-    return axios.get("/api/auth/all-users");
+const getAllUsersApi = (queryParams) => {
+    const queryString = new URLSearchParams(queryParams).toString();
+    return axios.get(`/api/auth/all-users?${queryString}`);
+};
+
+const logoutApi = () => {
+    return axios.post("/api/auth/logout");
 };
 
 const createWorkspaceApi = (data) => workspaceApi.create(data);
@@ -193,10 +197,6 @@ const refreshTokenApi = (refreshToken) => {
     return axios.post("/api/auth/refresh-token", { refreshToken });
 };
 
-const logoutApi = () => {
-    return axios.post("/api/auth/logout");
-};
-
 // ==========================================
 // ĐÃ BỎ CHỮ 'export' Ở TRƯỚC CÁC HÀM NÀY
 // ==========================================
@@ -248,6 +248,23 @@ const getAssetUrl = (url) => {
   }
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8088';
   return `${backendUrl.replace(/\/$/, '')}${normalized}`;
+// WORLD BUILDING (Của team)
+// Hàm 1: Lấy toàn bộ cấu trúc sơ đồ (Nodes + Edges) từ Backend dựa vào WorldId
+const getWorldGraphApi = (worldId) => {
+    return axios.get(`/api/worlds/graph/${worldId}`);
+};
+
+// Hàm 2: Gửi toàn bộ mảng sơ đồ hiện tại xuống để Backend lưu đè vào MongoDB
+const saveWorldGraphApi = (worldId, nodes, edges) => {
+    return axios.post(`/api/worlds/graph/save/${worldId}`, {
+        nodes,
+        edges
+    });
+};
+
+// TOGGLE USER STATUS (Của anh em mình)
+const toggleUserStatusApi = (targetUserId) => {
+    return axios.post("/api/auth/toggle-user-status", { targetUserId });
 };
 
 export {
@@ -329,4 +346,7 @@ export {
     updateAssetApi,
     deleteAssetApi,
     getAssetUrl
+    getWorldGraphApi,
+    saveWorldGraphApi,
+    toggleUserStatusApi
 };
