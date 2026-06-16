@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Form, Input, Modal } from 'antd';
+import { Form, Input, Modal, Select } from 'antd';
 
 const ProjectModal = ({ open, onCancel, onSave, project, loading }) => {
   const [form] = Form.useForm();
@@ -10,7 +10,7 @@ const ProjectModal = ({ open, onCancel, onSave, project, loading }) => {
         form.setFieldsValue({
           title: project.title,
           description: project.description,
-          tags: Array.isArray(project.tags) ? project.tags.join(', ') : '',
+          tags: Array.isArray(project.tags) ? project.tags : [],
         });
       } else {
         form.resetFields();
@@ -23,9 +23,7 @@ const ProjectModal = ({ open, onCancel, onSave, project, loading }) => {
       const data = {
         title: values.title,
         description: values.description,
-        tags: values.tags
-          ? values.tags.split(',').map((t) => t.trim()).filter(Boolean)
-          : [],
+        tags: Array.isArray(values.tags) ? values.tags : [],
       };
       onSave(data);
     });
@@ -56,10 +54,15 @@ const ProjectModal = ({ open, onCancel, onSave, project, loading }) => {
 
         <Form.Item
           name="tags"
-          label="Tags (comma-separated)"
-          help="Example: Series, Comedy, Action"
+          label="Tags"
+          help="Type a tag and press Enter"
         >
-          <Input placeholder="Series, Comedy, Action" />
+          <Select
+            mode="tags"
+            style={{ width: '100%' }}
+            placeholder="Type tag and press Enter..."
+            tokenSeparators={[',']}
+          />
         </Form.Item>
       </Form>
     </Modal>

@@ -8,6 +8,12 @@ import { Popover, Select, Button, Space, Tooltip, Avatar } from 'antd';
 import { DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusOutlined, HistoryOutlined, PlusCircleOutlined, SnippetsOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined } from '@ant-design/icons';
 import { getAssetUrl } from '../../util/api';
 
+const isHtmlEmpty = (html) => {
+  if (!html) return true;
+  const clean = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+  return clean === '';
+};
+
 const BlockItem = ({
   block,
   ydoc,
@@ -35,6 +41,13 @@ const BlockItem = ({
     const charId = block.content?.characterId;
     return characters.find((c) => String(c._id || c.id) === String(charId));
   }, [block, characters]);
+
+  const initialHtml = useMemo(() => {
+    if (block.type === 'DIALOGUE') {
+      return block.content?.text || '';
+    }
+    return typeof block.content === 'string' ? block.content : '';
+  }, [block]);
 
   // Unique cursor color for each user
   const cursorColor = useMemo(() => {
@@ -106,6 +119,32 @@ const BlockItem = ({
       editor.setEditable(!isViewer);
     }
   }, [editor, isViewer]);
+
+  // Initialize Yjs shared XML fragment from database content when synced
+  useEffect(() => {
+    if (!editor || !provider || !ydoc) return;
+
+    let isCleanedUp = false;
+
+    const initializeContent = () => {
+      if (isCleanedUp) return;
+      const fragment = ydoc.getXmlFragment(editorField);
+      if (fragment.length === 0 && !isHtmlEmpty(initialHtml)) {
+        editor.commands.setContent(initialHtml);
+      }
+    };
+
+    if (provider.isSynced) {
+      initializeContent();
+    } else {
+      provider.on('synced', initializeContent);
+    }
+
+    return () => {
+      isCleanedUp = true;
+      provider.off('synced', initializeContent);
+    };
+  }, [editor, provider, ydoc, initialHtml, editorField]);
 
   // 2. Character Details Popover Content
   const renderCharacterPopover = () => {

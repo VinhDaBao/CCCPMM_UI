@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
-import { Tabs, Button, Select, Space, Tooltip, notification, Spin, Modal, Input, List, Checkbox, Avatar, Badge } from 'antd';
+import { Tabs, Button, Select, Space, Tooltip, notification, Spin, Modal, Input, List, Checkbox, Avatar, Badge, Popover } from 'antd';
 
 import {
   PlayCircleOutlined,
@@ -30,6 +30,7 @@ import useProjectAssets from '../hooks/useProjectAssets';
 import useProjectSnapshots from '../hooks/useProjectSnapshots';
 import useSnippets from '../hooks/useSnippets';
 import useWorkspaces from '../hooks/useWorkspaces';
+import useWorkspaceMembers from '../hooks/useWorkspaceMember';
 
 // Components
 import BlockItem from '../components/script-editor/BlockItem';
@@ -39,6 +40,13 @@ import SnapshotHistoryModal from '../components/script-editor/SnapshotHistoryMod
 
 // API helpers
 import { getAllAssetsApi, getAssetUrl } from '../util/api';
+
+const roleLabels = {
+  OWNER: 'Owner',
+  ADMIN: 'Admin',
+  EDITOR: 'Editor',
+  VIEWER: 'Viewer'
+};
 
 const ScriptEditorPage = () => {
   const { projectId } = useParams();
@@ -55,6 +63,9 @@ const ScriptEditorPage = () => {
   const activeWorkspace = workspaces.find(ws => String(ws._id || ws.id) === String(activeWorkspaceId));
   const memberRole = activeWorkspace?.memberRole || 'VIEWER';
   const isViewer = memberRole === 'VIEWER';
+
+  // Lấy danh sách thành viên workspace để xác định online/offline status
+  const { data: members = [] } = useWorkspaceMembers(activeWorkspaceId);
 
   // Lấy chi tiết project
   const { data: projects = [], duplicateProject } = useProjects(activeWorkspaceId);
@@ -102,54 +113,94 @@ const ScriptEditorPage = () => {
 
   // Collaboration Cursors / Presence list
   const [presenceUsers, setPresenceUsers] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
 
   // Autosave tracking
   const pendingUpdatesRef = useRef({});
   const saveTimeoutRef = useRef(null);
 
-  // Yjs doc và Hocuspocus provider
-  const ydoc = useMemo(() => new Y.Doc(), [projectId]);
-  const provider = useMemo(() => {
-    const hpProvider = new HocuspocusProvider({
+  // Yjs doc và Hocuspocus provider lifecycle management
+  const ydocRef = useRef(null);
+  const providerRef = useRef(null);
+  const prevProjectIdRef = useRef(null);
+  const prevUserIdRef = useRef(null);
+  const currentUserId = user._id || user.id;
+
+  // Synchronous recreation on render if projectId or userId changes, with immediate destruction of old instances
+  if (!ydocRef.current || prevProjectIdRef.current !== projectId) {
+    if (providerRef.current) {
+      providerRef.current.destroy();
+      providerRef.current = null;
+      setConnectionStatus('disconnected');
+    }
+    if (ydocRef.current) {
+      ydocRef.current.destroy();
+      ydocRef.current = null;
+    }
+    ydocRef.current = new Y.Doc();
+    prevProjectIdRef.current = projectId;
+  }
+
+  if (!providerRef.current || prevUserIdRef.current !== currentUserId) {
+    if (providerRef.current) {
+      providerRef.current.destroy();
+    }
+    providerRef.current = new HocuspocusProvider({
       url: 'ws://localhost:1234',
       name: `project-${projectId}`,
-      document: ydoc,
+      document: ydocRef.current,
       userData: {
+        userId: currentUserId,
+        email: user.email,
         name: user.fullName || 'Collaborator',
         color: '#' + Math.floor(Math.random() * 16777215).toString(16),
       },
     });
 
-    hpProvider.on('awarenessUpdate', ({ states }) => {
+    // Explicitly initialize local awareness user details
+    providerRef.current.awareness.setLocalStateField('user', {
+      userId: currentUserId,
+      email: user.email,
+      name: user.fullName || 'Collaborator',
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+    });
+
+    prevUserIdRef.current = currentUserId;
+
+    providerRef.current.on('awarenessUpdate', ({ states }) => {
       const users = states
         .map((state) => state.user)
         .filter(Boolean);
       setPresenceUsers(users);
     });
 
-    return hpProvider;
-  }, [projectId, ydoc, user]);
-  useEffect(() => {
-    if (!provider) return;
-
-    provider.on('status', ({ status }) => {
+    providerRef.current.on('status', ({ status }) => {
       console.log('STATUS:', status, Date.now());
+      setConnectionStatus(status);
     });
 
-    provider.on('synced', () => {
+    providerRef.current.on('synced', () => {
       console.log('SYNCED:', Date.now());
     });
+  }
 
-    console.log('provider', provider);
-    console.log('awareness', provider.awareness);
+  const ydoc = ydocRef.current;
+  const provider = providerRef.current;
 
-  }, [provider]);
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      provider.destroy();
-      ydoc.destroy();
+      if (providerRef.current) {
+        providerRef.current.destroy();
+        providerRef.current = null;
+        setConnectionStatus('disconnected');
+      }
+      if (ydocRef.current) {
+        ydocRef.current.destroy();
+        ydocRef.current = null;
+      }
     };
-  }, [provider, ydoc]);
+  }, []);
 
   // 1. Browser Voice List Initialization
   useEffect(() => {
@@ -594,16 +645,153 @@ const ScriptEditorPage = () => {
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Collaborative Script Editor</div>
           </div>
           {/* Online Presence Indicator */}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
-            {presenceUsers.map((pUser, idx) => (
-              <Tooltip key={idx} title={pUser.name}>
-                <Badge dot color={pUser.color}>
-                  <Avatar style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: `2px solid ${pUser.color}` }}>
-                    {pUser.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                </Badge>
-              </Tooltip>
-            ))}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            {(() => {
+              const maxVisible = 5;
+              const visibleMembers = members.slice(0, maxVisible);
+              const remainingMembers = members.slice(maxVisible);
+
+              const renderMemberAvatar = (m, size = 'default') => {
+                const mUserId = m.userId?._id || m.userId?.id;
+                const mEmail = m.userId?.email;
+                const mName = m.userId?.fullName;
+
+                const presenceUser = presenceUsers.find((p) => {
+                  const pUserId = p.userId;
+                  const pEmail = p.email;
+                  const pName = p.name;
+                  
+                  return (
+                    (pUserId && mUserId && String(pUserId) === String(mUserId)) ||
+                    (pEmail && mEmail && String(pEmail).toLowerCase() === String(mEmail).toLowerCase()) ||
+                    (pName && mName && String(pName).toLowerCase() === String(mName).toLowerCase())
+                  );
+                });
+
+                const isSelf = String(mUserId) === String(user?._id || user?.id);
+                const isOnline = !!presenceUser || (isSelf && connectionStatus === 'connected');
+                const name = mName || mEmail || 'Collaborator';
+
+                // Stable custom color for each member's avatar border
+                const colors = ['#f783ac', '#da77f2', '#9775fa', '#748ffc', '#3bc9db', '#38d9a9', '#69db7c', '#ffd43b', '#ff922b'];
+                const idStr = String(mUserId || 'guest');
+                let hash = 0;
+                for (let i = 0; i < idStr.length; i++) {
+                  hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const stableColor = colors[Math.abs(hash) % colors.length];
+                const avatarColor = presenceUser?.color || stableColor;
+
+                const tooltipTitle = (
+                  <div style={{ padding: '4px 8px' }}>
+                    <div style={{ fontWeight: 600, color: '#fff' }}>{name}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.65)' }}>{roleLabels[m.role] || m.role}</div>
+                    <div style={{ fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ 
+                        width: 6, 
+                        height: 6, 
+                        borderRadius: '50%', 
+                        background: isOnline ? '#52c41a' : '#bfbfbf', 
+                        display: 'inline-block',
+                        boxShadow: isOnline ? '0 0 8px #52c41a' : 'none'
+                      }} />
+                      <span style={{ color: isOnline ? '#52c41a' : '#bfbfbf', fontWeight: 500 }}>
+                        {isOnline ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
+                  </div>
+                );
+
+                if (size === 'list') {
+                  return (
+                    <div key={m._id || m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                      <Badge 
+                        dot 
+                        status={isOnline ? 'success' : 'default'} 
+                        offset={[-2, 24]}
+                        style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
+                      >
+                        <Avatar 
+                          size="small"
+                          style={{ 
+                            background: 'rgba(255,255,255,0.05)', 
+                            color: 'var(--text-primary)', 
+                            border: `2px solid ${isOnline ? avatarColor : 'rgba(255,255,255,0.15)'}`,
+                            opacity: isOnline ? 1 : 0.6,
+                          }}
+                        >
+                          {name.charAt(0).toUpperCase()}
+                        </Avatar>
+                      </Badge>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {name}
+                        </span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                          {roleLabels[m.role] || m.role} • {isOnline ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Tooltip key={m._id || m.id} title={tooltipTitle} placement="bottom">
+                    <Badge 
+                      dot 
+                      status={isOnline ? 'success' : 'default'} 
+                      offset={[-2, 28]}
+                      style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
+                    >
+                      <Avatar 
+                        style={{ 
+                          background: 'rgba(255,255,255,0.05)', 
+                          color: 'var(--text-primary)', 
+                          border: `2px solid ${isOnline ? avatarColor : 'rgba(255,255,255,0.15)'}`,
+                          opacity: isOnline ? 1 : 0.45,
+                          transition: 'all 0.2s',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {name.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </Badge>
+                  </Tooltip>
+                );
+              };
+
+              return (
+                <>
+                  {visibleMembers.map((m) => renderMemberAvatar(m))}
+                  {remainingMembers.length > 0 && (
+                    <Popover
+                      content={
+                        <div style={{ maxHeight: 240, overflowY: 'auto', width: 220, padding: '4px 8px' }}>
+                          {remainingMembers.map((m) => renderMemberAvatar(m, 'list'))}
+                        </div>
+                      }
+                      title={<div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>More Members</div>}
+                      trigger="click"
+                      placement="bottomRight"
+                      overlayStyle={{ zIndex: 1050 }}
+                    >
+                      <Avatar 
+                        style={{ 
+                          background: 'rgba(255,255,255,0.08)', 
+                          border: '1px solid var(--border)', 
+                          cursor: 'pointer', 
+                          color: 'var(--text-muted)',
+                          fontSize: 12,
+                          fontWeight: 600
+                        }}
+                      >
+                        +{remainingMembers.length}
+                      </Avatar>
+                    </Popover>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
