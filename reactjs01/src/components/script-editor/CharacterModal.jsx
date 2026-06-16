@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Form, Input, Modal, Button, Space, message } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Form, Input, Modal, Button, Select } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 
 const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
   const [form] = Form.useForm();
@@ -12,7 +12,7 @@ const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
         form.setFieldsValue({
           name: character.name,
           description: character.description,
-          tags: Array.isArray(character.tags) ? character.tags.join(', ') : '',
+          tags: Array.isArray(character.tags) ? character.tags : [],
         });
         setAttributes(
           character.attributes && character.attributes.length > 0
@@ -54,7 +54,7 @@ const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
       const data = {
         name: values.name,
         description: values.description,
-        tags: values.tags ? values.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: Array.isArray(values.tags) ? values.tags : [],
         attributes: cleanAttributes,
       };
 
@@ -88,10 +88,15 @@ const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
 
         <Form.Item
           name="tags"
-          label="Tags (comma-separated)"
-          help="Example: Protagonist, Hero, Mysterious"
+          label="Tags"
+          help="Type a tag and press Enter"
         >
-          <Input placeholder="Protagonist, Mysterious" />
+          <Select
+            mode="tags"
+            style={{ width: '100%' }}
+            placeholder="Type tag and press Enter..."
+            tokenSeparators={[',']}
+          />
         </Form.Item>
 
         <div style={{ marginBottom: 8, fontWeight: 500, color: 'var(--text-primary)' }}>

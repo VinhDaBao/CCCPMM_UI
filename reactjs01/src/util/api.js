@@ -147,7 +147,7 @@ const getProjectAssetByIdApi = (workspaceId, projectId, id) => axios.get(`/api/w
 const updateProjectAssetApi = (workspaceId, projectId, id, data) => axios.put(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets/${id}`, data);
 const deleteProjectAssetApi = (workspaceId, projectId, id) => axios.delete(`/api/workspaces/${workspaceId}/projects/${projectId}/project-assets/${id}`);
 
-const createProjectSnapshotApi = (workspaceId, projectId) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots`);
+const createProjectSnapshotApi = (workspaceId, projectId) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots`, {});
 const getProjectSnapshotsApi = (workspaceId, projectId) => axios.get(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots`);
 const restoreProjectSnapshotApi = (workspaceId, projectId, snapshotId) => axios.post(`/api/workspaces/${workspaceId}/projects/${projectId}/snapshots/${snapshotId}/restore`);
 

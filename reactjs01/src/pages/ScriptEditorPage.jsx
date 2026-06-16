@@ -16,7 +16,9 @@ import {
   SendOutlined,
   CloudUploadOutlined,
   LoadingOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from '@ant-design/icons';
 import * as Y from 'yjs';
 import { HocuspocusProvider } from '@hocuspocus/provider';
@@ -100,6 +102,9 @@ const ScriptEditorPage = () => {
   const [snapshotModalOpen, setSnapshotModalOpen] = useState(false);
   const [attachModalOpen, setAttachModalOpen] = useState(false);
   const [snippetModalOpen, setSnippetModalOpen] = useState(false);
+  const [blockTypeModalOpen, setBlockTypeModalOpen] = useState(false);
+  const [addBlockPosition, setAddBlockPosition] = useState(null);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   const [snippetSourceBlock, setSnippetSourceBlock] = useState(null);
   const [snippetContentHtml, setSnippetContentHtml] = useState('');
   const [snippetTitle, setSnippetTitle] = useState('');
@@ -187,9 +192,27 @@ const ScriptEditorPage = () => {
   const ydoc = ydocRef.current;
   const provider = providerRef.current;
 
+  const updateBlockRef = useRef(updateBlock);
+  useEffect(() => {
+    updateBlockRef.current = updateBlock;
+  }, [updateBlock]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+      // Flush pending updates
+      const updates = pendingUpdatesRef.current;
+      if (updates && Object.keys(updates).length > 0) {
+        pendingUpdatesRef.current = {};
+        Promise.all(
+          Object.entries(updates).map(([id, updateData]) =>
+            updateBlockRef.current({ id, data: updateData })
+          )
+        ).catch((err) => console.error('Failed to flush updates on unmount:', err));
+      }
+
       if (providerRef.current) {
         providerRef.current.destroy();
         providerRef.current = null;
@@ -228,12 +251,7 @@ const ScriptEditorPage = () => {
     setSnippetModalOpen(true);
   };
 
-  // Cleanup autosave timeout
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, []);
+  // Autosave timeout is cleaned up in consolidated unmount effect
 
   // 2. Speech synthesis engine
   const playBlock = (block) => {
@@ -397,22 +415,9 @@ const ScriptEditorPage = () => {
   };
 
   // Add block from modal/button
-  const handleAddBlockClick = async (position) => {
-    Modal.confirm({
-      title: 'Choose Block Type',
-      content: 'Choose between Text or Dialogue block to insert.',
-      okText: 'Text Block',
-      cancelText: 'Dialogue Block',
-      okButtonProps: { style: { background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 } },
-      cancelButtonProps: { style: { background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' } },
-      centered: true,
-      onOk: async () => {
-        await createBlock({ type: 'TEXT', position: position + 1, content: '<p></p>' });
-      },
-      onCancel: async () => {
-        await createBlock({ type: 'DIALOGUE', position: position + 1, content: { characterId: '', text: '<p></p>' } });
-      }
-    });
+  const handleAddBlockClick = (position) => {
+    setAddBlockPosition(position);
+    setBlockTypeModalOpen(true);
   };
 
   // 4. Drag and Drop Block Reordering
@@ -599,15 +604,54 @@ const ScriptEditorPage = () => {
   };
 
   const handleSaveSnapshot = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    const updates = pendingUpdatesRef.current;
+    if (updates && Object.keys(updates).length > 0) {
+      pendingUpdatesRef.current = {};
+      try {
+        await Promise.all(
+          Object.entries(updates).map(([id, updateData]) =>
+            updateBlock({ id, data: updateData })
+          )
+        );
+      } catch (err) {
+        console.error('Failed to flush updates before snapshot:', err);
+      }
+    }
+
     try {
-      await createSnapshot();
+      console.log('Creating manual snapshot for workspace:', activeWorkspaceId, 'project:', projectId);
+      await createSnapshot({ workspaceId: activeWorkspaceId, projectId });
       notification.success({ message: 'Manual snapshot saved' });
     } catch (err) {
-      notification.error({ message: 'Failed to create snapshot' });
+      console.error('Snapshot creation failed:', err);
+      notification.error({
+        message: 'Failed to create snapshot',
+        description: err?.message || String(err)
+      });
     }
   };
 
   const handleDuplicateProject = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    const updates = pendingUpdatesRef.current;
+    if (updates && Object.keys(updates).length > 0) {
+      pendingUpdatesRef.current = {};
+      try {
+        await Promise.all(
+          Object.entries(updates).map(([id, updateData]) =>
+            updateBlock({ id, data: updateData })
+          )
+        );
+      } catch (err) {
+        console.error('Failed to flush updates before duplicate:', err);
+      }
+    }
+
     try {
       await duplicateProject(projectId);
       notification.success({ message: 'Project duplicated successfully' });
@@ -633,13 +677,33 @@ const ScriptEditorPage = () => {
     }, 1500);
   };
 
+  const handleExit = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    const updates = pendingUpdatesRef.current;
+    if (updates && Object.keys(updates).length > 0) {
+      pendingUpdatesRef.current = {};
+      try {
+        await Promise.all(
+          Object.entries(updates).map(([id, updateData]) =>
+            updateBlock({ id, data: updateData })
+          )
+        );
+      } catch (err) {
+        console.error('Failed to flush updates on exit:', err);
+      }
+    }
+    navigate('/workspace/projects');
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: 'var(--bg-void)' }}>
       {/* LEFT AREA: Editor & Main Workspace */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
         {/* Navigation & Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/workspace/dashboard')} />
+          <Button icon={<ArrowLeftOutlined />} onClick={handleExit} />
           <div>
             <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>{currentProject?.title || 'Script Editor'}</h2>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Collaborative Script Editor</div>
@@ -660,7 +724,7 @@ const ScriptEditorPage = () => {
                   const pUserId = p.userId;
                   const pEmail = p.email;
                   const pName = p.name;
-                  
+
                   return (
                     (pUserId && mUserId && String(pUserId) === String(mUserId)) ||
                     (pEmail && mEmail && String(pEmail).toLowerCase() === String(mEmail).toLowerCase()) ||
@@ -687,11 +751,11 @@ const ScriptEditorPage = () => {
                     <div style={{ fontWeight: 600, color: '#fff' }}>{name}</div>
                     <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.65)' }}>{roleLabels[m.role] || m.role}</div>
                     <div style={{ fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ 
-                        width: 6, 
-                        height: 6, 
-                        borderRadius: '50%', 
-                        background: isOnline ? '#52c41a' : '#bfbfbf', 
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: isOnline ? '#52c41a' : '#bfbfbf',
                         display: 'inline-block',
                         boxShadow: isOnline ? '0 0 8px #52c41a' : 'none'
                       }} />
@@ -705,17 +769,17 @@ const ScriptEditorPage = () => {
                 if (size === 'list') {
                   return (
                     <div key={m._id || m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                      <Badge 
-                        dot 
-                        status={isOnline ? 'success' : 'default'} 
+                      <Badge
+                        dot
+                        status={isOnline ? 'success' : 'default'}
                         offset={[-2, 24]}
                         style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
                       >
-                        <Avatar 
+                        <Avatar
                           size="small"
-                          style={{ 
-                            background: 'rgba(255,255,255,0.05)', 
-                            color: 'var(--text-primary)', 
+                          style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            color: 'var(--text-primary)',
                             border: `2px solid ${isOnline ? avatarColor : 'rgba(255,255,255,0.15)'}`,
                             opacity: isOnline ? 1 : 0.6,
                           }}
@@ -737,16 +801,16 @@ const ScriptEditorPage = () => {
 
                 return (
                   <Tooltip key={m._id || m.id} title={tooltipTitle} placement="bottom">
-                    <Badge 
-                      dot 
-                      status={isOnline ? 'success' : 'default'} 
+                    <Badge
+                      dot
+                      status={isOnline ? 'success' : 'default'}
                       offset={[-2, 28]}
                       style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
                     >
-                      <Avatar 
-                        style={{ 
-                          background: 'rgba(255,255,255,0.05)', 
-                          color: 'var(--text-primary)', 
+                      <Avatar
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          color: 'var(--text-primary)',
                           border: `2px solid ${isOnline ? avatarColor : 'rgba(255,255,255,0.15)'}`,
                           opacity: isOnline ? 1 : 0.45,
                           transition: 'all 0.2s',
@@ -775,11 +839,11 @@ const ScriptEditorPage = () => {
                       placement="bottomRight"
                       overlayStyle={{ zIndex: 1050 }}
                     >
-                      <Avatar 
-                        style={{ 
-                          background: 'rgba(255,255,255,0.08)', 
-                          border: '1px solid var(--border)', 
-                          cursor: 'pointer', 
+                      <Avatar
+                        style={{
+                          background: 'rgba(255,255,255,0.08)',
+                          border: '1px solid var(--border)',
+                          cursor: 'pointer',
                           color: 'var(--text-muted)',
                           fontSize: 12,
                           fontWeight: 600
@@ -859,6 +923,12 @@ const ScriptEditorPage = () => {
             </Button>
             <Button icon={<CopyOutlined />} disabled={isViewer} onClick={handleDuplicateProject}>
               Duplicate
+            </Button>
+            <Button
+              icon={sidebarVisible ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+              onClick={() => setSidebarVisible(!sidebarVisible)}
+            >
+              {sidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
             </Button>
           </Space>
         </div>
@@ -960,7 +1030,8 @@ const ScriptEditorPage = () => {
       </div>
 
       {/* RIGHT SIDEBAR: Tabs Pane (AI Chat, Snippets, Assets) */}
-      <div style={{ width: 340, minWidth: 340, background: 'var(--bg-base)', borderLeft: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {sidebarVisible && (
+        <div style={{ width: 340, minWidth: 340, background: 'var(--bg-base)', borderLeft: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -1170,6 +1241,7 @@ const ScriptEditorPage = () => {
           ]}
         />
       </div>
+      )}
 
       {/* Attachable Workspace Assets Modal */}
       <Modal
@@ -1245,6 +1317,42 @@ const ScriptEditorPage = () => {
               }}
             />
           )}
+        </div>
+      </Modal>
+
+      {/* Choose Block Type Modal */}
+      <Modal
+        title="Choose Block Type"
+        open={blockTypeModalOpen}
+        onCancel={() => setBlockTypeModalOpen(false)}
+        footer={null}
+        centered
+        destroyOnClose
+      >
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>
+          Choose between Text or Dialogue block to insert.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+          <Button
+            type="primary"
+            onClick={async () => {
+              setBlockTypeModalOpen(false);
+              await createBlock({ type: 'TEXT', position: addBlockPosition + 1, content: '<p></p>' });
+            }}
+            style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
+          >
+            Text Block
+          </Button>
+          <Button
+            type="primary"
+            onClick={async () => {
+              setBlockTypeModalOpen(false);
+              await createBlock({ type: 'DIALOGUE', position: addBlockPosition + 1, content: { characterId: '', text: '<p></p>' } });
+            }}
+            style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
+          >
+            Dialogue Block
+          </Button>
         </div>
       </Modal>
 
