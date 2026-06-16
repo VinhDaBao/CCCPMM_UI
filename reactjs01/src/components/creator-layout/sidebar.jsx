@@ -9,29 +9,30 @@ import { logoutApi } from '../../util/api';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-const Sidebar = () => {
+const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  // Rút dữ liệu user từ Redux (Giống hệt Header cũ)
+  // Extract user details from Redux
   const auth = useSelector(state => state.auth);
   const user = auth?.user || {};
 
+  // Menu Navigation List
   // Đọc mã Không gian làm việc đang hoạt động của nhóm từ localStorage
     const activeWorkspaceId = localStorage.getItem('active_workspace_id') || "6a2e999a3c0cbd9d2589efb4";
 
   // Mảng menu mặc định
   const navItems = [
     { id: "dashboard", path: "/workspace/dashboard", label: "Dashboard", icon: "kanban" },
-    { id: "project", path: "/workspace/editor", label: "Project", icon: "grid" },
+    { id: "project", path: "/workspace/projects", label: "Project", icon: "grid" },
     // Sử dụng dấu nháy ngược (Backticks) để truyền biến động
     { id: "world", path: `/workspace/world/${activeWorkspaceId}`, label: "Relationship diagram", icon: "grid" },
     { id: "assets", path: "/workspace/assets", label: "Assets", icon: "assets" },
     { id: "settings", path: "/workspace/settings", label: "Settings", icon: "settings" },
   ];
 
-  // Logic từ Header: Nếu là Admin, thêm menu Quản lý Users
+  // If Admin, append Users management view
   if (user.role === 'admin') {
     navItems.push({ id: "users", path: "/user", label: "Quản lý Users", icon: "user" });
   }
@@ -55,7 +56,7 @@ const Sidebar = () => {
       }
   };
 
-  // Xử lý hiển thị Avatar và Tên (Giống ProfilePage)
+  // Avatar / Display name fallbacks
   const avatarUrl = user.avatar ? (user.avatar.startsWith("data:") ? user.avatar : `${BACKEND_URL}${user.avatar}`) : null;
   const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
   const displayName = user.fullName && user.fullName !== "undefined" ? user.fullName : (user.email ? user.email.split('@')[0] : "Creator");
@@ -85,7 +86,7 @@ const Sidebar = () => {
         </div>
       </div>
 
-      <WorkspaceSwitcher />
+      <WorkspaceSwitcher activeWorkspaceId={activeWorkspaceId} setActiveWorkspaceId={setActiveWorkspaceId} />
 
       {/* Nav Menu */}
       <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
@@ -115,7 +116,7 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* Nút Đăng xuất */}
+      {/* Logout Button */}
       <div style={{ padding: "0 10px 10px" }}>
         <button 
           onClick={handleLogout}
@@ -133,7 +134,7 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* User Info (Được liên kết với Redux Profile) */}
+      {/* User profile entry */}
       <div 
         onClick={() => navigate(user.role === "admin" ? "/admin/profile" : "/user/profile")}
         style={{

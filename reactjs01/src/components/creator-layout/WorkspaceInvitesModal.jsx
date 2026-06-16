@@ -56,11 +56,15 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
   const handleSendInvite = (values) => {
     if (!workspaceId) return;
 
+    const expiresAt = values.expiresAt
+      ? values.expiresAt.minute(0).second(0).millisecond(0).toISOString()
+      : dayjs().add(7, 'day').hour(0).minute(0).second(0).millisecond(0).toISOString();
+
     inviteMutation.mutate({
       workspaceId,
       email: values.email,
       role: values.role,
-      expiresAt: values.expiresAt ? values.expiresAt.toISOString() : dayjs().add(7, 'day').toISOString(),
+      expiresAt,
     });
   };
 
@@ -88,7 +92,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
       title: 'Expires At',
       dataIndex: 'expiresAt',
       key: 'expiresAt',
-      render: (date) => dayjs(date).format('YYYY-MM-DD HH:mm'),
+      render: (date) => dayjs(date).format('YYYY-MM-DD HH'),
     },
     {
       title: 'Status',
@@ -153,7 +157,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
           onFinish={handleSendInvite}
           initialValues={{
             role: 'VIEWER',
-            expiresAt: dayjs().add(7, 'day'),
+            expiresAt: dayjs().add(7, 'day').hour(0).minute(0).second(0).millisecond(0),
           }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
         >
@@ -179,7 +183,12 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
           </Form.Item>
 
           <Form.Item name="expiresAt" style={{ width: 180, margin: 0 }}>
-            <DatePicker showTime format="YYYY-MM-DD HH:mm" placeholder="Expires At" style={{ width: '100%' }} />
+            <DatePicker
+              showTime={{ format: 'HH', defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+              format="YYYY-MM-DD HH"
+              placeholder="Expires At"
+              style={{ width: '100%' }}
+            />
           </Form.Item>
 
           <Form.Item style={{ margin: 0 }}>

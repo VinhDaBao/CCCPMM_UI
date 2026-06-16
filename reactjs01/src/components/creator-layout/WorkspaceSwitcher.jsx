@@ -12,7 +12,7 @@ import WorkspaceInvitesModal from './WorkspaceInvitesModal';
 
 const STORAGE_KEY = 'active_workspace_id';
 
-const WorkspaceSwitcher = () => {
+const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   const auth = useSelector((state) => state.auth);
   const user = auth?.user || {};
   const ownerId = user?._id || user?.id;
@@ -22,7 +22,6 @@ const WorkspaceSwitcher = () => {
   const [updateOpen, setUpdateOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState(null);
 
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem(STORAGE_KEY) || '');
   const lastErrorRef = useRef('');
   const [memberOpen, setMemberOpen] = useState(false);
   const [memberWorkspace, setMemberWorkspace] = useState(null);
@@ -45,8 +44,9 @@ const WorkspaceSwitcher = () => {
   useEffect(() => {
     if (selectedWorkspaceId && selectedWorkspaceId !== activeWorkspaceId) {
       localStorage.setItem(STORAGE_KEY, selectedWorkspaceId);
+      setActiveWorkspaceId(selectedWorkspaceId);
     }
-  }, [activeWorkspaceId, selectedWorkspaceId]);
+  }, [activeWorkspaceId, selectedWorkspaceId, setActiveWorkspaceId]);
 
   useEffect(() => {
     if (!isError) {
