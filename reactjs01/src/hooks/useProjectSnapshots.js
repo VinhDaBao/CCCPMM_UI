@@ -18,10 +18,16 @@ export const useProjectSnapshots = (workspaceId, projectId) => {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createProjectSnapshotApi(workspaceId, projectId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-snapshots', workspaceId, projectId] });
-      queryClient.invalidateQueries({ queryKey: ['activity-logs', workspaceId] });
+    mutationFn: (params) => {
+      const wId = params?.workspaceId || workspaceId;
+      const pId = params?.projectId || projectId;
+      return createProjectSnapshotApi(wId, pId);
+    },
+    onSuccess: (_, variables) => {
+      const wId = variables?.workspaceId || workspaceId;
+      const pId = variables?.projectId || projectId;
+      queryClient.invalidateQueries({ queryKey: ['project-snapshots', wId, pId] });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs', wId] });
     },
   });
 

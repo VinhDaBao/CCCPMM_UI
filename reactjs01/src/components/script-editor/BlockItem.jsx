@@ -36,18 +36,29 @@ const BlockItem = ({
   onDrop,
   onAddSnippet,
 }) => {
+  const blockContent = useMemo(() => {
+    if (typeof block.content === 'string') {
+      try {
+        return JSON.parse(block.content);
+      } catch (e) {
+        return block.content;
+      }
+    }
+    return block.content;
+  }, [block.content]);
+
   const selectedCharacter = useMemo(() => {
     if (block.type !== 'DIALOGUE') return null;
-    const charId = block.content?.characterId;
+    const charId = blockContent?.characterId;
     return characters.find((c) => String(c._id || c.id) === String(charId));
-  }, [block, characters]);
+  }, [block.type, blockContent, characters]);
 
   const initialHtml = useMemo(() => {
     if (block.type === 'DIALOGUE') {
-      return block.content?.text || '';
+      return blockContent?.text || '';
     }
-    return typeof block.content === 'string' ? block.content : '';
-  }, [block]);
+    return typeof blockContent === 'string' ? blockContent : '';
+  }, [block.type, blockContent]);
 
   // Unique cursor color for each user
   const cursorColor = useMemo(() => {
@@ -86,15 +97,15 @@ const BlockItem = ({
       if (block.type === 'DIALOGUE') {
         onUpdateBlock(block._id || block.id, {
           content: {
-            characterId: block.content?.characterId || '',
+            characterId: blockContent?.characterId || '',
             text: html,
           },
         });
-      } else {
+      } else if (block.type === 'TEXT') {
         onUpdateBlock(block._id || block.id, { content: html });
       }
     },
-  }, [block._id || block.id]);
+  }, [block._id || block.id, ydoc]);
 
   // Force a component update whenever the editor's cursor position or selection changes.
   // This ensures the Bold, Italic, and Underline buttons instantly reflect the active formatting states.
@@ -123,6 +134,7 @@ const BlockItem = ({
   // Initialize Yjs shared XML fragment from database content when synced
   useEffect(() => {
     if (!editor || !provider || !ydoc) return;
+    if (block.type !== 'TEXT' && block.type !== 'DIALOGUE') return; // Only sync text/dialogue blocks in Yjs!
 
     let isCleanedUp = false;
 
@@ -144,7 +156,7 @@ const BlockItem = ({
       isCleanedUp = true;
       provider.off('synced', initializeContent);
     };
-  }, [editor, provider, ydoc, initialHtml, editorField]);
+  }, [editor, provider, ydoc, initialHtml, editorField, block.type]);
 
   // 2. Character Details Popover Content
   const renderCharacterPopover = () => {
@@ -194,7 +206,7 @@ const BlockItem = ({
   // 3. Highlighted reading block render
   const renderReadingHighlight = () => {
     if (!highlightRange) return null;
-    const text = block.type === 'DIALOGUE' ? (block.content?.text || '') : (block.content || '');
+    const text = block.type === 'DIALOGUE' ? (blockContent?.text || '') : (blockContent || '');
     const plainText = text.replace(/<[^>]*>/g, '');
     const before = plainText.slice(0, highlightRange.start);
     const word = plainText.slice(highlightRange.start, highlightRange.end);
@@ -239,7 +251,7 @@ const BlockItem = ({
               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Character:</span>
               <Select
                 disabled={isViewer}
-                value={block.content?.characterId || undefined}
+                value={blockContent?.characterId || undefined}
                 onChange={(val) => {
                   if (val === 'create-new') {
                     onCreateCharacterClick();
@@ -247,7 +259,7 @@ const BlockItem = ({
                     onUpdateBlock(block._id || block.id, {
                       content: {
                         characterId: val,
-                        text: block.content?.text || '',
+                        text: blockContent?.text || '',
                       },
                     });
                   }
@@ -286,9 +298,9 @@ const BlockItem = ({
         return (
           <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textAlign: 'left', textTransform: 'uppercase', fontWeight: 600 }}>
-              IMAGE BLOCK ({block.content?.name || 'Attached Image'})
+              IMAGE BLOCK ({blockContent?.name || 'Attached Image'})
             </div>
-            <img src={getAssetUrl(block.content?.url) || '/placeholder.png'} alt={block.content?.name} style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 6, objectFit: 'contain' }} />
+            <img src={getAssetUrl(blockContent?.url) || '/placeholder.png'} alt={blockContent?.name} style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 6, objectFit: 'contain' }} />
           </div>
         );
 
@@ -296,9 +308,9 @@ const BlockItem = ({
         return (
           <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textAlign: 'left', textTransform: 'uppercase', fontWeight: 600 }}>
-              VIDEO BLOCK ({block.content?.name || 'Attached Video'})
+              VIDEO BLOCK ({blockContent?.name || 'Attached Video'})
             </div>
-            <video src={getAssetUrl(block.content?.url)} controls style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 6 }} />
+            <video src={getAssetUrl(blockContent?.url)} controls style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 6 }} />
           </div>
         );
 
@@ -306,9 +318,9 @@ const BlockItem = ({
         return (
           <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16, background: 'rgba(255,255,255,0.01)' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', fontWeight: 600 }}>
-              AUDIO BLOCK ({block.content?.name || 'Attached Audio'})
+              AUDIO BLOCK ({blockContent?.name || 'Attached Audio'})
             </div>
-            <audio src={getAssetUrl(block.content?.url)} controls style={{ width: '100%' }} />
+            <audio src={getAssetUrl(blockContent?.url)} controls style={{ width: '100%' }} />
           </div>
         );
 

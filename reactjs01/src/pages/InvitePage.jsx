@@ -15,7 +15,7 @@ const { user, isAuthenticated } = useSelector((state) => state.auth);
 
 useEffect(() => {
   if (!isAuthenticated && token) {
-    localStorage.setItem("pendingIn viteToken", token);
+    localStorage.setItem("pendingInviteToken", token);
     navigate("/login");
   }
 }, [isAuthenticated, token, navigate]);
