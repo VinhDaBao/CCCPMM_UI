@@ -64,11 +64,11 @@ const resetPasswordApi = (email, newPassword) => {
 
 const updateProfileApi = (fullName, avatarFile) => {
     const formData = new FormData();
-    
-    formData.append("fullName", fullName ?? ""); 
-    
+
+    formData.append("fullName", fullName ?? "");
+
     if (avatarFile && typeof avatarFile !== "string") {
-        formData.append("avatar", avatarFile); 
+        formData.append("avatar", avatarFile);
     } else if (typeof avatarFile === "string") {
         formData.append("avatar", avatarFile);
     }
@@ -164,7 +164,7 @@ const workspaceInviteApi = {
         axios.get(`/api/workspace-invites/invite/${token}`),
 
     accept: (token) =>
-        axios.post("/api/workspace-invites/accept", {token}),
+        axios.post("/api/workspace-invites/accept", { token }),
 
     cancel: (workspaceId, token) =>
         axios.delete(`/api/workspace-invites/${workspaceId}/invite/${token}`),
@@ -172,24 +172,24 @@ const workspaceInviteApi = {
 
 
 const getWorkspaceMembers = async (workspaceId) => {
-  return axios.get(`/api/workspace-members/${workspaceId}/members`);
+    return axios.get(`/api/workspace-members/${workspaceId}/members`);
 };
 
 const changeMemberRole = async ({ workspaceId, memberId, role }) => {
-  return axios.patch(
-    `/api/workspace-members/${workspaceId}/members/${memberId}/role`,
-    { role }
-  );
+    return axios.patch(
+        `/api/workspace-members/${workspaceId}/members/${memberId}/role`,
+        { role }
+    );
 };
 
 const removeMember = async ({ workspaceId, memberId }) => {
-  return axios.delete(
-    `/api/workspace-members/${workspaceId}/members/${memberId}`
-  );
+    return axios.delete(
+        `/api/workspace-members/${workspaceId}/members/${memberId}`
+    );
 };
 
 const leaveWorkspace = async (workspaceId) => {
-  return axios.post(`/api/workspace-members/${workspaceId}/leave`);
+    return axios.post(`/api/workspace-members/${workspaceId}/leave`);
 };
 
 
@@ -237,17 +237,18 @@ const deleteAssetApi = (assetId) => {
 };
 
 const getAssetUrl = (url) => {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-    return url;
-  }
-  let normalized = url.replace(/\\/g, '/');
-  normalized = normalized.replace(/^(src\/public\/images|public\/images|src\/images|public)/, '/images');
-  if (!normalized.startsWith('/images') && !normalized.startsWith('/')) {
-    normalized = '/' + normalized;
-  }
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8088';
-  return `${backendUrl.replace(/\/$/, '')}${normalized}`;
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+    }
+    let normalized = url.replace(/\\/g, '/');
+    normalized = normalized.replace(/^(src\/public\/images|public\/images|src\/images|public)/, '/images');
+    if (!normalized.startsWith('/images') && !normalized.startsWith('/')) {
+        normalized = '/' + normalized;
+    }
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8088';
+    return `${backendUrl.replace(/\/$/, '')}${normalized}`;
+}
 // WORLD BUILDING (Của team)
 // Hàm 1: Lấy toàn bộ cấu trúc sơ đồ (Nodes + Edges) từ Backend dựa vào WorldId
 const getWorldGraphApi = (worldId) => {
@@ -345,7 +346,7 @@ export {
     getWorkspaceTagsApi,
     updateAssetApi,
     deleteAssetApi,
-    getAssetUrl
+    getAssetUrl,
     getWorldGraphApi,
     saveWorldGraphApi,
     toggleUserStatusApi
