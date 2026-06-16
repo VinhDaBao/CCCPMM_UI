@@ -97,62 +97,9 @@ const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
    TRANG CHÍNH: ASSET LIBRARY
 ============================================================ */
 const AssetLibraryPage = () => {
-    const user = useSelector(state => state.auth.user);
+  const user = useSelector(state => state.auth.user);
   const { activeWorkspaceId } = useOutletContext();
   const CURRENT_WORKSPACE_ID = activeWorkspaceId;
-    const [assets, setAssets] = useState([]);
-    const [availableTags, setAvailableTags] = useState([]); 
-    
-    const [filter, setFilter] = useState("all");
-    const [sortOrder, setSortOrder] = useState("newest");
-    const [searchText, setSearchText] = useState("");
-    
-    const [isLoading, setIsLoading] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedAsset, setSelectedAsset] = useState(null);
-
-    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const [editFileName, setEditFileName] = useState("");
-    const [editTags, setEditTags] = useState([]);
-    const [editingAssetId, setEditingAssetId] = useState(null);
-
-    const fileInputRef = useRef(null);
-
-    const fetchAssets = async (searchQuery = searchText) => {
-  if (!CURRENT_WORKSPACE_ID) return;
-
-  setIsLoading(true);
-
-  try {
-    const assets = await getAllAssetsApi(
-      CURRENT_WORKSPACE_ID,
-      {
-        type:
-          filter === "all"
-            ? ""
-            : filter,
-        search: searchQuery,
-        sort: sortOrder,
-      }
-    );
-
-    setAssets(
-      assets?.data || assets
-    );
-  } catch (error) {
-    notification.error({
-      message: "Lỗi tải dữ liệu",
-      description:
-        error?.response?.data
-          ?.message,
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
   const [assets, setAssets] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
 
