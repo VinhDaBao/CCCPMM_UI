@@ -20,14 +20,14 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   // Menu Navigation List
   // Đọc mã Không gian làm việc đang hoạt động của nhóm từ localStorage
-    const activeWorkspaceId = localStorage.getItem('active_workspace_id') || "6a2e999a3c0cbd9d2589efb4";
+  const localActiveWorkspaceId = activeWorkspaceId || localStorage.getItem('active_workspace_id') || "6a2e999a3c0cbd9d2589efb4";
 
   // Mảng menu mặc định
   const navItems = [
     { id: "dashboard", path: "/workspace/dashboard", label: "Dashboard", icon: "kanban" },
     { id: "project", path: "/workspace/projects", label: "Project", icon: "grid" },
     // Sử dụng dấu nháy ngược (Backticks) để truyền biến động
-    { id: "world", path: `/workspace/world/${activeWorkspaceId}`, label: "Relationship diagram", icon: "grid" },
+    { id: "world", path: `/workspace/world/${localActiveWorkspaceId}`, label: "Relationship diagram", icon: "grid" },
     { id: "assets", path: "/workspace/assets", label: "Assets", icon: "assets" },
     { id: "settings", path: "/workspace/settings", label: "Settings", icon: "settings" },
   ];
