@@ -83,8 +83,13 @@ const updateProfileApi = (fullName, avatarFile) => {
     return axios.put("/api/auth/edit-profile", formData);
 };
 
-const getAllUsersApi = () => {
-    return axios.get("/api/auth/all-users");
+const getAllUsersApi = (queryParams) => {
+    const queryString = new URLSearchParams(queryParams).toString();
+    return axios.get(`/api/auth/all-users?${queryString}`);
+};
+
+const logoutApi = () => {
+    return axios.post("/api/auth/logout");
 };
 
 const createWorkspaceApi = (data) => workspaceApi.create(data);
@@ -180,10 +185,6 @@ const refreshTokenApi = (refreshToken) => {
     return axios.post("/api/auth/refresh-token", { refreshToken });
 };
 
-const logoutApi = () => {
-    return axios.post("/api/auth/logout");
-};
-
 // ==========================================
 // ĐÃ BỎ CHỮ 'export' Ở TRƯỚC CÁC HÀM NÀY
 // ==========================================
@@ -221,6 +222,10 @@ const updateAssetApi = (assetId, data) => {
 
 const deleteAssetApi = (assetId) => {
     return axios.delete(`/api/assets/${assetId}`);
+};
+
+const toggleUserStatusApi = (targetUserId) => {
+    return axios.post("/api/auth/toggle-user-status", { targetUserId });
 };
 
 export {
@@ -299,5 +304,6 @@ export {
     uploadAssetApi,
     getWorkspaceTagsApi,
     updateAssetApi,
-    deleteAssetApi
+    deleteAssetApi,
+    toggleUserStatusApi
 };

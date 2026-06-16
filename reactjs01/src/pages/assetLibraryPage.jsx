@@ -97,7 +97,7 @@ const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
 ============================================================ */
 const AssetLibraryPage = () => {
     const user = useSelector(state => state.auth.user);
-    const CURRENT_WORKSPACE_ID = user?.id || user?._id; 
+    const CURRENT_WORKSPACE_ID = localStorage.getItem('active_workspace_id');
 
     const [assets, setAssets] = useState([]);
     const [availableTags, setAvailableTags] = useState([]); 

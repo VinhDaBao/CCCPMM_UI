@@ -13,27 +13,41 @@ const LoginPage = () => {
     const onFinish = async (values) => {
         const { email, password } = values;
 
-        const res = await loginApi(email, password);
-        console.log("LOGIN RESPONSE:", res);
-        
-        if (res && res.accessToken) {
-            localStorage.setItem("access_token", res.accessToken);
-            localStorage.setItem("refresh_token", res.refreshToken); 
-            
-            notification.success({
-                message: "LOGIN USER",
-                description: "Success"
-            });
-            dispatch(loginSuccess(res.user));
-            if (res.redirectUrl) {
-                navigate(res.redirectUrl);
+        try {
+            const res = await loginApi(email, password);
+            console.log("LOGIN RESPONSE:", res);
+
+            if (res && res.accessToken) {
+                localStorage.setItem("access_token", res.accessToken);
+                localStorage.setItem("refresh_token", res.refreshToken);
+
+                notification.success({
+                    message: "Thành công",
+                    description: "Đăng nhập thành công!"
+                });
+
+                dispatch(loginSuccess(res.user));
+
+                if (res.redirectUrl) {
+                    navigate(res.redirectUrl);
+                } else {
+                    navigate("/workspace/editor");
+                }
             } else {
-                navigate("/workspace/editor"); 
+                notification.error({
+                    message: "Đăng nhập thất bại",
+                    description: res?.message ?? "Tài khoản hoặc mật khẩu không chính xác"
+                });
             }
-        } else {
+        } catch (error) {
+            const errorMessage =
+                error.response?.data?.message ||
+                error.message ||
+                "Đã xảy ra lỗi, vui lòng thử lại!";
+
             notification.error({
-                message: "LOGIN USER",
-                description: res?.message ?? "Error"
+                message: "Đăng nhập thất bại",
+                description: errorMessage
             });
         }
     };
