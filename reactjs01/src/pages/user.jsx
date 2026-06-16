@@ -1,158 +1,202 @@
-import { notification, Table } from "antd";
+import { notification, Table, Tag, Switch, Space, Typography, Card, Input, Select } from "antd"; // 🌟 Nhớ import thêm Select
+import { useEffect, useState } from "react";
+import { getAllUsersApi, toggleUserStatusApi } from "../util/api"; 
+import TopBar from "../components/creator-layout/TopBar"; 
 
-import { useEffect } from "react";
-
-import {
-  useDispatch,
-  useSelector
-} from "react-redux";
-
-import { getAllUsersApi } from "../util/api";
-
-import {
-
-  getProfileStart,
-  getProfileSuccess,
-  getProfileFail,
-
-} from "../redux/profileSlice";
+const { Title } = Typography;
+const { Search } = Input;
 
 const UserPage = () => {
+    const [users, setUsers] = useState([]);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
 
-  const dispatch = useDispatch();
-  const auth = useSelector(state => state.auth);
+    const [queryParams, setQueryParams] = useState({
+        page: 1,
+        limit: 10,
+        search: '',
+        sortBy: 'createdAt', 
+        sortOrder: 'desc'    
+    });
 
-
-  const {
-
-    profileLoading,
-
-    profileData,
-
-    profileError,
-
-  } = useSelector(
-    state => state.profile
-  );
-
-
-  useEffect(() => {
-
-    if (!auth?.user?.role) return;
-
-    const fetchUser = async () => {
-
-      try {
-
-        dispatch(getProfileStart());
-
-        const res = await getAllUsersApi();
-
-        if (res && res.users) {
-          dispatch(
-            getProfileSuccess(
-              res.users
-            )
-          );
-
-        } else {
-
-          dispatch(
-            getProfileFail(
-              res?.message ??
-              "Failed to fetch profile"
-            )
-          );
-
-          notification.error({
-
-            message: "Unauthorized",
-
-            description:
-              res?.message ??
-              "Cannot fetch profile",
-          });
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const res = await getAllUsersApi(queryParams);
+            if (res && res.errCode === 0) {
+                setUsers(res.data.users);
+                setTotalUsers(res.data.pagination.totalItems);
+            } else {
+                notification.error({ message: "Lỗi tải dữ liệu", description: res?.message });
+            }
+        } catch (error) {
+            notification.error({ message: "Lỗi hệ thống", description: error.message });
+        } finally {
+            setIsLoading(false);
         }
-
-      } catch (error) {
-
-        dispatch(
-          getProfileFail(
-            error.message
-          )
-        );
-
-        notification.error({
-
-          message: "Error",
-
-          description:
-            error.message,
-        });
-      }
     };
 
-    fetchUser();
+    useEffect(() => {
+        fetchUsers();
+    }, [queryParams]);
 
-  }, [dispatch]);
+    // 1. Xử lý khi gõ tìm kiếm
+    const handleSearch = (value) => {
+        setQueryParams({
+            ...queryParams,
+            search: value,
+            page: 1 
+        });
+    };
 
+    // 🌟 2. Xử lý khi chọn menu Sắp xếp sổ xuống
+    const handleSortChange = (value) => {
+        // value sẽ có dạng "createdAt_desc", mình cắt nó ra làm 2 phần
+        const [sortBy, sortOrder] = value.split('_');
+        
+        setQueryParams({
+            ...queryParams,
+            sortBy: sortBy,
+            sortOrder: sortOrder,
+            page: 1 // Đổi tiêu chí sắp xếp thì nên quay về trang 1 cho chuẩn
+        });
+    };
 
-  const columns = [
+    // 3. Xử lý khi đổi trang (Đã bỏ phần lấy sorter từ tiêu đề cột)
+    const handleTableChange = (pagination) => {
+        setQueryParams({
+            ...queryParams,
+            page: pagination.current,
+            limit: pagination.pageSize,
+        });
+    };
 
-    {
-      title: "Id",
-      dataIndex: "_id",
-    },
+    const handleToggleStatus = async (userId, currentStatus) => {
+        try {
+            setUsers(users.map(u => u._id === userId ? { ...u, isActivated: !currentStatus } : u));
+            const res = await toggleUserStatusApi(userId);
+            
+            if (res && res.errCode === 0) {
+                notification.success({ message: res.message });
+                fetchUsers(); 
+            } else {
+                setUsers(users.map(u => u._id === userId ? { ...u, isActivated: currentStatus } : u));
+                notification.error({ message: "Thất bại", description: res?.message });
+            }
+        } catch (error) {
+            fetchUsers(); 
+            notification.error({ message: "Lỗi hệ thống khi đổi trạng thái" });
+        }
+    };
 
-    {
-      title: "Email",
-      dataIndex: "email",
-    },
+    // 🌟 4. Cột của Bảng (Đã xóa sorter: true)
+    const columns = [
+        {
+            title: "Họ và Tên",
+            dataIndex: "fullName",
+            key: "fullName",
+            fontWeight: "bold",
+            render: (text) => <strong>{text}</strong>
+        },
+        {
+            title: "Email",
+            dataIndex: "email",
+            key: "email",
+        },
+        {
+            title: "Vai trò",
+            dataIndex: "role",
+            key: "role",
+            render: (role) => (
+                <Tag color={role === 'admin' ? "volcano" : "geekblue"}>
+                    {role.toUpperCase()}
+                </Tag>
+            )
+        },
+        {
+            title: "Trạng thái",
+            dataIndex: "isActivated",
+            key: "isActivated",
+            render: (isActivated) => (
+                <Tag color={isActivated ? "success" : "error"}>
+                    {isActivated ? "ĐANG HOẠT ĐỘNG" : "BỊ KHÓA"}
+                </Tag>
+            )
+        },
+        {
+            title: "Hành động",
+            key: "action",
+            align: 'center',
+            render: (_, record) => (
+                <Space size="middle">
+                    <Switch
+                        checkedChildren="Mở"
+                        unCheckedChildren="Khóa"
+                        checked={record.isActivated}
+                        onChange={() => handleToggleStatus(record._id, record.isActivated)}
+                        disabled={record.role === 'admin'} 
+                    />
+                </Space>
+            )
+        },
+    ];
 
-    {
-      title: "Full Name",
-      dataIndex: "fullName",
-    },
+    return (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
+            <TopBar title="Quản trị Hệ thống" subtitle="Quản lý Người dùng" />
+            
+            <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
+                <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                    <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <Title level={4} style={{ margin: 0 }}>Danh sách Tài khoản</Title>
+                            <p style={{ color: "var(--text-muted)", margin: 0 }}>Tổng số: {totalUsers} người dùng</p>
+                        </div>
+                        
+                        {/* 🌟 KHU VỰC BỘ LỌC BÊN PHẢI */}
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            {/* Menu sổ xuống */}
+                            <Select
+                                defaultValue="createdAt_desc"
+                                style={{ width: 160 }}
+                                onChange={handleSortChange}
+                                options={[
+                                    { value: 'createdAt_desc', label: 'Mới nhất' },
+                                    { value: 'createdAt_asc', label: 'Cũ nhất' },
+                                    { value: 'fullName_asc', label: 'Tên: A - Z' },
+                                    { value: 'fullName_desc', label: 'Tên: Z - A' },
+                                ]}
+                            />
+                            
+                            {/* Thanh tìm kiếm */}
+                            <Search 
+                                placeholder="Tìm theo Tên hoặc Email..." 
+                                allowClear 
+                                onSearch={handleSearch} 
+                                style={{ width: 250 }} 
+                            />
+                        </div>
+                    </div>
 
-    {
-      title: "Role",
-      dataIndex: "role",
-    },
-  ];
-
-  return (
-
-    <div style={{ padding: 30 }}>
-
-      {
-        profileError && (
-
-          <p
-            style={{
-              color: "red",
-              marginBottom: 20
-            }}
-          >
-            {profileError}
-          </p>
-        )
-      }
-
-      <Table
-
-        bordered
-
-        loading={profileLoading}
-
-        dataSource={profileData || []}
-
-        columns={columns}
-
-        rowKey={"_id"}
-      />
-
-    </div>
-  );
+                    <Table
+                        bordered
+                        loading={isLoading}
+                        dataSource={users}
+                        columns={columns}
+                        rowKey={"_id"}
+                        onChange={handleTableChange} 
+                        pagination={{ 
+                            current: queryParams.page, 
+                            pageSize: queryParams.limit, 
+                            total: totalUsers, 
+                            showSizeChanger: true, 
+                            pageSizeOptions: ['5', '10', '20', '50']
+                        }} 
+                    />
+                </Card>
+            </div>
+        </div>
+    );
 };
 
-export default UserPage; 
+export default UserPage;

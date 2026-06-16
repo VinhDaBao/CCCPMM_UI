@@ -13,40 +13,53 @@ const LoginPage = () => {
     const onFinish = async (values) => {
         const { email, password } = values;
 
-        const res = await loginApi(email, password);
-        console.log("LOGIN RESPONSE:", res);
+        try {
+            const res = await loginApi(email, password);
+            console.log("LOGIN RESPONSE:", res);
 
-        if (res && res.accessToken) {
-            localStorage.setItem("access_token", res.accessToken);
-            localStorage.setItem("refresh_token", res.refreshToken);
+            if (res && res.accessToken) {
+                // 1. Lưu token
+                localStorage.setItem("access_token", res.accessToken);
+                localStorage.setItem("refresh_token", res.refreshToken);
 
-            notification.success({
-                message: "LOGIN USER",
-                description: "Success"
-            });
-            dispatch(loginSuccess(res.user));
-            const inviteToken = localStorage.getItem(
-                "pendingInviteToken"
-            );
+                notification.success({
+                    message: "Thành công",
+                    description: "Đăng nhập thành công!"
+                });
 
-            if (inviteToken) {
-                localStorage.removeItem(
-                    "pendingInviteToken"
-                );
+                dispatch(loginSuccess(res.user));
 
-                navigate(`/invite/${inviteToken}`);
-                return;
-            }
+                // 2. LOGIC CỦA TEAM: Xử lý link mời tham gia Workspace
+                const inviteToken = localStorage.getItem("pendingInviteToken");
+                if (inviteToken) {
+                    localStorage.removeItem("pendingInviteToken");
+                    navigate(`/invite/${inviteToken}`);
+                    return; // Chuyển trang xong thì dừng hàm luôn
+                }
 
-            if (res.redirectUrl) {
-                navigate(res.redirectUrl);
+                // 3. LOGIC BÌNH THƯỜNG: Chuyển hướng theo role hoặc vào editor
+                if (res.redirectUrl) {
+                    navigate(res.redirectUrl);
+                } else {
+                    navigate("/workspace/editor");
+                }
             } else {
-                navigate("/workspace/editor");
+                // Xử lý khi Backend trả về lỗi nhưng mã HTTP vẫn là 200
+                notification.error({
+                    message: "Đăng nhập thất bại",
+                    description: res?.message ?? "Tài khoản hoặc mật khẩu không chính xác"
+                });
             }
-        } else {
+        } catch (error) {
+            // LOGIC CỦA MÌNH: Bắt lỗi 400, 401, 403 (Tài khoản bị khóa, sai pass...)
+            const errorMessage =
+                error.response?.data?.message ||
+                error.message ||
+                "Đã xảy ra lỗi, vui lòng thử lại!";
+
             notification.error({
-                message: "LOGIN USER",
-                description: res?.message ?? "Error"
+                message: "Đăng nhập thất bại",
+                description: errorMessage
             });
         }
     };

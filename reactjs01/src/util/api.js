@@ -1,6 +1,5 @@
 import axios from './axios.customize';
 
-
 const createCrudApi = (basePath) => ({
     create: (data) => axios.post(basePath, data),
     getAll: () => axios.get(basePath),
@@ -82,8 +81,13 @@ const updateProfileApi = (fullName, avatarFile) => {
     return axios.put("/api/auth/edit-profile", formData);
 };
 
-const getAllUsersApi = () => {
-    return axios.get("/api/auth/all-users");
+const getAllUsersApi = (queryParams) => {
+    const queryString = new URLSearchParams(queryParams).toString();
+    return axios.get(`/api/auth/all-users?${queryString}`);
+};
+
+const logoutApi = () => {
+    return axios.post("/api/auth/logout");
 };
 
 const createWorkspaceApi = (data) => workspaceApi.create(data);
@@ -190,10 +194,6 @@ const refreshTokenApi = (refreshToken) => {
     return axios.post("/api/auth/refresh-token", { refreshToken });
 };
 
-const logoutApi = () => {
-    return axios.post("/api/auth/logout");
-};
-
 // ==========================================
 // ĐÃ BỎ CHỮ 'export' Ở TRƯỚC CÁC HÀM NÀY
 // ==========================================
@@ -233,8 +233,7 @@ const deleteAssetApi = (assetId) => {
     return axios.delete(`/api/assets/${assetId}`);
 };
 
-
-//WORLD BUILDING
+// WORLD BUILDING (Của team)
 // Hàm 1: Lấy toàn bộ cấu trúc sơ đồ (Nodes + Edges) từ Backend dựa vào WorldId
 const getWorldGraphApi = (worldId) => {
     return axios.get(`/api/worlds/graph/${worldId}`);
@@ -246,6 +245,11 @@ const saveWorldGraphApi = (worldId, nodes, edges) => {
         nodes,
         edges
     });
+};
+
+// TOGGLE USER STATUS (Của anh em mình)
+const toggleUserStatusApi = (targetUserId) => {
+    return axios.post("/api/auth/toggle-user-status", { targetUserId });
 };
 
 export {
@@ -309,10 +313,10 @@ export {
     updateProjectAssetApi,
     deleteProjectAssetApi,
     workspaceInviteApi,
-getWorkspaceMembers,
-changeMemberRole,
-removeMember,
-leaveWorkspace,
+    getWorkspaceMembers,
+    changeMemberRole,
+    removeMember,
+    leaveWorkspace,
     refreshTokenApi,
     logoutApi,
     getAllAssetsApi,
@@ -321,5 +325,6 @@ leaveWorkspace,
     updateAssetApi,
     deleteAssetApi,
     getWorldGraphApi,
-    saveWorldGraphApi
+    saveWorldGraphApi,
+    toggleUserStatusApi
 };

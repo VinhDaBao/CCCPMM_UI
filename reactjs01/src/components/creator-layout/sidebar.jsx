@@ -5,6 +5,7 @@ import { logout } from '../../redux/authSlice';
 import Icon from './Icons';
 
 import WorkspaceSwitcher from './WorkspaceSwitcher';
+import { logoutApi } from '../../util/api';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -35,12 +36,23 @@ const Sidebar = () => {
     navItems.push({ id: "users", path: "/user", label: "Quản lý Users", icon: "user" });
   }
 
-  // Hàm Logout từ Header cũ
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('active_workspace_id');
-    dispatch(logout());
-    navigate('/login');
+  const handleLogout = async () => {
+      try {
+          await logoutApi();
+      } catch (error) {
+          console.log(
+              "Lỗi khi gọi API logout, nhưng vẫn ép đăng xuất ở Frontend",
+              error
+          );
+      } finally {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('active_workspace_id');
+
+          dispatch(logout());
+
+          navigate('/login');
+      }
   };
 
   // Xử lý hiển thị Avatar và Tên (Giống ProfilePage)
