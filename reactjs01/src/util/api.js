@@ -153,6 +153,8 @@ const restoreProjectSnapshotApi = (workspaceId, projectId, snapshotId) => axios.
 
 const getWorkspaceActivityLogsApi = (workspaceId) => axios.get(`/api/workspaces/${workspaceId}/activity-logs`);
 
+const sendSystemNotificationApi = (data) => axios.post('/api/notifications/system', data);
+
 const workspaceInviteApi = {
     invite: (data) =>
         axios.post(`/api/workspace-invites/${data.workspaceId}/invite`, data),
@@ -334,6 +336,7 @@ export {
     getProjectSnapshotsApi,
     restoreProjectSnapshotApi,
     getWorkspaceActivityLogsApi,
+    sendSystemNotificationApi,
     workspaceInviteApi,
     getWorkspaceMembers,
     changeMemberRole,

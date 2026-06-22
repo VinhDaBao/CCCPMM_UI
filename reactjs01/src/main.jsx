@@ -24,6 +24,7 @@ import SettingsPage from './pages/SettingsPage.jsx';
 import InvitePage from './pages/InvitePage.jsx';
 import ScriptEditorPage from './pages/ScriptEditorPage.jsx';
 import ProjectsPage from './pages/ProjectsPage.jsx';
+import NotificationsPage from './pages/NotificationsPage.jsx';
 import './i18n';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import WorkspaceWorldPage from './pages/workspaceWorldPage';
@@ -56,6 +57,9 @@ const router = createBrowserRouter([
           { path: "workspace/settings", element: <SettingsPage /> },
           { path: "projects/:projectId", element: <ScriptEditorPage /> },
           
+          // Notifications Page (No /workspace prefix)
+          { path: "notifications", element: <NotificationsPage /> },
+
           // Giữ nguyên 2 link Profile độc lập của bạn tại đây
           { path: "user/profile", element: <ProfilePage /> },
           { path: "admin/profile", element: <ProfilePage /> },

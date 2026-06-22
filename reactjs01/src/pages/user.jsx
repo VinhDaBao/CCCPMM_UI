@@ -1,6 +1,6 @@
-import { notification, Table, Tag, Switch, Space, Typography, Card, Input, Select } from "antd"; // 🌟 Nhớ import thêm Select
+import { notification, Table, Tag, Switch, Space, Typography, Card, Input, Select, Button } from "antd"; // 🌟 Nhớ import thêm Select
 import { useEffect, useState } from "react";
-import { getAllUsersApi, toggleUserStatusApi } from "../util/api"; 
+import { getAllUsersApi, toggleUserStatusApi, sendSystemNotificationApi } from "../util/api"; 
 import TopBar from "../components/creator-layout/TopBar"; 
 
 const { Title } = Typography;
@@ -10,6 +10,37 @@ const UserPage = () => {
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+
+    const [systemNotiTitle, setSystemNotiTitle] = useState('');
+    const [systemNotiMessage, setSystemNotiMessage] = useState('');
+    const [isSendingNoti, setIsSendingNoti] = useState(false);
+
+    const handleSendSystemNotification = async () => {
+        if (!systemNotiTitle.trim() || !systemNotiMessage.trim()) {
+            notification.error({ message: "Lỗi", description: "Vui lòng nhập đầy đủ tiêu đề và nội dung" });
+            return;
+        }
+
+        setIsSendingNoti(true);
+        try {
+            const res = await sendSystemNotificationApi({
+                title: systemNotiTitle,
+                message: systemNotiMessage
+            });
+
+            if (res && res.errCode === 0) {
+                notification.success({ message: "Thành công", description: "Thông báo hệ thống đã được gửi tới toàn bộ người dùng" });
+                setSystemNotiTitle('');
+                setSystemNotiMessage('');
+            } else {
+                notification.error({ message: "Gửi thất bại", description: res?.message });
+            }
+        } catch (error) {
+            notification.error({ message: "Lỗi hệ thống", description: error.message });
+        } finally {
+            setIsSendingNoti(false);
+        }
+    };
 
     const [queryParams, setQueryParams] = useState({
         page: 1,
@@ -146,6 +177,43 @@ const UserPage = () => {
             <TopBar title="Quản trị Hệ thống" subtitle="Quản lý Người dùng" />
             
             <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
+                {/* 📣 Gửi thông báo hệ thống */}
+                <Card 
+                    bordered={false} 
+                    style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", marginBottom: 24 }}
+                    title={<span style={{ fontWeight: 700, fontSize: 16 }}>📣 Gửi Thông báo Hệ thống</span>}
+                >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div>
+                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Tiêu đề thông báo:</div>
+                            <Input 
+                                placeholder="Nhập tiêu đề (vd: Bảo trì hệ thống)..." 
+                                value={systemNotiTitle}
+                                onChange={(e) => setSystemNotiTitle(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Nội dung thông báo:</div>
+                            <Input.TextArea 
+                                placeholder="Nhập nội dung thông báo hệ thống..." 
+                                rows={3}
+                                value={systemNotiMessage}
+                                onChange={(e) => setSystemNotiMessage(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                            <Button 
+                                type="primary" 
+                                loading={isSendingNoti}
+                                onClick={handleSendSystemNotification}
+                                style={{ background: "var(--accent-rust)", borderColor: "var(--accent-rust)", color: "#fff", fontWeight: 600 }}
+                              >
+                                Gửi thông báo tới tất cả người dùng
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+
                 <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
