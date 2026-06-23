@@ -7,6 +7,7 @@ import { Tabs, Button, Select, Space, Tooltip, notification, Spin, Modal, Input,
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
+  StopOutlined,
   HistoryOutlined,
   CameraOutlined,
   ProfileOutlined,
@@ -41,7 +42,7 @@ import ActivityLogModal from '../components/script-editor/ActivityLogModal';
 import SnapshotHistoryModal from '../components/script-editor/SnapshotHistoryModal';
 
 // API helpers
-import { getAllAssetsApi, getAssetUrl } from '../util/api';
+import { getAllAssetsApi, getAssetUrl, synthesizeTtsApi, getTtsVoicesApi } from '../util/api';
 
 const roleLabels = {
   OWNER: 'Owner',
@@ -81,13 +82,16 @@ const ScriptEditorPage = () => {
   const { createSnapshot } = useProjectSnapshots(activeWorkspaceId, projectId);
 
   // States
+  const [voiceEngine, setVoiceEngine] = useState('WEB_SPEECH');
   const [voices, setVoices] = useState([]);
   const [selectedVoice, setSelectedVoice] = useState(null);
-  const [voiceEngine, setVoiceEngine] = useState('BROWSER');
   const [readingBlockId, setReadingBlockId] = useState(null);
-  const [highlightRange, setHighlightRange] = useState(null);
   const [isVoicePaused, setIsVoicePaused] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
+
+  // Audio Playback & Cache Refs
+  const audioRef = useRef(null);
+  const audioCacheRef = useRef(new Map());
 
   const [activeTab, setActiveTab] = useState('chat');
   const [chatMessages, setChatMessages] = useState([
@@ -225,23 +229,97 @@ const ScriptEditorPage = () => {
     };
   }, []);
 
-  // 1. Browser Voice List Initialization
+  // 1. Audio Cleanup Effect on Unmount
   useEffect(() => {
-    const loadVoices = () => {
-      const vList = window.speechSynthesis.getVoices();
-      setVoices(vList);
-      if (vList.length > 0 && !selectedVoice) {
-        setSelectedVoice(vList.find(v => v.lang.startsWith('en')) || vList[0]);
-      }
-    };
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
     return () => {
       window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (audioCacheRef.current) {
+        audioCacheRef.current.clear();
+      }
       setIsVoiceActive(false);
       setIsVoicePaused(false);
     };
-  }, [selectedVoice]);
+  }, []);
+
+  // Clear cache and reset states when project changes
+  useEffect(() => {
+    if (audioCacheRef.current) {
+      audioCacheRef.current.clear();
+    }
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setReadingBlockId(null);
+    setIsVoiceActive(false);
+    setIsVoicePaused(false);
+  }, [projectId]);
+
+  // Load voices dynamically when voiceEngine changes
+  useEffect(() => {
+    if (voiceEngine === 'WEB_SPEECH') {
+      const loadBrowserVoices = () => {
+        const vList = window.speechSynthesis.getVoices();
+        setVoices(vList);
+        if (vList.length > 0) {
+          const defaultVoice = vList.find(v => v.lang.startsWith('en')) || vList[0];
+          setSelectedVoice(defaultVoice.name);
+        }
+      };
+      loadBrowserVoices();
+      window.speechSynthesis.onvoiceschanged = loadBrowserVoices;
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    } else if (voiceEngine === 'GOOGLE_CLOUD') {
+      const loadGoogleVoices = async () => {
+        try {
+          const res = await getTtsVoicesApi();
+          if (res && res.data) {
+            setVoices(res.data);
+            if (res.data.length > 0) {
+              const defaultVoice = res.data.find(v => v.name.includes('Neural2-F') || v.name.includes('Neural2')) || res.data[0];
+              setSelectedVoice(defaultVoice.name);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load Google voices:', err);
+          notification.error({ message: 'Failed to load premium voices' });
+        }
+      };
+      loadGoogleVoices();
+    }
+  }, [voiceEngine]);
+
+  const isFirstMount = useRef(true);
+
+  // Reset reading pointer and stop playback when voiceEngine or selectedVoice changes
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsVoiceActive(false);
+    setIsVoicePaused(false);
+
+    const firstReadable = blocks.find(b => b.type === 'TEXT' || b.type === 'DIALOGUE');
+    if (firstReadable) {
+      setReadingBlockId(firstReadable._id || firstReadable.id);
+    } else {
+      setReadingBlockId(null);
+    }
+  }, [voiceEngine, selectedVoice]);
 
   const handleAddSnippet = (block, currentHtml) => {
     setSnippetSourceBlock(block);
@@ -253,7 +331,7 @@ const ScriptEditorPage = () => {
 
   // Autosave timeout is cleaned up in consolidated unmount effect
 
-  // 2. Speech synthesis engine
+  // 2. Speech synthesis engine using Google Cloud TTS or Browser Web Speech API
   const playBlock = (block) => {
     // If clicking the currently reading block AND voice is active, toggle play/pause!
     if ((block._id || block.id) === readingBlockId && isVoiceActive) {
@@ -264,50 +342,102 @@ const ScriptEditorPage = () => {
     playBlockDirectly(block);
   };
 
-  const playBlockDirectly = (block) => {
+  const playBlockDirectly = async (block) => {
+    // Pause and clean up any playing audio
     window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
     setIsVoiceActive(true);
     setIsVoicePaused(false);
-    setReadingBlockId(block._id || block.id);
+    const blockId = block._id || block.id;
+    setReadingBlockId(blockId);
 
     const text = block.type === 'DIALOGUE' ? (block.content?.text || '') : (block.content || '');
-    const plainText = text.replace(/<[^>]*>/g, '');
+    const plainText = text.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
-    if (!plainText.trim()) {
-      playNextReadableBlock(block._id || block.id);
+    if (!plainText) {
+      playNextReadableBlock(blockId);
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(plainText);
-    if (selectedVoice) utterance.voice = selectedVoice;
-
-    utterance.onboundary = (event) => {
-      if (event.name === 'word') {
-        const charIndex = event.charIndex;
-        const remainingText = plainText.slice(charIndex);
-        const nextSpace = remainingText.search(/\s/);
-        const wordLength = nextSpace === -1 ? remainingText.length : nextSpace;
-
-        setHighlightRange({
-          blockId: block._id || block.id,
-          start: charIndex,
-          end: charIndex + wordLength
-        });
+    if (voiceEngine === 'GOOGLE_CLOUD') {
+      const cacheKey = `${blockId}-${voiceEngine}-${selectedVoice}`;
+      let audioSrc = audioCacheRef.current.get(cacheKey);
+      if (!audioSrc) {
+        try {
+          const res = await synthesizeTtsApi(plainText, selectedVoice);
+          if (res && res.audioBase64) {
+            audioSrc = `data:audio/mp3;base64,${res.audioBase64}`;
+            audioCacheRef.current.set(cacheKey, audioSrc);
+          } else {
+            throw new Error('No audio content returned from TTS service');
+          }
+        } catch (err) {
+          console.error('TTS synthesis failed:', err);
+          notification.error({
+            message: 'Synthesis Failed',
+            description: err.message || 'Could not synthesize voice.'
+          });
+          setReadingBlockId(null);
+          setIsVoiceActive(false);
+          setIsVoicePaused(false);
+          return;
+        }
       }
-    };
 
-    utterance.onend = () => {
-      playNextReadableBlock(block._id || block.id);
-    };
+      // Double check that we are still supposed to be reading this block
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
 
-    utterance.onerror = () => {
-      setReadingBlockId(null);
-      setHighlightRange(null);
-      setIsVoiceActive(false);
-      setIsVoicePaused(false);
-    };
+      const audio = new Audio(audioSrc);
+      audioRef.current = audio;
 
-    window.speechSynthesis.speak(utterance);
+      audio.onended = () => {
+        playNextReadableBlock(blockId);
+      };
+
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setReadingBlockId(null);
+        setIsVoiceActive(false);
+        setIsVoicePaused(false);
+        audioRef.current = null;
+      };
+
+      audio.play().catch(err => {
+        console.error('Failed to play audio:', err);
+        notification.warning({ message: 'Playback issue. Please interact with page and try again.' });
+        setReadingBlockId(null);
+        setIsVoiceActive(false);
+        setIsVoicePaused(false);
+        audioRef.current = null;
+      });
+    } else {
+      // WEB_SPEECH
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      const rawVoices = window.speechSynthesis.getVoices();
+      const browserVoiceObj = rawVoices.find(v => v.name === selectedVoice);
+      if (browserVoiceObj) {
+        utterance.voice = browserVoiceObj;
+      }
+
+      utterance.onend = () => {
+        playNextReadableBlock(blockId);
+      };
+
+      utterance.onerror = (e) => {
+        console.error('SpeechSynthesis error:', e);
+        setReadingBlockId(null);
+        setIsVoiceActive(false);
+        setIsVoicePaused(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
   const playNextReadableBlock = (currentBlockId) => {
@@ -326,34 +456,35 @@ const ScriptEditorPage = () => {
 
     // Finished sequential reading
     setReadingBlockId(null);
-    setHighlightRange(null);
     setIsVoiceActive(false);
     setIsVoicePaused(false);
-    notification.info({ message: 'Reading Finished' });
-  };
-
-  const handleResetReading = () => {
     window.speechSynthesis.cancel();
-    setIsVoiceActive(false);
-    setIsVoicePaused(false);
-    setHighlightRange(null);
-    const firstReadable = blocks.find(b => b.type === 'TEXT' || b.type === 'DIALOGUE');
-    if (firstReadable) {
-      setReadingBlockId(firstReadable._id || firstReadable.id);
-      notification.info({ message: 'Reading pointer reset to first block' });
-    } else {
-      setReadingBlockId(null);
-      notification.warning({ message: 'No readable blocks found' });
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
     }
+    notification.info({ message: 'Reading Finished' });
   };
 
   const handleTogglePauseVoice = () => {
     if (isVoiceActive) {
       if (isVoicePaused) {
-        window.speechSynthesis.resume();
+        if (voiceEngine === 'GOOGLE_CLOUD') {
+          if (audioRef.current) {
+            audioRef.current.play().catch(err => console.error('Failed to resume:', err));
+          }
+        } else {
+          window.speechSynthesis.resume();
+        }
         setIsVoicePaused(false);
       } else {
-        window.speechSynthesis.pause();
+        if (voiceEngine === 'GOOGLE_CLOUD') {
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+        } else {
+          window.speechSynthesis.pause();
+        }
         setIsVoicePaused(true);
       }
     } else {
@@ -372,8 +503,28 @@ const ScriptEditorPage = () => {
     }
   };
 
+  const handleStopReading = () => {
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setReadingBlockId(null);
+    setIsVoiceActive(false);
+    setIsVoicePaused(false);
+  };
+
   // 3. Autosave with Debounce
   const handleUpdateBlock = (blockId, data) => {
+    // Invalidate audio cache for this block if text/content changes
+    if (data.content !== undefined) {
+      for (const key of audioCacheRef.current.keys()) {
+        if (key.startsWith(`${blockId}-`)) {
+          audioCacheRef.current.delete(key);
+        }
+      }
+    }
+
     // 1. Instantly update UI cache
     queryClient.setQueryData(['blocks', activeWorkspaceId, projectId], (old) => {
       if (!old) return [];
@@ -876,32 +1027,30 @@ const ScriptEditorPage = () => {
             <Select
               value={voiceEngine}
               onChange={(val) => {
-                if (val === 'AZURE') {
-                  notification.info({ message: 'Azure Speech is placeholder and will be active in later releases.' });
-                } else {
-                  setVoiceEngine('BROWSER');
-                }
+                setVoiceEngine(val);
               }}
               options={[
-                { value: 'BROWSER', label: 'Browser Speech' },
-                { value: 'AZURE', label: 'Azure Speech (Placeholder)' }
+                { value: 'WEB_SPEECH', label: 'Browser Speech (Free)' },
+                { value: 'GOOGLE_CLOUD', label: 'Google Cloud TTS (Premium)' }
               ]}
               style={{ width: 200 }}
             />
 
-            {voiceEngine === 'BROWSER' && (
+            {voices.length > 0 && (
               <Select
-                value={selectedVoice?.name || undefined}
-                onChange={(val) => setSelectedVoice(voices.find(v => v.name === val))}
-                options={voices.map(v => ({ value: v.name, label: `${v.name} (${v.lang})` }))}
-                placeholder="Choose browser voice"
+                showSearch
+                value={selectedVoice || undefined}
+                onChange={(val) => setSelectedVoice(val)}
+                options={voices.map(v => ({
+                  value: v.name,
+                  label: voiceEngine === 'GOOGLE_CLOUD'
+                    ? `${v.name} (${v.ssmlGender || 'NEUTRAL'})`
+                    : `${v.name} (${v.lang || v.languageCodes?.join(', ')})`
+                }))}
+                placeholder="Choose voice"
                 style={{ width: 220 }}
               />
             )}
-
-            <Button icon={<HistoryOutlined />} onClick={handleResetReading}>
-              Reset Reading
-            </Button>
 
             <Button
               icon={(!isVoiceActive || isVoicePaused) ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
@@ -909,6 +1058,16 @@ const ScriptEditorPage = () => {
             >
               {!isVoiceActive ? 'Play Voice' : (isVoicePaused ? 'Resume Voice' : 'Pause Voice')}
             </Button>
+
+            {isVoiceActive && (
+              <Button
+                icon={<StopOutlined />}
+                onClick={handleStopReading}
+                danger
+              >
+                Stop
+              </Button>
+            )}
           </Space>
 
           <Space size="middle">
@@ -981,16 +1140,18 @@ const ScriptEditorPage = () => {
                   isCurrentlyReading={readingBlockId === (block._id || block.id)}
                   isVoiceActive={isVoiceActive}
                   isVoicePaused={isVoicePaused}
-                  highlightRange={highlightRange}
                   onUpdateBlock={handleUpdateBlock}
                   onDeleteBlock={handleDeleteBlock}
                   onPlayBlock={playBlock}
                   onAddBlockClick={handleAddBlockClick}
                   onResetReading={(id) => {
                     window.speechSynthesis.cancel();
+                    if (audioRef.current) {
+                      audioRef.current.pause();
+                      audioRef.current = null;
+                    }
                     setIsVoiceActive(false);
                     setIsVoicePaused(false);
-                    setHighlightRange(null);
                     setReadingBlockId(id);
                     notification.info({ message: 'Reading pointer moved to this block' });
                   }}
@@ -1032,215 +1193,215 @@ const ScriptEditorPage = () => {
       {/* RIGHT SIDEBAR: Tabs Pane (AI Chat, Snippets, Assets) */}
       {sidebarVisible && (
         <div style={{ width: 340, minWidth: 340, background: 'var(--bg-base)', borderLeft: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          style={{ padding: '0 16px' }}
-          items={[
-            {
-              key: 'chat',
-              label: 'AI Chat',
-              children: (
-                <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                  <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {chatMessages.map((msg, idx) => (
-                      <div key={idx} style={{ alignSelf: msg.sender === 'AI' ? 'flex-start' : 'flex-end', maxWidth: '85%' }}>
-                        <div style={{
-                          padding: '8px 12px',
-                          borderRadius: msg.sender === 'AI' ? '12px 12px 12px 0' : '12px 12px 0 12px',
-                          background: msg.sender === 'AI' ? 'var(--bg-hover)' : 'var(--accent-amber)',
-                          color: msg.sender === 'AI' ? 'var(--text-primary)' : '#000',
-                          fontSize: 13,
-                        }}>
-                          {msg.text}
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            style={{ padding: '0 16px' }}
+            items={[
+              {
+                key: 'chat',
+                label: 'AI Chat',
+                children: (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {chatMessages.map((msg, idx) => (
+                        <div key={idx} style={{ alignSelf: msg.sender === 'AI' ? 'flex-start' : 'flex-end', maxWidth: '85%' }}>
+                          <div style={{
+                            padding: '8px 12px',
+                            borderRadius: msg.sender === 'AI' ? '12px 12px 12px 0' : '12px 12px 0 12px',
+                            background: msg.sender === 'AI' ? 'var(--bg-hover)' : 'var(--accent-amber)',
+                            color: msg.sender === 'AI' ? 'var(--text-primary)' : '#000',
+                            fontSize: 13,
+                          }}>
+                            {msg.text}
+                          </div>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2, textAlign: msg.sender === 'AI' ? 'left' : 'right' }}>
+                            {msg.sender}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2, textAlign: msg.sender === 'AI' ? 'left' : 'right' }}>
-                          {msg.sender}
+                      ))}
+                      {isAiTyping && (
+                        <div style={{ padding: '8px 12px', background: 'var(--bg-hover)', borderRadius: 12, width: 60, textAlign: 'center' }}>
+                          <Spin indicator={<LoadingOutlined spin />} size="small" />
                         </div>
-                      </div>
-                    ))}
-                    {isAiTyping && (
-                      <div style={{ padding: '8px 12px', background: 'var(--bg-hover)', borderRadius: 12, width: 60, textAlign: 'center' }}>
-                        <Spin indicator={<LoadingOutlined spin />} size="small" />
-                      </div>
-                    )}
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Input
+                        placeholder="Type a query for the script AI..."
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onPressEnter={handleSendChatMessage}
+                      />
+                      <Button type="primary" icon={<SendOutlined />} onClick={handleSendChatMessage} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000' }} />
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Input
-                      placeholder="Type a query for the script AI..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onPressEnter={handleSendChatMessage}
-                    />
-                    <Button type="primary" icon={<SendOutlined />} onClick={handleSendChatMessage} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000' }} />
-                  </div>
-                </div>
-              )
-            },
-            {
-              key: 'assets',
-              label: 'Assets',
-              children: (
-                <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Attached Media</h4>
-                    {!isViewer && (
-                      <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleOpenAttachModal} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}>
-                        Add Asset
-                      </Button>
-                    )}
-                  </div>
+                )
+              },
+              {
+                key: 'assets',
+                label: 'Assets',
+                children: (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Attached Media</h4>
+                      {!isViewer && (
+                        <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleOpenAttachModal} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}>
+                          Add Asset
+                        </Button>
+                      )}
+                    </div>
 
-                  <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
-                    {projectAssets.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                        No assets attached yet. Drag-and-drop assets into the script.
-                      </div>
-                    ) : (
-                      projectAssets.map((assetItem) => {
-                        const originalAsset = assetItem.assetId;
-                        if (!originalAsset) return null;
-                        const isUsed = assetItem.status === 'USED';
+                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+                      {projectAssets.length === 0 ? (
+                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No assets attached yet. Drag-and-drop assets into the script.
+                        </div>
+                      ) : (
+                        projectAssets.map((assetItem) => {
+                          const originalAsset = assetItem.assetId;
+                          if (!originalAsset) return null;
+                          const isUsed = assetItem.status === 'USED';
 
-                        return (
-                          <Tooltip
-                            key={assetItem._id || assetItem.id}
-                            title={
-                              originalAsset.tags && originalAsset.tags.length > 0
-                                ? `Tags: ${originalAsset.tags.join(', ')}`
-                                : 'No tags'
-                            }
-                            placement="left"
-                          >
-                            <div
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData('text/plain', JSON.stringify({
-                                  assetId: originalAsset._id || originalAsset.id,
-                                  url: originalAsset.url,
-                                  name: originalAsset.fileName,
-                                  type: originalAsset.type
-                                }));
-                              }}
-                              style={{
-                                padding: '10px 12px',
-                                background: 'rgba(255,255,255,0.01)',
-                                border: '1px solid var(--border)',
-                                borderRadius: 8,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 10,
-                                marginBottom: 8,
-                                cursor: 'grab',
-                                position: 'relative'
-                              }}
+                          return (
+                            <Tooltip
+                              key={assetItem._id || assetItem.id}
+                              title={
+                                originalAsset.tags && originalAsset.tags.length > 0
+                                  ? `Tags: ${originalAsset.tags.join(', ')}`
+                                  : 'No tags'
+                              }
+                              placement="left"
                             >
-                              {/* Asset Preview Thumbnail */}
-                              <div style={{
-                                width: 40,
-                                height: 40,
-                                background: 'var(--bg-hover)',
-                                borderRadius: 6,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}>
-                                {originalAsset.type?.toUpperCase() === 'IMAGE' && originalAsset.url ? (
-                                  <img src={getAssetUrl(originalAsset.url)} alt={originalAsset.fileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                  <CloudUploadOutlined style={{ fontSize: 18 }} />
+                              <div
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('text/plain', JSON.stringify({
+                                    assetId: originalAsset._id || originalAsset.id,
+                                    url: originalAsset.url,
+                                    name: originalAsset.fileName,
+                                    type: originalAsset.type
+                                  }));
+                                }}
+                                style={{
+                                  padding: '10px 12px',
+                                  background: 'rgba(255,255,255,0.01)',
+                                  border: '1px solid var(--border)',
+                                  borderRadius: 8,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 10,
+                                  marginBottom: 8,
+                                  cursor: 'grab',
+                                  position: 'relative'
+                                }}
+                              >
+                                {/* Asset Preview Thumbnail */}
+                                <div style={{
+                                  width: 40,
+                                  height: 40,
+                                  background: 'var(--bg-hover)',
+                                  borderRadius: 6,
+                                  overflow: 'hidden',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}>
+                                  {originalAsset.type?.toUpperCase() === 'IMAGE' && originalAsset.url ? (
+                                    <img src={getAssetUrl(originalAsset.url)} alt={originalAsset.fileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <CloudUploadOutlined style={{ fontSize: 18 }} />
+                                  )}
+                                </div>
+
+                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {originalAsset.fileName}
+                                  </div>
+                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <span>{originalAsset.type}</span>
+                                    <Badge status={isUsed ? 'success' : 'default'} text={isUsed ? `USED (${assetItem.usageCount || 0})` : 'UNUSED'} />
+                                  </div>
+                                </div>
+
+                                {!isViewer && (
+                                  <Tooltip title={isUsed ? "Cannot delete asset in use" : "Remove asset from project"}>
+                                    <Button
+                                      type="text"
+                                      danger
+                                      disabled={isUsed}
+                                      size="small"
+                                      icon={<DeleteOutlined />}
+                                      onClick={() => deleteProjectAsset(assetItem._id || assetItem.id)}
+                                    />
+                                  </Tooltip>
                                 )}
                               </div>
-
-                              <div style={{ flex: 1, overflow: 'hidden' }}>
-                                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {originalAsset.fileName}
-                                </div>
-                                <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                                  <span>{originalAsset.type}</span>
-                                  <Badge status={isUsed ? 'success' : 'default'} text={isUsed ? `USED (${assetItem.usageCount || 0})` : 'UNUSED'} />
-                                </div>
-                              </div>
-
-                              {!isViewer && (
-                                <Tooltip title={isUsed ? "Cannot delete asset in use" : "Remove asset from project"}>
-                                  <Button
-                                    type="text"
-                                    danger
-                                    disabled={isUsed}
-                                    size="small"
-                                    icon={<DeleteOutlined />}
-                                    onClick={() => deleteProjectAsset(assetItem._id || assetItem.id)}
-                                  />
-                                </Tooltip>
-                              )}
-                            </div>
-                          </Tooltip>
-                        );
-                      })
-                    )}
+                            </Tooltip>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            },
-            {
-              key: 'snippets',
-              label: 'Snippets',
-              children: (
-                <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                  <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>Workspace Snippets</h4>
-                  <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
-                    {snippets.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                        No snippets created yet.
-                      </div>
-                    ) : (
-                      snippets.map((snip) => (
-                        <div
-                          key={snip._id || snip.id}
-                          onClick={() => handleSnippetClick(snip)}
-                          style={{
-                            padding: '10px 12px',
-                            background: 'rgba(255,255,255,0.01)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 8,
-                            marginBottom: 8,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--bg-hover)';
-                            e.currentTarget.style.borderColor = 'var(--border-lit)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
-                            e.currentTarget.style.borderColor = 'var(--border)';
-                          }}
-                        >
-                          <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{snip.title}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {Array.isArray(snip.content) && snip.content[0]
-                              ? (snip.content[0].type === 'DIALOGUE' ? snip.content[0].data?.text : snip.content[0].data)?.replace(/<[^>]*>/g, '')
-                              : typeof snip.content === 'string' ? snip.content?.replace(/<[^>]*>/g, '') : ''}
-                          </div>
-                          {snip.tags && snip.tags.length > 0 && (
-                            <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
-                              {snip.tags.map((tag, i) => (
-                                <span key={i} style={{ fontSize: 9, background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, color: 'var(--text-muted)' }}>{tag}</span>
-                              ))}
-                            </div>
-                          )}
+                )
+              },
+              {
+                key: 'snippets',
+                label: 'Snippets',
+                children: (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
+                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>Workspace Snippets</h4>
+                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+                      {snippets.length === 0 ? (
+                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No snippets created yet.
                         </div>
-                      ))
-                    )}
+                      ) : (
+                        snippets.map((snip) => (
+                          <div
+                            key={snip._id || snip.id}
+                            onClick={() => handleSnippetClick(snip)}
+                            style={{
+                              padding: '10px 12px',
+                              background: 'rgba(255,255,255,0.01)',
+                              border: '1px solid var(--border)',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'var(--bg-hover)';
+                              e.currentTarget.style.borderColor = 'var(--border-lit)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
+                              e.currentTarget.style.borderColor = 'var(--border)';
+                            }}
+                          >
+                            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{snip.title}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {Array.isArray(snip.content) && snip.content[0]
+                                ? (snip.content[0].type === 'DIALOGUE' ? snip.content[0].data?.text : snip.content[0].data)?.replace(/<[^>]*>/g, '')
+                                : typeof snip.content === 'string' ? snip.content?.replace(/<[^>]*>/g, '') : ''}
+                            </div>
+                            {snip.tags && snip.tags.length > 0 && (
+                              <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+                                {snip.tags.map((tag, i) => (
+                                  <span key={i} style={{ fontSize: 9, background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, color: 'var(--text-muted)' }}>{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            }
-          ]}
-        />
-      </div>
+                )
+              }
+            ]}
+          />
+        </div>
       )}
 
       {/* Attachable Workspace Assets Modal */}

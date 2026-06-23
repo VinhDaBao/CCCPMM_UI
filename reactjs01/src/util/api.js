@@ -153,6 +153,8 @@ const restoreProjectSnapshotApi = (workspaceId, projectId, snapshotId) => axios.
 
 const getWorkspaceActivityLogsApi = (workspaceId) => axios.get(`/api/workspaces/${workspaceId}/activity-logs`);
 
+const sendSystemNotificationApi = (data) => axios.post('/api/notifications/system', data);
+
 const workspaceInviteApi = {
     invite: (data) =>
         axios.post(`/api/workspace-invites/${data.workspaceId}/invite`, data),
@@ -264,6 +266,14 @@ const saveWorldGraphApi = (worldId, nodes, edges) => {
 };
 
 // TOGGLE USER STATUS (Của anh em mình)
+const synthesizeTtsApi = (text, voice) => {
+    return axios.post("/api/tts/synthesize", { text, voice });
+};
+
+const getTtsVoicesApi = () => {
+    return axios.get("/api/tts/voices");
+};
+
 const toggleUserStatusApi = (targetUserId) => {
     return axios.post("/api/auth/toggle-user-status", { targetUserId });
 };
@@ -334,6 +344,7 @@ export {
     getProjectSnapshotsApi,
     restoreProjectSnapshotApi,
     getWorkspaceActivityLogsApi,
+    sendSystemNotificationApi,
     workspaceInviteApi,
     getWorkspaceMembers,
     changeMemberRole,
@@ -349,5 +360,7 @@ export {
     getAssetUrl,
     getWorldGraphApi,
     saveWorldGraphApi,
-    toggleUserStatusApi
+    toggleUserStatusApi,
+    synthesizeTtsApi,
+    getTtsVoicesApi
 };
