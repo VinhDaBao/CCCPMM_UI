@@ -266,6 +266,14 @@ const saveWorldGraphApi = (worldId, nodes, edges) => {
 };
 
 // TOGGLE USER STATUS (Của anh em mình)
+const synthesizeTtsApi = (text, voice) => {
+    return axios.post("/api/tts/synthesize", { text, voice });
+};
+
+const getTtsVoicesApi = () => {
+    return axios.get("/api/tts/voices");
+};
+
 const toggleUserStatusApi = (targetUserId) => {
     return axios.post("/api/auth/toggle-user-status", { targetUserId });
 };
@@ -352,5 +360,7 @@ export {
     getAssetUrl,
     getWorldGraphApi,
     saveWorldGraphApi,
-    toggleUserStatusApi
+    toggleUserStatusApi,
+    synthesizeTtsApi,
+    getTtsVoicesApi
 };

@@ -24,7 +24,6 @@ const BlockItem = ({
   isCurrentlyReading,
   isVoiceActive,
   isVoicePaused,
-  highlightRange,
   onUpdateBlock,
   onDeleteBlock,
   onPlayBlock,
@@ -203,38 +202,8 @@ const BlockItem = ({
     );
   };
 
-  // 3. Highlighted reading block render
-  const renderReadingHighlight = () => {
-    if (!highlightRange) return null;
-    const text = block.type === 'DIALOGUE' ? (blockContent?.text || '') : (blockContent || '');
-    const plainText = text.replace(/<[^>]*>/g, '');
-    const before = plainText.slice(0, highlightRange.start);
-    const word = plainText.slice(highlightRange.start, highlightRange.end);
-    const after = plainText.slice(highlightRange.end);
-
-    return (
-      <div style={{ padding: '14px 18px', border: '1px solid var(--accent-amber)', borderRadius: 8, background: 'rgba(232, 166, 66, 0.04)', transition: 'all 0.2s' }}>
-        {block.type === 'DIALOGUE' && (
-          <div style={{ fontWeight: 'bold', color: 'var(--accent-amber)', marginBottom: 6, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {selectedCharacter?.name || 'DIALOGUE'}:
-          </div>
-        )}
-        <div style={{ fontSize: 15, lineHeight: '1.6', color: 'var(--text-primary)', fontFamily: "'Outfit', sans-serif" }}>
-          {before}
-          <span style={{ background: 'var(--accent-amber)', color: '#000', fontWeight: 'bold', padding: '0 4px', borderRadius: 4 }}>
-            {word}
-          </span>
-          {after}
-        </div>
-      </div>
-    );
-  };
-
   // Render main block contents
   const renderBlockContent = () => {
-    if (isCurrentlyReading && highlightRange) {
-      return renderReadingHighlight();
-    }
 
     switch (block.type) {
       case 'TEXT':
