@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { notification, Spin, Modal, Input, Select, Button, Dropdown } from 'antd';
+import { notification, Spin, Modal, Input, Select, Button, Dropdown, Progress } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import TopBar from '../components/creator-layout/TopBar';
@@ -117,6 +117,28 @@ const AssetLibraryPage = () => {
   const [editingAssetId, setEditingAssetId] = useState(null);
 
   const fileInputRef = useRef(null);
+
+  const totalUsedBytes = assets.reduce(
+    (sum, asset) => sum + (asset.fileSize || 0),
+    0
+  );
+
+  const limitBytes = 500 * 1024 * 1024;
+
+  const percentUsed = Math.min(
+    100,
+    Math.round((totalUsedBytes / limitBytes) * 100)
+  );
+
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return '0 MB';
+
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   const fetchAssets = async (searchQuery = searchText) => {
     if (!CURRENT_WORKSPACE_ID) return;
@@ -333,10 +355,44 @@ const AssetLibraryPage = () => {
           <Option value="oldest">Cũ nhất</Option>
         </Select>
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept="image/*,audio/*" />
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 20 }}>
+          
+          {/* === THANH HIỂN THỊ DUNG LƯỢNG === */}
+          <div style={{ width: 200 }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              fontSize: 11, 
+              color: 'var(--text-muted)', 
+              marginBottom: 4, 
+              fontFamily: "'JetBrains Mono', monospace" 
+            }}>
+              <span>Dung lượng:</span>
+              {/* Nếu xài quá 90% thì chữ hóa Đỏ, còn không thì màu Trắng */}
+              <span style={{ color: percentUsed >= 90 ? '#ff4d4f' : 'var(--text-primary)' }}>
+                {formatBytes(totalUsedBytes)} / 500 MB
+              </span>
+            </div>
+            <Progress 
+              percent={percentUsed} 
+              showInfo={false} 
+              size="small" 
+              // Gần đầy thì thanh bar chuyển đỏ, bình thường thì màu vàng Amber
+              strokeColor={percentUsed >= 90 ? '#ff4d4f' : 'var(--accent-amber)'} 
+              trailColor="rgba(255,255,255,0.1)"
+            />
+          </div>
+
+          {/* === NÚT UPLOAD GIỮ NGUYÊN === */}
+          <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept="image/*,audio/*,video/*" />
           <button onClick={() => fileInputRef.current.click()} disabled={isUploading}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: isUploading ? "var(--text-muted)" : "var(--accent-amber)", color: "#0d0d0f", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: isUploading ? "wait" : "pointer", fontFamily: "'Lato', sans-serif" }}
+            style={{ 
+              display: "flex", alignItems: "center", gap: 8, 
+              background: isUploading ? "var(--text-muted)" : "var(--accent-amber)", 
+              color: "#0d0d0f", border: "none", borderRadius: 8, padding: "8px 16px", 
+              fontSize: 13, fontWeight: 700, cursor: isUploading ? "wait" : "pointer", 
+              fontFamily: "'Lato', sans-serif" 
+            }}
           >
             <Icon name="upload" size={14} color="#0d0d0f" />
             {isUploading ? "Đang tải..." : "Upload Media"}

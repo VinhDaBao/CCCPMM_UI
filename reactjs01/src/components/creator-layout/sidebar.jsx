@@ -34,6 +34,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   // If Admin, append Users management view
   if (user.role === 'admin') {
+    navItems.push({ id: "admin-analytics", path: "/admin/dashboard", label: "Biểu đồ Doanh thu", icon: "sparkles" });
     navItems.push({ id: "users", path: "/user", label: "Quản lý Users", icon: "user" });
   }
 

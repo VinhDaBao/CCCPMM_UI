@@ -15,6 +15,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import VerifyOtpPage from './pages/VerifyOtpPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 
 import CreatorLayout from './components/creator-layout/CreatorLayout.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
           { path: "admin/profile", element: <ProfilePage /> },
 
           { path: "workspace/world/:worldId", element: <WorkspaceWorldPage /> },
+          { path: "admin/dashboard", element: <AdminRoute><AdminDashboardPage /></AdminRoute> },
           { path: "user", element: <AdminRoute><UserPage /></AdminRoute> } 
         ]
       }

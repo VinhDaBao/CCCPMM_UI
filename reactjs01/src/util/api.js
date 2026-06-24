@@ -278,6 +278,10 @@ const toggleUserStatusApi = (targetUserId) => {
     return axios.post("/api/auth/toggle-user-status", { targetUserId });
 };
 
+const getBillingInfoApi = () => {
+    return axios.get("/api/auth/billing-info");
+};
+
 export {
     createUserApi,
     loginApi,
@@ -362,5 +366,6 @@ export {
     saveWorldGraphApi,
     toggleUserStatusApi,
     synthesizeTtsApi,
-    getTtsVoicesApi
+    getTtsVoicesApi,
+    getBillingInfoApi
 };
