@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { notification, Spin, Modal, Input, Select, Button, Dropdown } from 'antd'; // Đã bỏ Menu vì không cần nữa
+import { notification, Spin, Modal, Input, Select, Button, Dropdown } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import TopBar from '../components/creator-layout/TopBar';
@@ -17,7 +17,6 @@ const { confirm } = Modal;
 const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
   const uiType = data.type.toLowerCase();
 
-  // 🌟 ĐÃ SỬA: Chuyển sang dùng mảng items chuẩn Antd v5
   const menuItems = [
     {
       key: 'edit',
@@ -77,7 +76,6 @@ const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* 🌟 ĐÃ SỬA: Dùng menu={{ items }} và bọc Button trong thẻ div */}
       <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
         <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
           <div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>
@@ -187,24 +185,29 @@ const AssetLibraryPage = () => {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
 
-    if (
-      !file ||
-      !CURRENT_WORKSPACE_ID
-    )
-      return;
+    if (!file || !CURRENT_WORKSPACE_ID) return;
 
     setIsUploading(true);
 
     try {
-      await uploadAssetApi(
-        CURRENT_WORKSPACE_ID,
-        file,
-        "new_upload"
-      );
+      // 🔥 XỬ LÝ LÀM SẠCH TÊN FILE (Khắc phục lỗi font chữ Tiếng Việt) 🔥
+      let safeFileName = file.name;
+      safeFileName = safeFileName
+        .normalize("NFD") // Tách các dấu thanh ra khỏi chữ cái
+        .replace(/[\u0300-\u036f]/g, "") // Xóa toàn bộ dấu (á, à, ả, ã, ạ -> a)
+        .replace(/đ/g, "d").replace(/Đ/g, "D") // Chuyển chữ Đ riêng biệt
+        .replace(/\s+/g, "_") // Biến tất cả khoảng trắng thành dấu gạch dưới
+        .replace(/[^a-zA-Z0-9.\-_]/g, ""); // Gạt bỏ mọi ký tự lạ, chỉ giữ lại chữ, số, dấu chấm, gạch ngang, gạch dưới
+
+      // Khởi tạo một File object mới toanh với cái tên đã được "tẩy rửa"
+      const safeFile = new File([file], safeFileName, { type: file.type });
+      // --------------------------------------------------------------
+
+      // Đẩy safeFile lên server thay vì file gốc có dấu
+      await uploadAssetApi(CURRENT_WORKSPACE_ID, safeFile, "new_upload");
 
       notification.success({
-        message:
-          "Upload thành công!",
+        message: "Upload thành công!",
       });
 
       fetchAssets();
@@ -212,9 +215,7 @@ const AssetLibraryPage = () => {
     } catch (error) {
       notification.error({
         message: "Lỗi upload",
-        description:
-          error?.response?.data
-            ?.message,
+        description: error?.response?.data?.message,
       });
     } finally {
       setIsUploading(false);

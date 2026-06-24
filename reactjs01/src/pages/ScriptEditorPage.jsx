@@ -94,9 +94,24 @@ const ScriptEditorPage = () => {
   const audioCacheRef = useRef(new Map());
 
   const [activeTab, setActiveTab] = useState('chat');
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'AI', text: 'Hi! I am your collaborative Script Assistant. Need help writing or reviewing a dialogue block?' }
-  ]);
+  const [chatMessages, setChatMessages] = useState(() => {
+    const savedChat = localStorage.getItem(`ai_chat_${projectId}`);
+    if (savedChat) {
+      try {
+        return JSON.parse(savedChat);
+      } catch (e) {
+        console.error("Lỗi parse lịch sử chat", e);
+      }
+    }
+    return [
+      { sender: 'AI', text: 'Chào! Mình là Trợ lý Kịch bản hợp tác của bạn. Bạn có cần giúp viết hay xem lại một đoạn hội thoại không?' }
+    ];
+  });
+  useEffect(() => {
+    if (chatMessages && chatMessages.length > 0) {
+      localStorage.setItem(`ai_chat_${projectId}`, JSON.stringify(chatMessages));
+    }
+  }, [chatMessages, projectId]);
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
 
@@ -812,20 +827,49 @@ const ScriptEditorPage = () => {
   };
 
   // 7. Interactive Mock AI Chat Logic
-  const handleSendChatMessage = () => {
-    if (!chatInput.trim()) return;
-    const newMsg = { sender: 'User', text: chatInput };
-    setChatMessages((prev) => [...prev, newMsg]);
-    setChatInput('');
+  const handleSendChatMessage = async (presetMessage = null) => {
+    // Ưu tiên câu hỏi được bấm (presetMessage), nếu không có thì lấy text trong ô chat (chatInput)
+    const userMessage = typeof presetMessage === 'string' ? presetMessage : chatInput;
+    
+    if (!userMessage.trim()) return;
+
+    setChatMessages((prev) => [...prev, { sender: 'User', text: userMessage }]);
+    setChatInput(''); // Xóa ô input
     setIsAiTyping(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:8088/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: userMessage,
+          scriptContext: blocks 
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setChatMessages((prev) => [...prev, { sender: 'AI', text: data.reply }]);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err) {
+      notification.error({ message: 'AI Error', description: 'Could not connect to AI service.' });
       setChatMessages((prev) => [
-        ...prev,
-        { sender: 'AI', text: `I am currently in mock UI mode, but when the AI model is connected, I will assist with writing and formatting for your block: "${chatInput}".` }
+        ...prev, 
+        { sender: 'AI', text: 'Xin lỗi, hiện tại tổng đài AI đang bận. Bạn đợi một lát nhé!' }
       ]);
+    } finally {
       setIsAiTyping(false);
-    }, 1500);
+    }
+  };
+
+  const handleClearChat = () => {
+    const defaultMsg = [{ sender: 'AI', text: 'Đã xóa trí nhớ. Mình có thể giúp gì cho kịch bản mới của bạn?' }];
+    setChatMessages(defaultMsg);
+    localStorage.setItem(`ai_chat_${projectId}`, JSON.stringify(defaultMsg));
+    notification.success({ message: 'Đã xóa lịch sử trò chuyện' });
   };
 
   const handleExit = async () => {
@@ -856,8 +900,38 @@ const ScriptEditorPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={handleExit} />
           <div>
-            <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>{currentProject?.title || 'Script Editor'}</h2>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Collaborative Script Editor</div>
+            <h2 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              {currentProject?.title || 'Script Editor'}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Collaborative Script Editor
+              </div>
+
+              {/* Hiển thị danh sách Tags của Project */}
+              {currentProject?.tags && currentProject.tags.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {/* Dấu chấm phân cách UI cho đẹp */}
+                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border-lit)' }} />
+                  
+                  {currentProject.tags.map((tag, idx) => (
+                    <span 
+                      key={idx} 
+                      style={{ 
+                        background: 'rgba(255,255,255,0.06)', 
+                        border: '1px solid var(--border-lit)',
+                        color: 'var(--text-secondary)', 
+                        fontSize: '11px', 
+                        padding: '2px 8px', 
+                        borderRadius: '12px' 
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           {/* Online Presence Indicator */}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1226,14 +1300,55 @@ const ScriptEditorPage = () => {
                         </div>
                       )}
                     </div>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }}>
+                      {[
+                        "Tóm tắt kịch bản", 
+                        "Gợi ý một tình tiết giật gân, rùng rợn", 
+                        "Sửa lỗi chính tả", 
+                        "Viết tiếp một câu thoại"
+                      ].map((suggestion, index) => (
+                        <Button 
+                          key={index} 
+                          size="small" 
+                          onClick={() => handleSendChatMessage(suggestion)}
+                          style={{ 
+                            borderRadius: 12, 
+                            fontSize: 12, 
+                            background: 'rgba(255,255,255,0.05)', 
+                            color: 'var(--text-secondary)', 
+                            border: '1px solid var(--border)' 
+                          }}
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                      
+                      {/* Nút Xóa lịch sử nằm cuối thanh gợi ý */}
+                      <Tooltip title="Tẩy não AI (Xóa lịch sử)">
+                        <Button 
+                          size="small" 
+                          icon={<DeleteOutlined />} 
+                          danger
+                          onClick={handleClearChat}
+                          style={{ borderRadius: 12 }}
+                        />
+                      </Tooltip>
+                    </div>
+
+                    {/* Khối Input cũ của ông giữ nguyên */}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Input
-                        placeholder="Type a query for the script AI..."
+                        placeholder="Nhập một lệnh truy vấn cho script AI..."
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        onPressEnter={handleSendChatMessage}
+                        onPressEnter={() => handleSendChatMessage()}
                       />
-                      <Button type="primary" icon={<SendOutlined />} onClick={handleSendChatMessage} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000' }} />
+                      <Button 
+                        type="primary" 
+                        icon={<SendOutlined />} 
+                        onClick={() => handleSendChatMessage()} 
+                        style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000' }} 
+                      />
                     </div>
                   </div>
                 )
