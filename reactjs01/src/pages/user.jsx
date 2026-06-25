@@ -1,4 +1,4 @@
-import { notification, Table, Tag, Switch, Space, Typography, Card, Input, Select, Button } from "antd"; // 🌟 Nhớ import thêm Select
+import { notification, Table, Tag, Switch, Space, Typography, Card, Input, Select, Button } from "antd"; 
 import { useEffect, useState } from "react";
 import { getAllUsersApi, toggleUserStatusApi, sendSystemNotificationApi } from "../util/api"; 
 import TopBar from "../components/creator-layout/TopBar"; 
@@ -71,7 +71,6 @@ const UserPage = () => {
         fetchUsers();
     }, [queryParams]);
 
-    // 1. Xử lý khi gõ tìm kiếm
     const handleSearch = (value) => {
         setQueryParams({
             ...queryParams,
@@ -80,20 +79,16 @@ const UserPage = () => {
         });
     };
 
-    // 🌟 2. Xử lý khi chọn menu Sắp xếp sổ xuống
     const handleSortChange = (value) => {
-        // value sẽ có dạng "createdAt_desc", mình cắt nó ra làm 2 phần
         const [sortBy, sortOrder] = value.split('_');
-        
         setQueryParams({
             ...queryParams,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            page: 1 // Đổi tiêu chí sắp xếp thì nên quay về trang 1 cho chuẩn
+            page: 1 
         });
     };
 
-    // 3. Xử lý khi đổi trang (Đã bỏ phần lấy sorter từ tiêu đề cột)
     const handleTableChange = (pagination) => {
         setQueryParams({
             ...queryParams,
@@ -120,7 +115,6 @@ const UserPage = () => {
         }
     };
 
-    // 🌟 4. Cột của Bảng (Đã xóa sorter: true)
     const columns = [
         {
             title: "Họ và Tên",
@@ -143,6 +137,25 @@ const UserPage = () => {
                     {role.toUpperCase()}
                 </Tag>
             )
+        },
+        // 👇 CỘT GÓI DỊCH VỤ ĐÃ HOÀN THIỆN 👇
+        {
+            title: "Gói dịch vụ",
+            key: "plan",
+            align: "center",
+            render: (_, record) => {
+                const currentPlanName = record?.subscription?.planId?.name || "FREE";
+                const isPro = currentPlanName.toUpperCase().includes("PRO");
+
+                return (
+                    <Tag 
+                        color={isPro ? "gold" : "default"} 
+                        style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                        {isPro ? "PRO" : "FREE"}
+                    </Tag>
+                );
+            }
         },
         {
             title: "Trạng thái",
@@ -177,7 +190,6 @@ const UserPage = () => {
             <TopBar title="Quản trị Hệ thống" subtitle="Quản lý Người dùng" />
             
             <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
-                {/* 📣 Gửi thông báo hệ thống */}
                 <Card 
                     bordered={false} 
                     style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", marginBottom: 24 }}
@@ -221,9 +233,7 @@ const UserPage = () => {
                             <p style={{ color: "var(--text-muted)", margin: 0 }}>Tổng số: {totalUsers} người dùng</p>
                         </div>
                         
-                        {/* 🌟 KHU VỰC BỘ LỌC BÊN PHẢI */}
                         <div style={{ display: 'flex', gap: '12px' }}>
-                            {/* Menu sổ xuống */}
                             <Select
                                 defaultValue="createdAt_desc"
                                 style={{ width: 160 }}
@@ -236,7 +246,6 @@ const UserPage = () => {
                                 ]}
                             />
                             
-                            {/* Thanh tìm kiếm */}
                             <Search 
                                 placeholder="Tìm theo Tên hoặc Email..." 
                                 allowClear 
