@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { notification, Spin, Modal, Input, Select, Button, Dropdown } from 'antd'; // Đã bỏ Menu vì không cần nữa
 import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
-import TopBar from '../components/creator-layout/TopBar';
+import TopBar from '../components/creator-layout/topBar';
 import Icon from '../components/creator-layout/Icons';
 import { getAllAssetsApi, uploadAssetApi, getWorkspaceTagsApi, updateAssetApi, deleteAssetApi, getAssetUrl } from '../util/api';
 

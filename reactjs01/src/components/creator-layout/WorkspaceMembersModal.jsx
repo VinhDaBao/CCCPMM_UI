@@ -97,6 +97,7 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
                     size="middle"
                     onChange={(role) =>
                       changeRole.mutate({
+                        workspaceId,
                         memberId: m._id,
                         role,
                       })
