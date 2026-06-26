@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams , useOutletContext} from 'react-router-dom';
+import { useParams , useOutletContext, useNavigate} from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   ReactFlow,
@@ -10,6 +10,7 @@ import {
   useEdgesState,
   addEdge,
   ReactFlowProvider,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -32,6 +33,8 @@ const edgeTypes = { customEdge: CustomRelationshipEdge };
 const WorldGraphCanvas = () => {
   const { worldId } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { screenToFlowPosition } = useReactFlow(); //lấy hàm screenToFlowPosition từ hook ra sử dụng
 
   const { activeWorkspaceId } = useOutletContext(); // Lấy mã Workspace động khi người dùng click đổi trên Sidebar tổng
   const { data: realCharacters, isLoading: isLoadingChars } = useCharacters(activeWorkspaceId);
@@ -76,14 +79,25 @@ const WorldGraphCanvas = () => {
     loadWorkspaceAssets();
   }, [worldId, activeWorkspaceId]);
 
+useEffect(() => {
+    // Nếu phát hiện activeWorkspaceId từ Sidebar tổng đã đổi sang mã mới,
+    if (activeWorkspaceId && worldId && activeWorkspaceId !== worldId) {
+
+      console.log(">>> Phát hiện lệch pha URL! Ép điều hướng sang Workspace mới:", activeWorkspaceId);
+
+      // Tiến hành ép thanh URL nhảy sang tuyến đường mới của Workspace vừa chọn
+      navigate(`/workspace/world/${activeWorkspaceId}`);
+    }
+  }, [activeWorkspaceId, worldId, navigate]);
+
   // Luồng tải đồ thị và quét khôi phục danh sách Tab động từ DB
   useEffect(() => {
     const loadGraphData = async () => {
-      if (!worldId) return;
+      if (!activeWorkspaceId) return;
 
       dispatch(worldActionStart());
       try {
-        const res = await getWorldGraphApi(worldId, activeTab);
+        const res = await getWorldGraphApi(activeWorkspaceId, activeTab);
         if (res && res.errCode === 0) {
           const nodesData = res.data?.nodes || [];
           const edgesData = res.data?.edges || [];
@@ -119,8 +133,8 @@ const WorldGraphCanvas = () => {
           setEdges(formattedEdges);
           dispatch(fetchGraphSuccess({ nodes: nodesData, edges: edgesData }));
 
-          // Khôi phục mảng Tab lưu tạm theo World và Workspace tương ứng
-          const savedTabs = localStorage.getItem(`tabs_${activeWorkspaceId}_${worldId}`);
+          // Khôi phục mảng Tab đồng bộ theo activeWorkspaceId
+          const savedTabs = localStorage.getItem(`tabs_${activeWorkspaceId}`);
           if (savedTabs) {
             setTabsList(JSON.parse(savedTabs));
           } else {
@@ -128,7 +142,7 @@ const WorldGraphCanvas = () => {
           }
         }
       } catch (error) {
-        // FIX VẤN ĐỀ 1: Trả về tham chiếu sạch, triệt tiêu hoàn toàn mảng mock cũ hồi sinh
+        //Trả về tham chiếu sạch, triệt tiêu hoàn toàn mảng mock cũ hồi sinh
         setNodes((prev) => prev.length === 0 ? prev : []);
         setEdges((prev) => prev.length === 0 ? prev : []);
         dispatch(fetchGraphSuccess({ nodes: [], edges: [] }));
@@ -137,13 +151,13 @@ const WorldGraphCanvas = () => {
 
     loadGraphData();
     // Thêm activeWorkspaceId vào mảng phụ thuộc để kích hoạt re-fetch lập tức khi đổi Workspace
-  }, [worldId, activeTab, activeWorkspaceId, dispatch, setNodes, setEdges]);
+  }, [ activeTab, activeWorkspaceId, dispatch, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params) => {
       const isDuplicate = edges.some((e) => (e.source === params.source && e.target === params.target) || (e.source === params.target && e.target === params.source));
       if (isDuplicate) {
-        notification.warning({ message: 'Ràng buộc kết nối', description: 'Giữa hai nhân vật đã có đường quan hệ!' });
+        notification.warning({ message: 'Connection Restriction', description: 'A relationship link already exists between these characters!' });
         return;
       }
 
@@ -166,6 +180,7 @@ const WorldGraphCanvas = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+//tính toán vị trí con trỏ chuột thả
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
@@ -174,7 +189,13 @@ const WorldGraphCanvas = () => {
       if (!rawData) return;
 
       const character = JSON.parse(rawData);
-      const position = { x: event.clientX - 350, y: event.clientY - 150 };
+
+      // Tính toán vị trí thông minh, thích ứng hoàn hảo với các chế độ Zoom/Pan
+      const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+      });
+
       const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
 
       const newNode = {
@@ -191,9 +212,9 @@ const WorldGraphCanvas = () => {
       };
 
       setNodes((nds) => nds.concat(newNode));
-      notification.success({ message: 'Thành công', description: `Đã nạp nhân vật ${character.name} vào sơ đồ!` });
+      notification.success({ message: 'Success', description: `Successfully loaded ${character.name} into the diagram!` });
     },
-    [setNodes]
+    [screenToFlowPosition, setNodes]
   );
 
   const onNodeClick = useCallback((event, node) => {
@@ -237,23 +258,23 @@ const WorldGraphCanvas = () => {
     if (!selectedElement || elementType !== 'edge') return;
     setEdges((eds) => eds.filter((e) => e.id !== selectedElement.id));
     setDrawerOpen(false);
-    notification.success({ message: 'Thông báo', description: 'Đã gỡ bỏ đường quan hệ này!' });
+    notification.success({ message: 'Notification', description: 'Relationship link removed successfully!' });
   };
 
   const handleSaveGraph = async () => {
-    if (!worldId) return;
+    if (!activeWorkspaceId) return;
     setIsSaving(true);
     try {
         const payload = { nodes, edges, stageId: activeTab };
-        const res = await saveWorldGraphApi(worldId, payload);
+        const res = await saveWorldGraphApi(activeWorkspaceId, payload);
         if (res && res.errCode === 0) {
-          notification.success({ message: 'Thành công', description: 'Sơ đồ đã được lưu đè vào MongoDB!' });
+          notification.success({ message: 'Success', description: 'Relationship graph saved successfully!' });
           dispatch(fetchGraphSuccess({ nodes: res.data?.nodes || nodes, edges: res.data?.edges || edges }));
           localStorage.setItem(`tabs_${activeWorkspaceId}_${worldId}`, JSON.stringify(tabsList));
         }
       } catch (error) {
         dispatch(worldActionFail(error.message));
-        notification.error({ message: 'Lỗi', description: 'Gặp sự cố khi kết nối lưu sơ đồ!' });
+        notification.error({ message: 'Error', description: 'Failed to synchronize diagram data with server!' });
       } finally {
         setIsSaving(false);
       }
@@ -287,19 +308,19 @@ const WorldGraphCanvas = () => {
     setNodes((nds) => nds.filter((n) => n.id !== targetId));
     setEdges((eds) => eds.filter((e) => e.source !== targetId && e.target !== targetId));
     setDrawerOpen(false);
-    notification.success({ message: 'Thông báo', description: 'Đã xóa nhân vật khỏi sơ đồ!' });
+    notification.success({ message: 'Notification', description: 'Character removed from the diagram!' });
   };
 
   const sourceNodeName = nodes.find(n => n.id === selectedElement?.source)?.data?.label || 'Node A';
   const targetNodeName = nodes.find(n => n.id === selectedElement?.target)?.data?.label || 'Node B';
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gray-50 overflow-hidden">
-      <div className="bg-white px-6 pt-2 border-b border-gray-100 flex items-center justify-between shrink-0">
-        <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key)} className="mb-[-1px]" items={tabsList.map(tab => ({
-          key: tab.key, label: <span className="flex items-center gap-2 group">{tab.label}<span className="text-xs text-gray-400 hover:text-blue-500 cursor-pointer hidden group-hover:inline" onClick={(e) => { e.stopPropagation(); handleOpenRenameModal(tab.key); }}>✏️</span></span>
+    <div className="w-full h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
+      <div className="bg-white px-6 pt-2 border-b border-gray-100 flex items-center justify-between shrink-0 font-sans">
+        <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key)} className="mb-[-1px] font-sans" items={tabsList.map(tab => ({
+          key: tab.key, label: <span className="flex items-center gap-2 group font-sans font-medium text-sm">{tab.label}<span className="text-xs text-gray-400 hover:text-blue-500 cursor-pointer hidden group-hover:inline" onClick={(e) => { e.stopPropagation(); handleOpenRenameModal(tab.key); }}>✏️</span></span>
         }))} />
-        <Button type="dashed" size="small" onClick={() => {
+        <Button type="dashed" size="small" className="font-sans" onClick={() => {
           const newKey = `stage_${Date.now()}`;
           const updatedTabs = [...tabsList, { key: newKey, label: `Stage ${tabsList.length + 1}` }];
           setTabsList(updatedTabs);
@@ -308,36 +329,36 @@ const WorldGraphCanvas = () => {
         }}>+ Add Stage Tab</Button>
       </div>
 
-      <div className="h-16 border-b border-gray-200 bg-white px-6 flex items-center justify-between shadow-sm shrink-0">
-        <h1 className="text-lg font-bold text-gray-800">Relationship Diagram</h1>
-        <button onClick={handleSaveGraph} disabled={isSaving} className={`px-5 py-2.5 rounded-xl font-bold text-sm text-white shadow-md ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
-          {isSaving ? 'Storing...' : 'SAVE GRAPH'}
+      <div className="h-16 border-b border-gray-200 bg-white px-6 flex items-center justify-between shadow-sm shrink-0 font-sans">
+        <h1 className="text-lg font-bold text-gray-800 font-sans tracking-tight">Relationship Diagram</h1>
+        <button onClick={handleSaveGraph} disabled={isSaving} className={`px-5 py-2.5 rounded-xl font-bold text-sm text-white shadow-md font-sans tracking-wide transition-all ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          {isSaving ? 'STORING...' : 'SAVE GRAPH'}
         </button>
       </div>
 
-      <div className="flex-1 flex w-full h-full overflow-hidden">
-        <div className="w-72 bg-white border-r border-gray-200 p-4 flex flex-col gap-3 overflow-y-auto shrink-0 select-none text-left">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Workspace Characters</h3>
+      <div className="flex-1 flex w-full h-full overflow-hidden font-sans">
+        <div className="w-72 bg-white border-r border-gray-200 p-4 flex flex-col gap-3 overflow-y-auto shrink-0 select-none text-left font-sans">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-sans">Workspace Characters</h3>
           {isLoadingChars ? (
-            <div className="text-center py-6"><Spin size="small" /></div>
+            <div className="text-center py-6 font-sans"><Spin size="small" /></div>
           ) : realCharacters?.length > 0 ? (
             realCharacters.map((char) => (
               <div
                 key={char._id}
                 draggable
                 onDragStart={(e) => e.dataTransfer.setData('application/reactflow', JSON.stringify(char))}
-                className="p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-blue-50 hover:border-blue-200 cursor-grab active:cursor-grabbing transition-all flex flex-col gap-0.5 shadow-sm"
+                className="p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-blue-50 hover:border-blue-200 cursor-grab active:cursor-grabbing transition-all flex flex-col gap-0.5 shadow-sm font-sans"
               >
-                <span className="text-sm font-bold text-gray-700">{char.name}</span>
-                <span className="text-xs text-gray-400 font-medium">{char.role || 'Character'}</span>
+                <span className="text-sm font-bold text-gray-700 font-sans">{char.name}</span>
+                <span className="text-xs text-gray-400 font-medium font-sans">{char.role || 'Character'}</span>
               </div>
             ))
           ) : (
-            <span className="text-xs text-gray-400 italic">Chưa có nhân vật nào trong kịch bản.</span>
+            <span className="text-xs text-gray-400 italic font-sans">No characters found in the workspace.</span>
           )}
         </div>
 
-        <div className="flex-1 h-full relative" onDrop={onDrop} onDragOver={onDragOver}>
+        <div className="flex-1 h-full relative font-sans" onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={onNodeClick} onEdgeClick={onEdgeClick} fitView>
             <Controls />
             <MiniMap nodeColor={() => '#1677ff'} />
@@ -347,13 +368,19 @@ const WorldGraphCanvas = () => {
       </div>
 
       <WorldConfigDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} elementType={elementType} selectedElement={selectedElement} assetImages={assetImages} relationSideA={relationSideA} relationSideB={relationSideB} handleUpdateNodeField={handleUpdateNodeField} handleUpdateBidirectionalEdge={handleUpdateBidirectionalEdge} handleUpdateEdgeColor={handleUpdateEdgeColor} handleDeleteNode={handleDeleteNode} handleDeleteEdge={handleDeleteEdge} sourceNodeName={sourceNodeName} targetNodeName={targetNodeName} />
-      <Modal title="Đổi Tên Giai Đoạn Sơ Đồ" open={isRenameModalOpen} onOk={handleRenameTabSubmit} onCancel={() => setIsRenameModalOpen(false)} okText="Xác nhận" cancelText="Hủy" centered><div className="pt-3"><label className="text-xs font-bold text-gray-400 block mb-1">Stage name</label><Input value={newTabName} onChange={(e) => setNewTabName(e.target.value)} placeholder="Ví dụ: Hồi 1: Gặp gỡ..." /></div></Modal>
+      <Modal title={<span className="font-sans font-bold text-base">Rename Diagram Stage</span>} open={isRenameModalOpen} onOk={handleRenameTabSubmit} onCancel={() => setIsRenameModalOpen(false)} okText="Confirm" cancelText="Cancel" centered className="font-sans"><div className="pt-3 font-sans"><label className="text-xs font-bold text-gray-400 block mb-1 font-sans">Stage Name</label><Input className="font-sans" value={newTabName} onChange={(e) => setNewTabName(e.target.value)} placeholder="e.g. Act 1: The Gathering..." /></div></Modal>
     </div>
   );
 };
 
 const WorkspaceWorldPage = () => {
-  return <ReactFlowProvider><WorldGraphCanvas /></ReactFlowProvider>;
+    //activeWorkspaceId từ Context ở cấp màng bọc Provider để làm chìa khóa định danh (Key)
+  const { activeWorkspaceId } = useOutletContext();
+  return (
+      <ReactFlowProvider>
+          <WorldGraphCanvas key={activeWorkspaceId} />
+      </ReactFlowProvider>
+  )
 };
 
 export default WorkspaceWorldPage;
