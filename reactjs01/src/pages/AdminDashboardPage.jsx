@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Spin, Typography } from 'antd';
+import { Card, Row, Col, Statistic, Spin, notification } from 'antd';
 import { 
   UserOutlined, 
   DollarOutlined, 
   CrownOutlined, 
-  RiseOutlined 
+  RiseOutlined,
+  PieChartOutlined
 } from '@ant-design/icons';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line
+  PieChart, Pie, Cell
 } from 'recharts';
+import TopBar from '../components/creator-layout/TopBar';
 
-const { Title } = Typography;
+// IMPORT API
+import { getAdminDashboardStatsApi } from '../util/api'; 
 
-// Màu sắc chủ đạo cho các biểu đồ (Đồng bộ với theme của app)
-const COLORS = ['#d97706', '#3b82f6', '#10b981', '#8b5cf6'];
+// Chỉ để lại 2 màu: Cam (FREE) và Xanh dương (PRO)
+const COLORS = ['#d97706', '#3b82f6'];
 
 const AdminDashboardPage = () => {
   const [loading, setLoading] = useState(true);
@@ -26,29 +29,26 @@ const AdminDashboardPage = () => {
     planData: []
   });
 
-  // Giả lập gọi API lấy dữ liệu thống kê (Sau này thay bằng axios/fetch thật)
+  // ĐÃ FIX LỖI Ở ĐÂY: Sửa res.data.errCode thành res.errCode
   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        totalUsers: 1250,
-        activeSubscriptions: 450,
-        totalRevenue: 125000000,
-        revenueData: [
-          { month: 'Tháng 1', revenue: 15000000 },
-          { month: 'Tháng 2', revenue: 18000000 },
-          { month: 'Tháng 3', revenue: 12000000 },
-          { month: 'Tháng 4', revenue: 25000000 },
-          { month: 'Tháng 5', revenue: 22000000 },
-          { month: 'Tháng 6', revenue: 33000000 },
-        ],
-        planData: [
-          { name: 'Gói FREE', value: 800 },
-          { name: 'Gói PRO', value: 300 },
-          { name: 'Gói ENTERPRISE', value: 150 },
-        ]
-      });
-      setLoading(false);
-    }, 1000);
+    const fetchDashboardStats = async () => {
+      try {
+        const res = await getAdminDashboardStatsApi();
+        
+        // Cấu trúc chuẩn khớp với api.js của ông
+        if (res && res.errCode === 0) {
+          setStats(res.data);
+        } else {
+          notification.error({ message: "Lỗi tải thống kê", description: res?.message });
+        }
+      } catch (error) {
+        notification.error({ message: "Lỗi hệ thống", description: "Không thể lấy dữ liệu Dashboard" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
   }, []);
 
   // Format tiền tệ VNĐ
@@ -65,110 +65,115 @@ const AdminDashboardPage = () => {
   }
 
   return (
-    <div style={{ padding: '24px', background: 'var(--bg-void)', minHeight: '100vh', overflowY: 'auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2} style={{ color: 'var(--text-primary)', margin: 0 }}>Quản trị hệ thống (Admin)</Title>
-        <div style={{ color: 'var(--text-muted)' }}>Theo dõi doanh thu và tình trạng người dùng</div>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
+      <TopBar title="Admin Dashboard" subtitle="Thống kê doanh thu & Người dùng" />
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
+        
+        {/* Dãy Thẻ Thống Kê Tổng Quan */}
+        <Row gutter={[20, 20]} style={{ marginBottom: 24 }}>
+          <Col xs={24} sm={8}>
+            <Card style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+              <Statistic 
+                title={<span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>Tổng người dùng</span>} 
+                value={stats.totalUsers} 
+                prefix={<UserOutlined style={{ color: '#3b82f6', marginRight: 8 }} />} 
+                valueStyle={{ color: 'var(--text-primary)', fontFamily: "'Instrument Serif', serif", fontSize: 38, marginTop: 4 }} 
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+              <Statistic 
+                title={<span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>Đăng ký PRO</span>} 
+                value={stats.activeSubscriptions} 
+                prefix={<CrownOutlined style={{ color: '#10b981', marginRight: 8 }} />} 
+                valueStyle={{ color: 'var(--text-primary)', fontFamily: "'Instrument Serif', serif", fontSize: 38, marginTop: 4 }} 
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+              <Statistic 
+                title={<span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>Tổng doanh thu</span>} 
+                value={stats.totalRevenue} 
+                formatter={(value) => formatVND(value)}
+                prefix={<DollarOutlined style={{ color: 'var(--accent-amber)', marginRight: 8 }} />} 
+                valueStyle={{ color: 'var(--accent-amber)', fontFamily: "'Instrument Serif', serif", fontSize: 38, marginTop: 4 }} 
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Hàng Biểu Đồ */}
+        <Row gutter={[20, 20]}>
+          {/* Biểu Đồ Cột: Doanh thu theo tháng */}
+          <Col xs={24} lg={16}>
+            <Card 
+              title={<span style={{ color: 'var(--text-primary)', fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700 }}><RiseOutlined style={{ marginRight: 8 }}/> Doanh thu 6 tháng gần nhất</span>} 
+              style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, height: '100%', boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}
+            >
+              <div style={{ width: '100%', height: 350 }}>
+                <ResponsiveContainer>
+                  <BarChart data={stats.revenueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} style={{ fontFamily: "'Lato', sans-serif", fontSize: 12 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="month" stroke="var(--text-muted)" axisLine={false} tickLine={false} dy={10} />
+                    <YAxis 
+                      stroke="var(--text-muted)" 
+                      axisLine={false} 
+                      tickLine={false}
+                      tickFormatter={(value) => value > 0 ? `${value / 1000}k` : '0'} 
+                      dx={-10}
+                    />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontFamily: "'Lato', sans-serif", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                      formatter={(value) => [formatVND(value), 'Doanh thu']}
+                      cursor={{ fill: 'var(--bg-hover)' }}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: 20 }} />
+                    <Bar dataKey="revenue" name="Doanh thu (VNĐ)" fill="var(--accent-amber)" radius={[6, 6, 0, 0]} barSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </Col>
+
+          {/* Biểu Đồ Tròn: Tỉ lệ các gói */}
+          <Col xs={24} lg={8}>
+            <Card 
+              title={<span style={{ color: 'var(--text-primary)', fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700 }}><PieChartOutlined style={{ marginRight: 8 }}/> Tỉ lệ gói tài khoản</span>} 
+              style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, height: '100%', boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}
+            >
+              <div style={{ width: '100%', height: 350 }}>
+                <ResponsiveContainer>
+                  <PieChart style={{ fontFamily: "'Lato', sans-serif", fontSize: 13 }}>
+                    <Pie
+                      data={stats.planData}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={80}
+                      outerRadius={110}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {stats.planData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)', borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                      itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                      formatter={(value) => [`${value} User`, 'Số lượng']}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: 'var(--text-primary)', fontSize: 12 }}/>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </Col>
+        </Row>
       </div>
-
-      {/* Dãy Thẻ Thống Kê Tổng Quan */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12 }}>
-            <Statistic 
-              title={<span style={{ color: 'var(--text-secondary)' }}>Tổng người dùng</span>} 
-              value={stats.totalUsers} 
-              prefix={<UserOutlined style={{ color: '#3b82f6' }} />} 
-              valueStyle={{ color: 'var(--text-primary)', fontWeight: 'bold' }} 
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12 }}>
-            <Statistic 
-              title={<span style={{ color: 'var(--text-secondary)' }}>Đăng ký Premium (Active)</span>} 
-              value={stats.activeSubscriptions} 
-              prefix={<CrownOutlined style={{ color: '#10b981' }} />} 
-              valueStyle={{ color: 'var(--text-primary)', fontWeight: 'bold' }} 
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12 }}>
-            <Statistic 
-              title={<span style={{ color: 'var(--text-secondary)' }}>Tổng doanh thu</span>} 
-              value={stats.totalRevenue} 
-              formatter={(value) => formatVND(value)}
-              prefix={<DollarOutlined style={{ color: '#d97706' }} />} 
-              valueStyle={{ color: 'var(--text-primary)', fontWeight: 'bold' }} 
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Hàng Biểu Đồ */}
-      <Row gutter={[16, 16]}>
-        {/* Biểu Đồ Cột: Doanh thu theo tháng */}
-        <Col xs={24} lg={16}>
-          <Card 
-            title={<span style={{ color: 'var(--text-primary)' }}><RiseOutlined /> Doanh thu 6 tháng gần nhất</span>} 
-            style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, height: '100%' }}
-          >
-            <div style={{ width: '100%', height: 350 }}>
-              <ResponsiveContainer>
-                <BarChart data={stats.revenueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="month" stroke="var(--text-muted)" />
-                  <YAxis 
-                    stroke="var(--text-muted)" 
-                    tickFormatter={(value) => `${value / 1000000}tr`} 
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)', borderRadius: 8, color: 'var(--text-primary)' }}
-                    formatter={(value) => [formatVND(value), 'Doanh thu']}
-                  />
-                  <Legend />
-                  <Bar dataKey="revenue" name="Doanh thu (VNĐ)" fill="var(--accent-amber)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </Col>
-
-        {/* Biểu Đồ Tròn: Tỉ lệ các gói */}
-        <Col xs={24} lg={8}>
-          <Card 
-            title={<span style={{ color: 'var(--text-primary)' }}><PieChart /> Tỉ lệ gói tài khoản</span>} 
-            style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', borderRadius: 12, height: '100%' }}
-          >
-            <div style={{ width: '100%', height: 350 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={stats.planData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={110}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {stats.planData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)', borderRadius: 8 }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} wrapperStyle={{ color: 'var(--text-primary)' }}/>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </Col>
-      </Row>
     </div>
   );
 };

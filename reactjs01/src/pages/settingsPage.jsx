@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { notification, Spin, Modal, Input, Select, Button, Dropdown, Progress, Tag, Divider } from 'antd';
+import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { notification, Spin } from 'antd';
 import TopBar from '../components/creator-layout/TopBar';
-// Nhớ import getBillingInfoApi ở đây!
-import { updateProfileApi, getBillingInfoApi } from '../util/api'; 
 import { loginSuccess } from '../redux/authSlice';
+import Icon from '../components/creator-layout/Icons';
+import { updateProfileApi, getBillingInfoApi, createPayOSLinkApi } from '../util/api';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -26,6 +28,11 @@ const SettingsPage = () => {
   // === STATE CHO BILLING & DUNG LƯỢNG (DỮ LIỆU THẬT) ===
   const [billingInfo, setBillingInfo] = useState(null);
   const [loadingBilling, setLoadingBilling] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  // === STATE CHO POPUP CHI TIẾT THANH TOÁN (MỚI THÊM) ===
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
 
   // Khởi tạo dữ liệu Profile
   useEffect(() => {
@@ -42,7 +49,6 @@ const SettingsPage = () => {
         setLoadingBilling(true);
         try {
           const res = await getBillingInfoApi();
-          // Cấu trúc trả về tùy thuộc axios (có thể là res.data.data hoặc res.data)
           setBillingInfo(res.data?.data || res.data); 
         } catch (error) {
           notification.error({ message: "Lỗi tải dữ liệu gói cước" });
@@ -57,10 +63,8 @@ const SettingsPage = () => {
   const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
   const displayEmail = user.email || "creator@studio.com";
 
-  // Hàm chuyển đổi Bytes sang MB
   const toMB = (bytes) => (bytes / (1024 * 1024)).toFixed(2);
 
-  // --- CÁC HÀM XỬ LÝ PROFILE ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -89,19 +93,47 @@ const SettingsPage = () => {
     }
   };
 
-  // ==========================================
-  // TÍNH TOÁN THÔNG SỐ HIỂN THỊ DUNG LƯỢNG TỪ API
-  // ==========================================
   const planName = billingInfo?.plan?.name || "FREE PLAN";
   const limitMB = billingInfo?.plan?.storageLimitMB || 500;
   const workspaceLimit = billingInfo?.plan?.workspaceLimit === 9999 ? "Không giới hạn" : billingInfo?.plan?.workspaceLimit || 3;
+  const subscription = billingInfo?.subscription;
   
   const totalUsedMB = billingInfo ? toMB(billingInfo.storage.totalUsedBytes) : 0;
   const audioMB = billingInfo ? toMB(billingInfo.storage.audioVideoBytes) : 0;
   const imageMB = billingInfo ? toMB(billingInfo.storage.imageBytes) : 0;
   
-  // Tính phần trăm thanh bar (không vượt quá 100%)
   const pct = billingInfo ? Math.min(100, (billingInfo.storage.totalUsedBytes / billingInfo.storage.limitBytes) * 100) : 0;
+
+  const handleUpgradePRO = async () => {
+    setIsUpgrading(true);
+    try {
+      const fakePlanId = "6a3ce12a08a8e8991f3d1fb8";
+      const amount = 2000;
+      const res = await createPayOSLinkApi(fakePlanId, amount);
+
+      const payload = res?.data?.data || res?.data || res;
+      const checkoutUrl = payload?.checkoutUrl;
+
+      if (checkoutUrl) {
+        window.location.assign(checkoutUrl); 
+      } else {
+        notification.error({ message: "Không lấy được link thanh toán!" });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Lỗi tạo thanh toán",
+        description: error?.response?.data?.message || "Không thể kết nối đến cổng thanh toán"
+      });
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
+  // HÀM MỞ POPUP CHI TIẾT
+  const openPaymentDetails = (payment) => {
+    setSelectedPayment(payment);
+    setIsPaymentModalVisible(true);
+  };
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
@@ -127,7 +159,6 @@ const SettingsPage = () => {
           {/* TAB 1: TÀI KHOẢN */}
           {tab === "account" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 28 }} className="fade-up">
-              {/* Avatar Info */}
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="avatar" style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--border-lit)", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }} />
@@ -145,7 +176,6 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              {/* Form fields */}
               <div style={{ display: "flex", gap: 20 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>HỌ VÀ TÊN</div>
@@ -157,7 +187,6 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              {/* Display mode */}
               <div>
                 <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginBottom: 12 }}>GIAO DIỆN MÀN HÌNH</div>
                 <div style={{ display: "flex", gap: 10 }}>
@@ -175,14 +204,13 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {/* TAB 2: GÓI & DUNG LƯỢNG (REAL DATA) */}
+          {/* TAB 2: GÓI & DUNG LƯỢNG */}
           {tab === "package" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }} className="fade-up">
               {loadingBilling ? (
                 <div style={{ padding: 40, textAlign: "center" }}><Spin size="large" tip="Đang tải dữ liệu dung lượng..." /></div>
               ) : (
                 <>
-                  {/* Current plan */}
                   <div style={{ background: "var(--bg-raised)", borderRadius: 12, padding: "20px 24px", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
                     <div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em" }}>GÓI HIỆN TẠI CỦA BẠN</div>
@@ -191,16 +219,51 @@ const SettingsPage = () => {
                       </div>
                       <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
                         {limitMB} MB dung lượng · Giới hạn: {workspaceLimit} Workspace
+                        
+                        {/* Tính toán ngày hết hạn thông minh */}
+                        {(() => {
+                          if (planName.includes("FREE")) return null;
+                          
+                          // Tìm hóa đơn SUCCESS gần nhất
+                          const latestSuccessPayment = billingInfo?.payments?.find(p => p.status === 'SUCCESS');
+                          let expireDate = subscription?.endDate;
+                          
+                          // Nếu Backend không trả về endDate, tự động tính = Ngày mua + 30 ngày
+                          if (!expireDate && latestSuccessPayment) {
+                            const createdDate = new Date(latestSuccessPayment.createdAt);
+                            createdDate.setDate(createdDate.getDate() + 30);
+                            expireDate = createdDate;
+                          }
+
+                          if (expireDate) {
+                            return (
+                              <div style={{ marginTop: 6, color: "var(--accent-sage)", fontWeight: 600, fontSize: 12 }}>
+                                ⏳ Hiệu lực đến: {new Date(expireDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(expireDate).toLocaleDateString('vi-VN')}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        
                       </div>
                     </div>
                     {planName.includes("FREE") && (
-                      <button style={{ background: "linear-gradient(135deg, var(--accent-amber), var(--accent-rust))", color: "#fff", border: "none", borderRadius: 9, padding: "12px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(176, 58, 34, 0.2)" }}>
-                        Nâng cấp PRO ✦
+                      <button 
+                        onClick={handleUpgradePRO}
+                        disabled={isUpgrading}
+                        style={{ 
+                          background: isUpgrading ? "var(--text-muted)" : "linear-gradient(135deg, var(--accent-amber), var(--accent-rust))", 
+                          color: "#fff", border: "none", borderRadius: 9, padding: "12px 24px", fontSize: 13, fontWeight: 700, 
+                          cursor: isUpgrading ? "wait" : "pointer", fontFamily: "'Lato', sans-serif", 
+                          boxShadow: isUpgrading ? "none" : "0 4px 12px rgba(176, 58, 34, 0.2)",
+                          transition: "all 0.2s"
+                        }}
+                      >
+                        {isUpgrading ? "Đang tạo Link..." : "Nâng cấp PRO ✦"}
                       </button>
                     )}
                   </div>
 
-                  {/* Storage */}
                   <div style={{ background: "var(--bg-raised)", borderRadius: 12, padding: "24px", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
                     <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em", marginBottom: 16 }}>DUNG LƯỢNG LƯU TRỮ TỔNG</div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
@@ -208,12 +271,10 @@ const SettingsPage = () => {
                       <span style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace" }}>{limitMB} MB tổng</span>
                     </div>
                     
-                    {/* Main progress bar */}
                     <div style={{ height: 10, background: "var(--bg-active)", borderRadius: 5, overflow: "hidden", marginBottom: 20 }}>
                       <div style={{ height: "100%", width: `${pct}%`, background: pct > 80 ? "var(--accent-rust)" : "linear-gradient(90deg, var(--accent-amber), var(--accent-rust))", borderRadius: 5, transition: "width 0.6s ease" }} />
                     </div>
                     
-                    {/* Breakdown */}
                     <div style={{ display: "flex", gap: 20 }}>
                       {[["Âm thanh & Video", audioMB, "var(--accent-ice)"], ["Hình ảnh & Khác", imageMB, "var(--accent-sage)"]].map(([label, mb, color]) => (
                         <div key={label} style={{ flex: 1 }}>
@@ -232,12 +293,11 @@ const SettingsPage = () => {
                     </div>
                   </div>
 
-                  {/* Billing history */}
+                  {/* LỊCH SỬ THANH TOÁN CÓ THỂ CLICK */}
                   <div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em", marginBottom: 12, marginTop: 8 }}>LỊCH SỬ THANH TOÁN</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em", marginBottom: 12, marginTop: 8 }}>LỊCH SỬ THANH TOÁN (Click để xem chi tiết)</div>
                     
                     <div style={{ background: "var(--bg-raised)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
-                      {/* Default Mặc định luôn có dòng Gói Free */}
                       <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>Gói FREE — Đăng ký lần đầu</div>
@@ -248,23 +308,51 @@ const SettingsPage = () => {
                         </span>
                       </div>
 
-                      {/* Map các gói thanh toán thật từ DB */}
                       {billingInfo?.payments && billingInfo.payments.length > 0 ? (
-                        billingInfo.payments.map((payment, idx) => (
-                          <div key={idx} style={{ padding: "16px 20px", borderBottom: idx !== billingInfo.payments.length -1 ? "1px solid var(--border)" : "none", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.02)" }}>
-                            <div>
-                              <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>
-                                Nâng cấp {payment.planSnapshot?.name || "Gói Premium"} — {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payment.amount)}
+                        billingInfo.payments.map((payment, idx) => {
+                          // Setup màu sắc theo trạng thái
+                          let statusColor = "var(--text-muted)";
+                          let statusBg = "rgba(255,255,255,0.05)";
+                          if (payment.status === 'SUCCESS') {
+                            statusColor = "var(--accent-sage)";
+                            statusBg = "rgba(90,138,106,0.1)";
+                          } else if (payment.status === 'PENDING') {
+                            statusColor = "var(--accent-amber)";
+                            statusBg = "rgba(232,166,66,0.1)";
+                          } else if (payment.status === 'CANCELLED') {
+                            statusColor = "var(--accent-rust)";
+                            statusBg = "rgba(176,58,34,0.1)";
+                          }
+
+                          return (
+                            <div 
+                              key={idx} 
+                              onClick={() => openPaymentDetails(payment)} // THÊM SỰ KIỆN CLICK VÀO ĐÂY
+                              style={{ 
+                                padding: "16px 20px", 
+                                borderBottom: idx !== billingInfo.payments.length -1 ? "1px solid var(--border)" : "none", 
+                                display: "flex", justifyContent: "space-between", alignItems: "center", 
+                                background: "rgba(255,255,255,0.02)",
+                                cursor: "pointer", // ĐỔI CHUỘT THÀNH HÌNH BÀN TAY
+                                transition: "background 0.2s"
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-hover)"}
+                              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                            >
+                              <div>
+                                <div style={{ fontSize: 13, color: payment.status === 'CANCELLED' ? 'var(--text-muted)' : 'var(--text-primary)', fontWeight: 600, textDecoration: payment.status === 'CANCELLED' ? 'line-through' : 'none' }}>
+                                  Nâng cấp {payment.planSnapshot?.name || "Gói Premium"} — {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payment.amount)}
+                                </div>
+                                <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+                                  Mã GD: {payment.transactionRef || "N/A"} · {new Date(payment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(payment.createdAt).toLocaleDateString('vi-VN')}
+                                </div>
                               </div>
-                              <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
-                                Mã GD: {payment.transactionRef || "N/A"} · {new Date(payment.createdAt).toLocaleDateString('vi-VN')}
-                              </div>
+                              <span style={{ fontSize: 11, color: statusColor, background: statusBg, padding: "4px 10px", borderRadius: 6, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                                {payment.status}
+                              </span>
                             </div>
-                            <span style={{ fontSize: 11, color: payment.status === 'SUCCESS' ? "var(--accent-sage)" : "var(--accent-rust)", background: payment.status === 'SUCCESS' ? "rgba(90,138,106,0.1)" : "rgba(176,58,34,0.1)", padding: "4px 10px", borderRadius: 6, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
-                              {payment.status}
-                            </span>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div style={{ padding: "20px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
                           Chưa có giao dịch nâng cấp nào. <button style={{ background: "none", border: "none", color: "var(--accent-amber)", cursor: "pointer", fontSize: 13, fontFamily: "'Lato', sans-serif", fontWeight: 600 }}>Tìm hiểu thêm gói PRO →</button>
@@ -279,6 +367,65 @@ const SettingsPage = () => {
           )}
         </div>
       </div>
+
+      {/* POPUP HIỂN THỊ CHI TIẾT THANH TOÁN */}
+      <Modal
+        title={null}
+        open={isPaymentModalVisible}
+        onCancel={() => setIsPaymentModalVisible(false)}
+        footer={null}
+        centered
+        width={400}
+        bodyStyle={{ padding: 0, borderRadius: 12, overflow: 'hidden' }}
+      >
+        {selectedPayment && (
+          <div style={{ background: "var(--bg-raised)", color: "var(--text-primary)" }}>
+            <div style={{ padding: "24px", textAlign: "center", borderBottom: "1px dashed var(--border)" }}>
+              <div style={{ 
+                width: 50, height: 50, borderRadius: "50%", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center",
+                background: selectedPayment.status === 'SUCCESS' ? "rgba(90,138,106,0.1)" : (selectedPayment.status === 'PENDING' ? "rgba(232,166,66,0.1)" : "rgba(176,58,34,0.1)"),
+                color: selectedPayment.status === 'SUCCESS' ? "var(--accent-sage)" : (selectedPayment.status === 'PENDING' ? "var(--accent-amber)" : "var(--accent-rust)"),
+                fontSize: 24
+              }}>
+                {selectedPayment.status === 'SUCCESS' ? "✓" : (selectedPayment.status === 'PENDING' ? "⏳" : "✕")}
+              </div>
+              <div style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 4 }}>Số tiền thanh toán</div>
+              <div style={{ fontSize: 28, fontFamily: "'Instrument Serif', serif", fontWeight: 700 }}>
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedPayment.amount)}
+              </div>
+              <Tag color={selectedPayment.status === 'SUCCESS' ? 'success' : (selectedPayment.status === 'PENDING' ? 'warning' : 'error')} style={{ marginTop: 12, borderRadius: 16, padding: "2px 12px", fontFamily: "'JetBrains Mono', monospace" }}>
+                {selectedPayment.status}
+              </Tag>
+            </div>
+
+            <div style={{ padding: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Mã giao dịch</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 500 }}>{selectedPayment.transactionRef}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Gói dịch vụ</span>
+                <span style={{ fontWeight: 600, color: "var(--accent-amber)" }}>{selectedPayment.planSnapshot?.name || "Premium"}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Cổng thanh toán</span>
+                <span style={{ fontWeight: 500 }}>{selectedPayment.method}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Thời gian tạo</span>
+                <span style={{ fontSize: 13 }}>{new Date(selectedPayment.createdAt).toLocaleTimeString('vi-VN')} - {new Date(selectedPayment.createdAt).toLocaleDateString('vi-VN')}</span>
+              </div>
+            </div>
+
+            <div style={{ padding: "16px 24px", background: "var(--bg-base)", textAlign: "center" }}>
+              <Button type="primary" onClick={() => setIsPaymentModalVisible(false)} style={{ background: "var(--accent-amber)", color: "#000", fontWeight: 600, borderRadius: 8, width: "100%" }}>
+                Đóng
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
     </div>
   );
 };
