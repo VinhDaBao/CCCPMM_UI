@@ -280,6 +280,14 @@ const getBillingInfoApi = () => {
     return axios.get("/api/auth/billing-info");
 };
 
+const createPayOSLinkApi = (planId, amount) => {
+    return axios.post("/api/payments/create-payos-link", { planId, amount });
+};
+
+export const getAdminDashboardStatsApi = () => {
+    return axios.get('/api/auth/admin/dashboard-stats'); 
+};
+
 export {
     createUserApi,
     loginApi,
@@ -365,5 +373,6 @@ export {
     toggleUserStatusApi,
     synthesizeTtsApi,
     getTtsVoicesApi,
-    getBillingInfoApi
+    getBillingInfoApi,
+    createPayOSLinkApi
 };
