@@ -1,164 +1,288 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { notification, Spin, Dropdown, Button, Modal } from 'antd';
+// Bổ sung các Icon cần thiết
+import { LoadingOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import TopBar from '../components/creator-layout/TopBar';
 import Icon from '../components/creator-layout/Icons';
+import useProjects from '../hooks/useProjects';
+import useWorkspaces from '../hooks/useWorkspaces';
+import ProjectModal from '../components/creator-layout/ProjectModal';
 
-// Dữ liệu mẫu (Mock Data) giả lập các kịch bản của kênh
-const initialBoard = [
-  {
-    id: 'idea',
-    title: 'Ý TƯỞNG',
-    color: '#3b82f6', 
-    cards: [
-      { id: '1', title: 'Con Ma Học Đường', tags: ['#kinh_dị', '#học_đường'], attachments: 2, assignees: ['Đ', 'M'] },
-      { id: '2', title: 'Ngôi Nhà Số 13', tags: ['#bí_ẩn', '#tâm_lý'], attachments: 0, assignees: ['Đ', 'M'] },
-      { id: '3', title: 'Đứa Trẻ Không Tên', tags: ['#kinh_dị', '#gia_đình'], attachments: 1, assignees: ['Đ', 'M'] },
-    ]
-  },
-  {
-    id: 'writing',
-    title: 'ĐANG VIẾT',
-    color: '#d97706',
-    cards: [
-      { id: '4', title: 'Mắt Âm Dương', tags: ['#kinh_dị', '#tâm_lý', '#ep01'], attachments: 6, assignees: ['Đ', 'M'] },
-      { id: '5', title: 'Trùng Tang', tags: ['#ma_quỷ', '#truyền_thống'], attachments: 4, assignees: ['Đ'] },
-    ]
-  },
-  {
-    id: 'media',
-    title: 'LÀM MEDIA',
-    color: '#9333ea', 
-    cards: [
-      { id: '6', title: 'Bóng Tối Kể Chuyện', tags: ['#hoàn_chỉnh', '#dựng_video'], attachments: 12, assignees: ['Đ'] },
-      { id: '7', title: 'Tiếng Kêu Trong Đêm', tags: ['#âm_thanh', '#edit'], attachments: 8, assignees: ['Đ', 'M'] },
-    ]
-  },
-  {
-    id: 'done',
-    title: 'ĐÃ ĐĂNG',
-    color: '#16a34a', 
-    cards: [
-      { id: '8', title: 'Linh Miêu Thần Tài', tags: ['#youtube', '#short'], attachments: 5, assignees: ['Đ'] },
-      { id: '9', title: 'Bàn Thờ Góc Nhà', tags: ['#tiktok', '#viral'], attachments: 3, assignees: ['Đ', 'M'] },
-      { id: '10', title: 'Chuyến Xe Buýt Đêm', tags: ['#kinh_dị', '#audio'], attachments: 7, assignees: ['Đ'] },
-    ]
-  }
-];
+const COLUMNS_DEF = {
+  IDEA: { id: 'IDEA', title: 'Ý TƯỞNG', color: '#3b82f6' },
+  WRITING: { id: 'WRITING', title: 'ĐANG VIẾT', color: '#d97706' },
+  MEDIA: { id: 'MEDIA', title: 'LÀM MEDIA', color: '#9333ea' },
+  PUBLISHED: { id: 'PUBLISHED', title: 'ĐÃ ĐĂNG', color: '#16a34a' }
+};
 
 const KanbanPage = () => {
-  const [columns, setColumns] = useState(initialBoard);
+  const navigate = useNavigate();
+  const { activeWorkspaceId } = useOutletContext();
+  
+  // Kiểm tra quyền (giống ProjectsPage)
+  const { data: workspaces = [] } = useWorkspaces();
+  const activeWorkspace = workspaces.find(ws => String(ws._id || ws.id) === String(activeWorkspaceId));
+  const memberRole = activeWorkspace?.memberRole || 'VIEWER';
+  const canManageProjects = memberRole === 'OWNER' || memberRole === 'ADMIN';
 
-  const handleNewScript = () => {
-    console.log("Mở modal tạo kịch bản mới!");
+  const { 
+    data: projects = [], 
+    isLoading, 
+    updateProject, 
+    createProject,
+    deleteProject // Bổ sung deleteProject
+  } = useProjects(activeWorkspaceId);
+
+  const [columns, setColumns] = useState({});
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null); // Quản lý dự án đang Edit
+  const [defaultStatus, setDefaultStatus] = useState('IDEA');
+
+  useEffect(() => {
+    const board = { IDEA: [], WRITING: [], MEDIA: [], PUBLISHED: [] };
+    projects.forEach(project => {
+      if (board[project.status]) {
+        board[project.status].push(project);
+      }
+    });
+    setColumns(board);
+  }, [projects]);
+
+  const onDragEnd = async (result) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    const sourceStatus = source.droppableId;
+    const destStatus = destination.droppableId;
+
+    const newColumns = { ...columns };
+    const [movedProject] = newColumns[sourceStatus].splice(source.index, 1);
+    movedProject.status = destStatus;
+    newColumns[destStatus].splice(destination.index, 0, movedProject);
+    setColumns(newColumns);
+
+    if (sourceStatus !== destStatus) {
+      try {
+        await updateProject({ id: draggableId, data: { status: destStatus } });
+      } catch (error) {
+        notification.error({ message: 'Lỗi khi cập nhật trạng thái', description: error.message });
+      }
+    }
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f4f5f7'}}>
-      {/* 1. Thanh TopBar phía trên cùng */}
-      <TopBar 
-        title="DashBoard" 
-        subtitle="Quản lý tiến độ kịch bản" 
-        onNewScript={handleNewScript} 
-      />
+  const handleOpenCreateModal = (status) => {
+    setEditingProject(null); // Đảm bảo là tạo mới
+    setDefaultStatus(status);
+    setProjectModalOpen(true);
+  };
 
-      {/* 2. Khu vực chứa các Cột Kanban */}
-      <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '24px', display: 'flex', gap: '20px' }}>
-        
-        {columns.map(column => (
-          // Cột (Column) - ĐÃ SỬA THÀNH flex: 1 ĐỂ CHIA ĐỀU
-          <div key={column.id} style={{
-            flex: 1, // <--- Sửa ở đây: Chia đều 100% chiều ngang cho 4 cột
-            minWidth: '240px', // Đảm bảo cột không bị bóp méo quá đà nếu thu nhỏ cửa sổ
-            display: 'flex', flexDirection: 'column',
-            background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-          }}>
-            
-            {/* Header của Cột */}
-            <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-lit)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: column.color }} />
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>
-                  {column.title}
-                </div>
-              </div>
-              <div style={{ background: 'var(--bg-raised)', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px' }}>
-                {column.cards.length}
-              </div>
-            </div>
+  // Hàm xử lý chung cho cả Create và Edit
+  const handleSaveProject = async (data) => {
+    try {
+      if (editingProject) {
+        // Cập nhật
+        await updateProject({ id: editingProject._id || editingProject.id, data });
+        notification.success({ message: 'Cập nhật dự án thành công' });
+      } else {
+        // Tạo mới
+        const payload = { ...data, status: data.status || defaultStatus };
+        await createProject(payload);
+        notification.success({ message: 'Tạo dự án thành công' });
+      }
+      setProjectModalOpen(false);
+      setEditingProject(null);
+    } catch (error) {
+      notification.error({ message: 'Lỗi khi lưu dự án', description: error.message });
+    }
+  };
 
-            {/* Danh sách Thẻ (Cards) */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              
-              {column.cards.map(card => (
-                <div key={card.id} style={{
-                  background: '#ffffff', border: '1px solid var(--border-lit)', borderRadius: '12px',
-                  padding: '16px', cursor: 'grab', boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  borderLeft: `4px solid ${column.color}`, 
-                  transition: 'box-shadow 0.2s, transform 0.2s',
-                }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'}
-                >
-                  <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: '19px', color: 'var(--text-primary)', marginBottom: '10px', lineHeight: 1.2 }}>
-                    {card.title}
-                  </div>
+  // Hàm Xóa Project
+  const handleDeleteProject = (project) => {
+    const projectId = project._id || project.id;
+    Modal.confirm({
+      title: 'Xóa dự án?',
+      content: `Bạn có chắc chắn muốn xóa "${project.title}"? Hành động này không thể hoàn tác.`,
+      okText: 'Xóa',
+      okButtonProps: { danger: true },
+      cancelText: 'Hủy',
+      centered: true,
+      onOk: async () => {
+        try {
+          await deleteProject(projectId);
+          notification.success({ message: 'Xóa dự án thành công' });
+        } catch (error) {
+          notification.error({ message: 'Lỗi khi xóa dự án', description: error.message });
+        }
+      }
+    });
+  };
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-                    {card.tags.map(tag => (
-                      <span key={tag} style={{
-                        background: 'var(--bg-raised)', color: 'var(--text-secondary)',
-                        fontSize: '11px', fontFamily: "'JetBrains Mono', monospace",
-                        padding: '4px 8px', borderRadius: '6px'
-                      }}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+  // Cấu hình menu 3 chấm
+  const buildProjectMenu = (project) => ({
+    items: [
+      { key: 'edit', label: 'Edit Project', icon: <EditOutlined /> },
+      { key: 'delete', label: 'Delete Project', danger: true, icon: <DeleteOutlined /> },
+    ],
+    onClick: (e) => {
+      e.domEvent.stopPropagation(); // CỰC KỲ QUAN TRỌNG: Ngăn chặn click lan ra thẻ
+      if (e.key === 'edit') {
+        setEditingProject(project);
+        setProjectModalOpen(true);
+      } else if (e.key === 'delete') {
+        handleDeleteProject(project);
+      }
+    }
+  });
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '12px' }}>
-                      <Icon name="paperclip" size={14} color="var(--text-muted)" />
-                      <span>{card.attachments}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {card.assignees.map((user, index) => (
-                        <div key={index} style={{
-                          width: '24px', height: '24px', borderRadius: '50%',
-                          background: user === 'Đ' ? 'linear-gradient(135deg, #4a3f8a, #7a5a9a)' : 'linear-gradient(135deg, #2d5a8b, #4b8cc4)',
-                          color: '#fff', fontSize: '10px', fontWeight: 700,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          border: '2px solid #fff', marginLeft: index > 0 ? '-8px' : '0',
-                          position: 'relative', zIndex: card.assignees.length - index
-                        }}>
-                          {user}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Nút Thêm kịch bản nhanh */}
-            <div style={{ padding: '0 16px 16px' }}>
-              <button style={{
-                width: '100%', padding: '10px', background: 'transparent',
-                border: '1px dashed var(--border)', borderRadius: '8px',
-                color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
-                transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-              }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--text-muted)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-              >
-                <Icon name="plus" size={14} />
-                Thêm kịch bản
-              </button>
-            </div>
-            
-          </div>
-        ))}
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-void)' }}>
+        <Spin indicator={<LoadingOutlined spin />} size="large" />
       </div>
+    );
+  }
+
+  const uniqueTags = Array.from(new Set(projects.flatMap(p => p.tags || [])));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-void)' }}>
+      <TopBar title="DashBoard" subtitle="Quản lý tiến độ kịch bản bằng kéo thả" />
+
+      <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '24px', display: 'flex', gap: '20px' }}>
+        <DragDropContext onDragEnd={onDragEnd}>
+          {Object.entries(COLUMNS_DEF).map(([statusKey, colDef]) => (
+            
+            <Droppable key={statusKey} droppableId={statusKey}>
+              {(provided, snapshot) => (
+                <div 
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  style={{
+                    flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column',
+                    background: snapshot.isDraggingOver ? 'rgba(255,255,255,0.05)' : 'var(--bg-base)',
+                    borderRadius: '16px', border: '1px solid var(--border)',
+                    transition: 'background 0.2s', height: '100%'
+                  }}
+                >
+                  <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-lit)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: colDef.color }} />
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>
+                        {colDef.title}
+                      </div>
+                    </div>
+                    <div style={{ background: 'var(--bg-raised)', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px' }}>
+                      {columns[statusKey]?.length || 0}
+                    </div>
+                  </div>
+
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {columns[statusKey]?.map((project, index) => {
+                      const projectId = project._id || project.id;
+                      return (
+                        <Draggable key={projectId} draggableId={projectId.toString()} index={index}>
+                          {(provided, snapshot) => (
+                            <div 
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => navigate(`/projects/${projectId}`)}
+                              style={{
+                                background: 'var(--bg-raised)', border: '1px solid var(--border-lit)', borderRadius: '12px',
+                                padding: '16px', cursor: 'pointer',
+                                boxShadow: snapshot.isDragging ? '0 8px 24px rgba(0,0,0,0.2)' : 'none',
+                                borderLeft: `4px solid ${colDef.color}`, 
+                                ...provided.draggableProps.style
+                              }}
+                            >
+                              <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {project.title}
+                              </div>
+
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                                {project.tags?.map(tag => (
+                                  <span key={tag} style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)', fontSize: '11px', padding: '2px 6px', borderRadius: '4px' }}>
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                                  <Icon name="paperclip" size={12} /> {Math.floor(Math.random() * 5)}
+                                </div>
+                                
+                                {/* CỤM AVATAR VÀ NÚT 3 CHẤM */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-amber)', color: '#000', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {project.createdBy?.name ? project.createdBy.name.charAt(0).toUpperCase() : 'U'}
+                                  </div>
+
+                                  {canManageProjects && (
+                                    <div 
+                                      onClick={(e) => e.stopPropagation()} 
+                                      onPointerDown={(e) => e.stopPropagation()} // Chặn thư viện kéo thả dnd hiểu nhầm
+                                    >
+                                      <Dropdown menu={buildProjectMenu(project)} trigger={['click']} placement="bottomRight">
+                                        <Button 
+                                          type="text" 
+                                          size="small" 
+                                          icon={<MoreOutlined style={{ fontSize: 16, color: 'var(--text-primary)' }} />} 
+                                          style={{ padding: 0, width: 24, height: 24 }}
+                                        />
+                                      </Dropdown>
+                                    </div>
+                                  )}
+                                </div>
+                                {/* KẾT THÚC CỤM AVATAR VÀ NÚT 3 CHẤM */}
+
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      )
+                    })}
+                    {provided.placeholder}
+                  </div>
+
+                  <div style={{ padding: '0 16px 16px' }}>
+                    {canManageProjects && (
+                      <button 
+                        onClick={() => handleOpenCreateModal(statusKey)}
+                        style={{
+                          width: '100%', padding: '10px', background: 'transparent', border: '1px dashed var(--border)', 
+                          borderRadius: '8px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer', 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-amber)'; e.currentTarget.style.borderColor = 'var(--accent-amber)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+                      >
+                        <Icon name="plus" size={14} /> Create Project
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </Droppable>
+          ))}
+        </DragDropContext>
+      </div>
+
+      <ProjectModal
+        open={projectModalOpen}
+        onCancel={() => {
+          setProjectModalOpen(false);
+          setEditingProject(null);
+        }}
+        onSave={handleSaveProject}
+        project={editingProject} // Truyền project đang edit vào Modal
+        initialValues={{ status: defaultStatus }}
+        existingTags={uniqueTags}
+      />
     </div>
   );
 };

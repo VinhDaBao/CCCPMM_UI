@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { notification, Spin, Modal, Input, Select, Button, Dropdown } from 'antd'; // Đã bỏ Menu vì không cần nữa
+import { notification, Spin, Modal, Input, Select, Button, Dropdown, Progress } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import TopBar from '../components/creator-layout/topBar';
 import Icon from '../components/creator-layout/Icons';
-import { getAllAssetsApi, uploadAssetApi, getWorkspaceTagsApi, updateAssetApi, deleteAssetApi, getAssetUrl } from '../util/api';
+// ĐÃ THÊM getBillingInfoApi VÀO ĐÂY:
+import { getAllAssetsApi, uploadAssetApi, getWorkspaceTagsApi, updateAssetApi, deleteAssetApi, getAssetUrl, getBillingInfoApi } from '../util/api';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -17,7 +18,6 @@ const { confirm } = Modal;
 const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
   const uiType = data.type.toLowerCase();
 
-  // 🌟 ĐÃ SỬA: Chuyển sang dùng mảng items chuẩn Antd v5
   const menuItems = [
     {
       key: 'edit',
@@ -77,7 +77,6 @@ const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* 🌟 ĐÃ SỬA: Dùng menu={{ items }} và bọc Button trong thẻ div */}
       <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
         <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
           <div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>
@@ -103,6 +102,9 @@ const AssetLibraryPage = () => {
   const [assets, setAssets] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
 
+  // THÊM STATE ĐỂ LƯU THÔNG TIN GÓI HIỆN TẠI
+  const [billingInfo, setBillingInfo] = useState(null);
+
   const [filter, setFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
   const [searchText, setSearchText] = useState("");
@@ -120,33 +122,50 @@ const AssetLibraryPage = () => {
 
   const fileInputRef = useRef(null);
 
+  // GỌI API LẤY THÔNG TIN GÓI (Để biết dung lượng tổng là bao nhiêu)
+  useEffect(() => {
+    const fetchBilling = async () => {
+      try {
+        const res = await getBillingInfoApi();
+        setBillingInfo(res.data?.data || res.data);
+      } catch (error) {
+        console.error("Lỗi lấy thông tin gói cước:", error);
+      }
+    };
+    fetchBilling();
+  }, []);
+
+  // TÍNH TOÁN DUNG LƯỢNG ĐỘNG
+  const totalUsedBytes = assets.reduce((sum, asset) => sum + (asset.fileSize || 0), 0);
+  
+  // Lấy mức giới hạn từ gói hiện tại (mặc định 500MB nếu chưa load xong)
+  const dynamicLimitMB = billingInfo?.plan?.storageLimitMB || 500;
+  const limitBytes = dynamicLimitMB * 1024 * 1024;
+
+  const percentUsed = Math.min(100, Math.round((totalUsedBytes / limitBytes) * 100));
+
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return '0 MB';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   const fetchAssets = async (searchQuery = searchText) => {
     if (!CURRENT_WORKSPACE_ID) return;
-
     setIsLoading(true);
-
     try {
-      const assets = await getAllAssetsApi(
-        CURRENT_WORKSPACE_ID,
-        {
-          type:
-            filter === "all"
-              ? ""
-              : filter,
-          search: searchQuery,
-          sort: sortOrder,
-        }
-      );
-
-      setAssets(
-        assets?.data || assets
-      );
+      const assets = await getAllAssetsApi(CURRENT_WORKSPACE_ID, {
+        type: filter === "all" ? "" : filter,
+        search: searchQuery,
+        sort: sortOrder,
+      });
+      setAssets(assets?.data || assets);
     } catch (error) {
       notification.error({
         message: "Lỗi tải dữ liệu",
-        description:
-          error?.response?.data
-            ?.message,
+        description: error?.response?.data?.message,
       });
     } finally {
       setIsLoading(false);
@@ -155,22 +174,13 @@ const AssetLibraryPage = () => {
 
   const fetchAvailableTags = async () => {
     if (!CURRENT_WORKSPACE_ID) return;
-
     try {
-      const tags =
-        await getWorkspaceTagsApi(
-          CURRENT_WORKSPACE_ID
-        );
-
-      setAvailableTags(
-        tags?.data || tags
-      );
+      const tags = await getWorkspaceTagsApi(CURRENT_WORKSPACE_ID);
+      setAvailableTags(tags?.data || tags);
     } catch (error) {
       notification.error({
         message: "Lỗi tải tags",
-        description:
-          error?.response?.data
-            ?.message,
+        description: error?.response?.data?.message,
       });
     }
   };
@@ -178,43 +188,31 @@ const AssetLibraryPage = () => {
   useEffect(() => {
     fetchAssets();
     fetchAvailableTags();
-  }, [
-    filter,
-    sortOrder,
-    CURRENT_WORKSPACE_ID,
-  ]);
+  }, [filter, sortOrder, CURRENT_WORKSPACE_ID]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-
-    if (
-      !file ||
-      !CURRENT_WORKSPACE_ID
-    )
-      return;
-
+    if (!file || !CURRENT_WORKSPACE_ID) return;
     setIsUploading(true);
-
     try {
-      await uploadAssetApi(
-        CURRENT_WORKSPACE_ID,
-        file,
-        "new_upload"
-      );
+      let safeFileName = file.name;
+      safeFileName = safeFileName
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d").replace(/Đ/g, "D")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9.\-_]/g, "");
 
-      notification.success({
-        message:
-          "Upload thành công!",
-      });
+      const safeFile = new File([file], safeFileName, { type: file.type });
+      await uploadAssetApi(CURRENT_WORKSPACE_ID, safeFile, "new_upload");
 
+      notification.success({ message: "Upload thành công!" });
       fetchAssets();
       fetchAvailableTags();
     } catch (error) {
       notification.error({
         message: "Lỗi upload",
-        description:
-          error?.response?.data
-            ?.message,
+        description: error?.response?.data?.message,
       });
     } finally {
       setIsUploading(false);
@@ -222,9 +220,7 @@ const AssetLibraryPage = () => {
     }
   };
 
-  const handleOpenEdit = (
-    asset
-  ) => {
+  const handleOpenEdit = (asset) => {
     setEditingAssetId(asset._id);
     setEditFileName(asset.fileName);
     setEditTags(asset.tags || []);
@@ -233,74 +229,39 @@ const AssetLibraryPage = () => {
 
   const handleSaveEdit = async () => {
     if (!editFileName.trim()) {
-      return notification.warning({
-        message:
-          "Tên file không được để trống!",
-      });
+      return notification.warning({ message: "Tên file không được để trống!" });
     }
-
     try {
-      await updateAssetApi(
-        editingAssetId,
-        {
-          fileName:
-            editFileName,
-          tags: editTags,
-        }
-      );
-
-      notification.success({
-        message:
-          "Đã cập nhật tài nguyên!",
-      });
-
+      await updateAssetApi(editingAssetId, { fileName: editFileName, tags: editTags });
+      notification.success({ message: "Đã cập nhật tài nguyên!" });
       setIsEditModalVisible(false);
-
       fetchAssets();
       fetchAvailableTags();
     } catch (error) {
       notification.error({
-        message:
-          "Lỗi cập nhật",
-        description:
-          error?.response?.data
-            ?.message,
+        message: "Lỗi cập nhật",
+        description: error?.response?.data?.message,
       });
     }
   };
 
-  const handleDelete = (
-    asset
-  ) => {
+  const handleDelete = (asset) => {
     confirm({
-      title:
-        "Bạn có chắc chắn muốn xóa file này?",
-      icon:
-        <ExclamationCircleOutlined />,
+      title: "Bạn có chắc chắn muốn xóa file này?",
+      icon: <ExclamationCircleOutlined />,
       content: `File "${asset.fileName}" sẽ bị xóa vĩnh viễn.`,
       okText: "Xóa",
       okType: "danger",
       cancelText: "Hủy",
-
       onOk: async () => {
         try {
-          await deleteAssetApi(
-            asset._id
-          );
-
-          notification.success({
-            message:
-              "Đã xóa thành công!",
-          });
-
+          await deleteAssetApi(asset._id);
+          notification.success({ message: "Đã xóa thành công!" });
           fetchAssets();
         } catch (error) {
           notification.error({
-            message:
-              "Lỗi xóa file",
-            description:
-              error?.response?.data
-                ?.message,
+            message: "Lỗi xóa file",
+            description: error?.response?.data?.message,
           });
         }
       },
@@ -332,10 +293,41 @@ const AssetLibraryPage = () => {
           <Option value="oldest">Cũ nhất</Option>
         </Select>
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept="image/*,audio/*" />
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 20 }}>
+          
+          {/* === THANH HIỂN THỊ DUNG LƯỢNG TRỞ THÀNH ĐỘNG === */}
+          <div style={{ width: 200 }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              fontSize: 11, 
+              color: 'var(--text-muted)', 
+              marginBottom: 4, 
+              fontFamily: "'JetBrains Mono', monospace" 
+            }}>
+              <span>Dung lượng:</span>
+              <span style={{ color: percentUsed >= 90 ? '#ff4d4f' : 'var(--text-primary)' }}>
+                {formatBytes(totalUsedBytes)} / {dynamicLimitMB} MB
+              </span>
+            </div>
+            <Progress 
+              percent={percentUsed} 
+              showInfo={false} 
+              size="small" 
+              strokeColor={percentUsed >= 90 ? '#ff4d4f' : 'var(--accent-amber)'} 
+              trailColor="rgba(255,255,255,0.1)"
+            />
+          </div>
+
+          <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept="image/*,audio/*,video/*" />
           <button onClick={() => fileInputRef.current.click()} disabled={isUploading}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: isUploading ? "var(--text-muted)" : "var(--accent-amber)", color: "#0d0d0f", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: isUploading ? "wait" : "pointer", fontFamily: "'Lato', sans-serif" }}
+            style={{ 
+              display: "flex", alignItems: "center", gap: 8, 
+              background: isUploading ? "var(--text-muted)" : "var(--accent-amber)", 
+              color: "#0d0d0f", border: "none", borderRadius: 8, padding: "8px 16px", 
+              fontSize: 13, fontWeight: 700, cursor: isUploading ? "wait" : "pointer", 
+              fontFamily: "'Lato', sans-serif" 
+            }}
           >
             <Icon name="upload" size={14} color="#0d0d0f" />
             {isUploading ? "Đang tải..." : "Upload Media"}
@@ -366,7 +358,6 @@ const AssetLibraryPage = () => {
               <p style={{ margin: 0 }}><strong>Tên file:</strong> {selectedAsset.fileName}</p>
               <p style={{ margin: 0 }}>
                 <strong>Workspace:</strong> <span style={{ color: "var(--accent-ice)", fontWeight: "bold" }}>
-                  {/* Lấy tên ra, nếu chưa có thì để "Chưa xác định" */}
                   {selectedAsset.workspaceId?.name || "Chưa xác định"}
                 </span>
               </p>
@@ -388,7 +379,7 @@ const AssetLibraryPage = () => {
         )}
       </Modal>
 
-      {/* 🌟 Popup Edit Tên & Tags */}
+      {/* Popup Edit Tên & Tags */}
       <Modal
         title="Chỉnh sửa Tài nguyên"
         open={isEditModalVisible}
