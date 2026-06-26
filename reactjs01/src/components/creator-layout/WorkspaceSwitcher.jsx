@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Divider, Dropdown, Empty, Modal, Select, Spin, notification } from 'antd';
-import { DatabaseOutlined, DownOutlined, LoadingOutlined, PlusOutlined, DeleteOutlined, EditOutlined, UserSwitchOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, DownOutlined, LoadingOutlined, PlusOutlined, DeleteOutlined, EditOutlined, UserSwitchOutlined, SettingOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import useWorkspaces from '../../hooks/useWorkspaces';
 import useDeleteWorkspace from '../../hooks/useDeleteWorkspace';
@@ -207,43 +207,66 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
       {workspaceList.length > 0 && (
         <div style={{ maxHeight: 220, overflowY: 'auto' }}>
           {workspaceList.map((ws) => (
-            <Dropdown
+            <div
               key={ws._id || ws.id}
-              trigger={['contextMenu']}
-              menu={buildWorkspaceMenu(ws)}
-              placement="bottomLeft"
+              onClick={() => {
+                handleWorkspaceChange(String(ws._id || ws.id));
+                setDropdownOpen(false);
+              }}
+              style={{
+                padding: '8px 10px',
+                cursor: 'pointer',
+                borderRadius: 6,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--bg-hover)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = 'transparent')
+              }
             >
-              <div
-                onClick={() => {
-                  handleWorkspaceChange(String(ws._id || ws.id));
-                  setDropdownOpen(false);
-                }}
-                style={{
-                  padding: '8px 10px',
-                  cursor: 'pointer',
-                  borderRadius: 6,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = 'var(--bg-hover)')
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = 'transparent')
-                }
-              >
-                <span style={{ fontSize: 13 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', flex: 1 }}>
+                <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {ws.name || 'Untitled workspace'}
                 </span>
 
                 {String(ws._id || ws.id) === selectedWorkspaceId && (
-                  <span style={{ fontSize: 10, color: 'var(--accent-amber)' }}>
+                  <span style={{ fontSize: 10, color: 'var(--accent-amber)', flexShrink: 0 }}>
                     ACTIVE
                   </span>
                 )}
               </div>
-            </Dropdown>
+
+              <Dropdown
+                menu={buildWorkspaceMenu(ws)}
+                trigger={['click']}
+                placement="bottomRight"
+              >
+                <SettingOutlined
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    fontSize: 14,
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    transition: 'background 0.2s, color 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.color = 'var(--accent-amber)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
+                />
+              </Dropdown>
+            </div>
           ))}
         </div>
       )}
@@ -276,29 +299,43 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
         <DatabaseOutlined style={{ color: 'var(--accent-amber)', fontSize: 14 }} />
       </div>
 
-      <Select
-        value={selectedWorkspaceId || undefined}
-        options={workspaceOptions}
-        onChange={handleWorkspaceChange}
-        onOpenChange={setDropdownOpen}
-        open={dropdownOpen}
-        loading={isLoading}
-        placeholder="Select workspace"
-        suffixIcon={<DownOutlined style={{ color: 'var(--text-muted)' }} />}
-        popupRender={() => dropdownContent}
-        style={{ width: '100%' }}
-        variant="filled"
-        allowClear={false}
-        size="middle"
-        showSearch={false}
-        popupMatchSelectWidth
-      />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <Select
+          value={selectedWorkspaceId || undefined}
+          options={workspaceOptions}
+          onChange={handleWorkspaceChange}
+          onOpenChange={setDropdownOpen}
+          open={dropdownOpen}
+          loading={isLoading}
+          placeholder="Select workspace"
+          suffixIcon={<DownOutlined style={{ color: 'var(--text-muted)' }} />}
+          popupRender={() => dropdownContent}
+          style={{ flex: 1 }}
+          variant="filled"
+          allowClear={false}
+          size="middle"
+          showSearch={false}
+          popupMatchSelectWidth
+        />
 
-      <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-sage)', flexShrink: 0 }} />
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {activeWorkspace?.name || 'No active workspace'}
-        </span>
+        {activeWorkspace && (
+          <Dropdown
+            menu={buildWorkspaceMenu(activeWorkspace)}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<SettingOutlined />}
+            />
+          </Dropdown>
+        )}
       </div>
 
       <CreateWorkspaceModal
