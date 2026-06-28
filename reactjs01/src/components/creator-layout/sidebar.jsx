@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/authSlice';
 import Icon from './Icons';
-
+import { Modal } from 'antd';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import { logoutApi } from '../../util/api';
 
@@ -55,6 +55,18 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
           navigate('/login');
       }
+  };
+
+  const showLogoutConfirm = () => {
+    Modal.confirm({
+      title: 'Xác nhận đăng xuất',
+      content: 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này?',
+      okText: 'Đăng xuất',
+      okButtonProps: { danger: true }, 
+      cancelText: 'Hủy',
+      centered: true,
+      onOk: handleLogout, 
+    });
   };
 
   // Avatar / Display name fallbacks
@@ -120,7 +132,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
       {/* Logout Button */}
       <div style={{ padding: "0 10px 10px" }}>
         <button 
-          onClick={handleLogout}
+          onClick={showLogoutConfirm} 
           style={{
             width: "100%", display: "flex", alignItems: "center", gap: 10,
             padding: "9px 10px", borderRadius: 7, border: "none", cursor: "pointer",
@@ -131,13 +143,13 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}
         >
           <Icon name="x" size={15} color="var(--accent-rust)" />
-          Đăng xuất
+          Logout
         </button>
       </div>
 
       {/* User profile entry */}
       <div 
-        onClick={() => navigate(user.role === "admin" ? "/admin/profile" : "/user/profile")}
+        onClick={() => navigate("/workspace/settings")}
         style={{
           padding: "14px 16px", borderTop: "1px solid var(--border)",
           display: "flex", alignItems: "center", gap: 10, cursor: "pointer", transition: "background 0.2s"

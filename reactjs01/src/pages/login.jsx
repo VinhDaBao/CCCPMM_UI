@@ -38,10 +38,10 @@ const LoginPage = () => {
                 }
 
                 // 3. LOGIC BÌNH THƯỜNG: Chuyển hướng theo role hoặc vào editor
-                if (res.redirectUrl) {
-                    navigate(res.redirectUrl);
+                if (res.user && res.user.role === 'admin') {
+                    navigate(res.redirectUrl || "/admin/profile");
                 } else {
-                    navigate("/workspace/editor");
+                    navigate("/workspace/dashboard");
                 }
             } else {
                 // Xử lý khi Backend trả về lỗi nhưng mã HTTP vẫn là 200

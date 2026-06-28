@@ -28,7 +28,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
   const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const handleGoToProfile = () => {
-    navigate('/user/profile');
+    navigate('/workspace/settings');
   };
 
   const toggleLanguage = () => {

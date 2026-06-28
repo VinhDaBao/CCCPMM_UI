@@ -1,4 +1,4 @@
-import { Form, Input, Modal } from 'antd';
+import { Form, Input, Modal, notification } from 'antd';
 import useCreateWorkspace from '../../hooks/useCreateWorkspace';
 
 const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
@@ -7,11 +7,23 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
 
   const handleCreateWorkspace = async (values) => {
     try {
-      await createWorkspaceMutation.mutateAsync(values);
+      const res = await createWorkspaceMutation.mutateAsync(values);
+      
+      // Nếu Backend vẫn cứng đầu trả 200 nhưng có errCode = 1
+      if (res && res.errCode && res.errCode !== 0) {
+        notification.error({ message: 'Lỗi tạo Workspace', description: res.message });
+        return; 
+      }
+
       form.resetFields();
       onCancel();
     } catch (submitError) {
-      return submitError;
+      // Khi Backend trả 400, nó sẽ nhảy thẳng xuống đây
+      const errorMsg = submitError?.response?.data?.message || 'Không thể tạo Workspace do lỗi máy chủ';
+      notification.error({ 
+        message: 'Từ chối tạo', 
+        description: errorMsg 
+      });
     }
   };
 
@@ -26,12 +38,7 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
       destroyOnClose
       afterClose={() => form.resetFields()}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleCreateWorkspace}
-        preserve={false}
-      >
+      <Form form={form} layout="vertical" onFinish={handleCreateWorkspace} preserve={false}>
         <Form.Item
           label="Workspace name"
           name="name"
@@ -41,12 +48,7 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
         </Form.Item>
 
         <Form.Item label="Description" name="description">
-          <Input.TextArea
-            placeholder="Optional workspace description"
-            rows={4}
-            maxLength={500}
-            showCount
-          />
+          <Input.TextArea placeholder="Optional workspace description" rows={4} maxLength={500} showCount />
         </Form.Item>
       </Form>
     </Modal>
