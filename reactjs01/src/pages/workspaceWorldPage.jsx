@@ -134,7 +134,7 @@ useEffect(() => {
           dispatch(fetchGraphSuccess({ nodes: nodesData, edges: edgesData }));
 
           // Khôi phục mảng Tab đồng bộ theo activeWorkspaceId
-          const savedTabs = localStorage.getItem(`tabs_${activeWorkspaceId}`);
+          const savedTabs = localStorage.getItem(`tabs_${activeWorkspaceId}_${worldId}`);
           if (savedTabs) {
             setTabsList(JSON.parse(savedTabs));
           } else {
@@ -151,7 +151,7 @@ useEffect(() => {
 
     loadGraphData();
     // Thêm activeWorkspaceId vào mảng phụ thuộc để kích hoạt re-fetch lập tức khi đổi Workspace
-  }, [ activeTab, activeWorkspaceId, dispatch, setNodes, setEdges]);
+  }, [ activeTab, activeWorkspaceId, dispatch, worldId]);
 
   const onConnect = useCallback(
     (params) => {
