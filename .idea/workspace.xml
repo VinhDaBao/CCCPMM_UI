@@ -4,15 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="783fe867-8f39-4bd0-8700-687a7e0fa41a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/reactjs01/src/pages/workspaceWorldPage.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/reactjs01/src/redux/worldSlice.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reactjs01/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reactjs01/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reactjs01/src/components/creator-layout/sidebar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/components/creator-layout/sidebar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reactjs01/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/main.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reactjs01/src/redux/store.js" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/redux/store.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reactjs01/src/util/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/util/api.js" afterDir="false" />
+    <list default="true" id="1e631995-3b48-415f-8759-aff1ab32ceea" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reactjs01/src/pages/workspaceWorldPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/pages/workspaceWorldPage.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,46 +14,42 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="develop" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;DylanVenomania&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "DylanVenomania"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/VinhDaBao/CCCPMM_UI.git&quot;,
-    &quot;accountId&quot;: &quot;7be2258f-03fc-4eac-838a-4ec960297fc9&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/VinhDaBao/CCCPMM_UI.git",
+    "accountId": "7be2258f-03fc-4eac-838a-4ec960297fc9"
   }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 8
-}</component>
-  <component name="ProjectId" id="3F7uMcllI5I0ke2gjTaHetRHtCl" />
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3FkuLuZgAciPnwK0cWAwclQwe4T" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/world-building&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "develop",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -69,50 +59,12 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="783fe867-8f39-4bd0-8700-687a7e0fa41a" name="Changes" comment="" />
-      <created>1781438381520</created>
+      <changelist id="1e631995-3b48-415f-8759-aff1ab32ceea" name="Changes" comment="" />
+      <created>1782631338222</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1781438381520</updated>
+      <updated>1782631338222</updated>
     </task>
     <servers />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="RECENT_FILTERS">
-      <map>
-        <entry key="Branch">
-          <value>
-            <list>
-              <RecentGroup>
-                <option name="FILTER_VALUES">
-                  <option value="origin/develop" />
-                </option>
-              </RecentGroup>
-            </list>
-          </value>
-        </entry>
-      </map>
-    </option>
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State>
-              <option name="FILTERS">
-                <map>
-                  <entry key="branch">
-                    <value>
-                      <list>
-                        <option value="origin/develop" />
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
-            </State>
-          </value>
-        </entry>
-      </map>
-    </option>
   </component>
 </project>

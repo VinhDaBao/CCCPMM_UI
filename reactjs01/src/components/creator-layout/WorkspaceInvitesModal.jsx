@@ -37,7 +37,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (token) => workspaceInviteApi.cancel(token),
+    mutationFn: ({ workspaceId, token }) => workspaceInviteApi.cancel( workspaceId, token ),
     onSuccess: () => {
       notification.success({
         message: 'Invitation Cancelled',
@@ -129,7 +129,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
               danger
               shape="circle"
               icon={<CloseOutlined />}
-              onClick={() => cancelMutation.mutate(record.token)}
+              onClick={() => cancelMutation.mutate({ workspaceId, token: record.token })}
               loading={cancelMutation.isPending}
             />
           </Tooltip>

@@ -1,0 +1,56 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"783fe867-8f39-4bd0-8700-687a7e0fa41a\" name=\"Changes\" comment=\"\">\r\n      <change afterPath=\"$PROJECT_DIR$/reactjs01/src/pages/workspaceWorldPage.jsx\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/reactjs01/src/redux/worldSlice.js\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/reactjs01/package-lock.json\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/reactjs01/package-lock.json\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/reactjs01/package.json\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/reactjs01/package.json\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/reactjs01/src/components/creator-layout/sidebar.jsx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/reactjs01/src/components/creator-layout/sidebar.jsx\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/reactjs01/src/main.jsx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/reactjs01/src/main.jsx\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/reactjs01/src/redux/store.js\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/reactjs01/src/redux/store.js\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/reactjs01/src/util/api.js\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/reactjs01/src/util/api.js\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\r\n      <map>\r\n        <entry key=\"$PROJECT_DIR$\" value=\"develop\" />\r\n      </map>\r\n    </option>\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"GitHubPullRequestSearchHistory\">{\r\n  &quot;lastFilter&quot;: {\r\n    &quot;state&quot;: &quot;OPEN&quot;,\r\n    &quot;assignee&quot;: &quot;DylanVenomania&quot;\r\n  }\r\n}</component>\r\n  <component name=\"GithubPullRequestsUISettings\">{\r\n  &quot;selectedUrlAndAccountId&quot;: {\r\n    &quot;url&quot;: &quot;https://github.com/VinhDaBao/CCCPMM_UI.git&quot;,\r\n    &quot;accountId&quot;: &quot;7be2258f-03fc-4eac-838a-4ec960297fc9&quot;\r\n  }\r\n}</component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 8\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"3F7uMcllI5I0ke2gjTaHetRHtCl\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">{\r\n  &quot;keyToString&quot;: {\r\n    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,\r\n    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,\r\n    &quot;git-widget-placeholder&quot;: &quot;feature/world-building&quot;,\r\n    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,\r\n    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,\r\n    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;\r\n  }\r\n}</component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"783fe867-8f39-4bd0-8700-687a7e0fa41a\" name=\"Changes\" comment=\"\" />\r\n      <created>1781438381520</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1781438381520</updated>\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"Vcs.Log.Tabs.Properties\">\r\n    <option name=\"RECENT_FILTERS\">\r\n      <map>\r\n        <entry key=\"Branch\">\r\n          <value>\r\n            <list>\r\n              <RecentGroup>\r\n                <option name=\"FILTER_VALUES\">\r\n                  <option value=\"origin/develop\" />\r\n                </option>\r\n              </RecentGroup>\r\n            </list>\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n    <option name=\"TAB_STATES\">\r\n      <map>\r\n        <entry key=\"MAIN\">\r\n          <value>\r\n            <State>\r\n              <option name=\"FILTERS\">\r\n                <map>\r\n                  <entry key=\"branch\">\r\n                    <value>\r\n                      <list>\r\n                        <option value=\"origin/develop\" />\r\n                      </list>\r\n                    </value>\r\n                  </entry>\r\n                </map>\r\n              </option>\r\n            </State>\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n  </component>\r\n</project>
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 3a6163a54ee679a19e6e7aa0a1aedd440b53562c)
++++ b/.idea/workspace.xml	(date 1781531066845)
+@@ -5,14 +5,7 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="783fe867-8f39-4bd0-8700-687a7e0fa41a" name="Changes" comment="">
+-      <change afterPath="$PROJECT_DIR$/reactjs01/src/pages/workspaceWorldPage.jsx" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/reactjs01/src/redux/worldSlice.js" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/reactjs01/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/package-lock.json" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/reactjs01/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/package.json" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/reactjs01/src/components/creator-layout/sidebar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/components/creator-layout/sidebar.jsx" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/reactjs01/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/main.jsx" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/reactjs01/src/redux/store.js" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/redux/store.js" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/reactjs01/src/util/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/reactjs01/src/util/api.js" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -47,19 +40,19 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent">{
+-  &quot;keyToString&quot;: {
+-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+-    &quot;git-widget-placeholder&quot;: &quot;feature/world-building&quot;,
+-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
++  <component name="PropertiesComponent"><![CDATA[{
++  "keyToString": {
++    "ModuleVcsDetector.initialDetectionPerformed": "true",
++    "RunOnceActivity.ShowReadmeOnStart": "true",
++    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
++    "RunOnceActivity.git.unshallow": "true",
++    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
++    "git-widget-placeholder": "feature/world-building",
++    "junie.onboarding.icon.badge.shown": "true",
++    "kotlin-language-version-configured": "true",
++    "to.speed.mode.migration.done": "true"
+   }
+-}</component>
++}]]></component>
+   <component name="SharedIndexes">
+     <attachedChunks>
+       <set>

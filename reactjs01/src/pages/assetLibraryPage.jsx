@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { notification, Spin, Modal, Input, Select, Button, Dropdown, Progress } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
-import TopBar from '../components/creator-layout/TopBar';
+import TopBar from '../components/creator-layout/topBar';
 import Icon from '../components/creator-layout/Icons';
 // ĐÃ THÊM getBillingInfoApi VÀO ĐÂY:
 import { getAllAssetsApi, uploadAssetApi, getWorkspaceTagsApi, updateAssetApi, deleteAssetApi, getAssetUrl, getBillingInfoApi } from '../util/api';

@@ -7,11 +7,13 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, LoadingOutlined, FolderOutl
 import useProjects from '../hooks/useProjects';
 import useWorkspaces from '../hooks/useWorkspaces';
 import ProjectModal from '../components/creator-layout/ProjectModal';
-import TopBar from '../components/creator-layout/TopBar';
+import TopBar from '../components/creator-layout/topBar';
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Read activeWorkspaceId from CreatorLayout context
   
   const { activeWorkspaceId } = useOutletContext();
 

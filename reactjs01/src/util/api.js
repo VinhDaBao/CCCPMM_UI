@@ -253,16 +253,14 @@ const getAssetUrl = (url) => {
 }
 // WORLD BUILDING (Của team)
 // Hàm 1: Lấy toàn bộ cấu trúc sơ đồ (Nodes + Edges) từ Backend dựa vào WorldId
-const getWorldGraphApi = (worldId) => {
-    return axios.get(`/api/worlds/graph/${worldId}`);
+//tham số stageId truyền vào dưới dạng Query String (?stageId=...)
+const getWorldGraphApi = (worldId, stageId = "stage_1") => {
+    return axios.get(`/api/worlds/graph/${worldId}`, { params: { stageId } });
 };
 
-// Hàm 2: Gửi toàn bộ mảng sơ đồ hiện tại xuống để Backend lưu đè vào MongoDB
-const saveWorldGraphApi = (worldId, nodes, edges) => {
-    return axios.post(`/api/worlds/graph/save/${worldId}`, {
-        nodes,
-        edges
-    });
+// Hàm 2: hàm lưu graph với object payload xuống để Backend lưu đè vào MongoDB
+const saveWorldGraphApi = (worldId, payload) => {
+    return axios.post(`/api/worlds/graph/save/${worldId}`, payload); // payload sẽ bao gồm: { nodes, edges, stageId }
 };
 
 // TOGGLE USER STATUS (Của anh em mình)
