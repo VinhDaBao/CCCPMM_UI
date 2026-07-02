@@ -100,11 +100,11 @@ const ScriptEditorPage = () => {
       try {
         return JSON.parse(savedChat);
       } catch (e) {
-        console.error("Lỗi parse lịch sử chat", e);
+        console.error("Failed to parse chat history", e);
       }
     }
     return [
-      { sender: 'AI', text: 'Chào! Mình là Trợ lý Kịch bản hợp tác của bạn. Bạn có cần giúp viết hay xem lại một đoạn hội thoại không?' }
+      { sender: 'AI', text: 'Hello! I am your collaborative script assistant. Do you need help writing or reviewing a dialogue segment?' }
     ];
   });
   useEffect(() => {
@@ -828,13 +828,13 @@ const ScriptEditorPage = () => {
 
   // 7. Interactive Mock AI Chat Logic
   const handleSendChatMessage = async (presetMessage = null) => {
-    // Ưu tiên câu hỏi được bấm (presetMessage), nếu không có thì lấy text trong ô chat (chatInput)
+    // Prefer the clicked suggestion (presetMessage); otherwise use the chat input text
     const userMessage = typeof presetMessage === 'string' ? presetMessage : chatInput;
     
     if (!userMessage.trim()) return;
 
     setChatMessages((prev) => [...prev, { sender: 'User', text: userMessage }]);
-    setChatInput(''); // Xóa ô input
+    setChatInput(''); // Clear the input field
     setIsAiTyping(true);
 
     try {
@@ -858,7 +858,7 @@ const ScriptEditorPage = () => {
       notification.error({ message: 'AI Error', description: 'Could not connect to AI service.' });
       setChatMessages((prev) => [
         ...prev, 
-        { sender: 'AI', text: 'Xin lỗi, hiện tại tổng đài AI đang bận. Bạn đợi một lát nhé!' }
+        { sender: 'AI', text: 'Sorry, the AI service is currently busy. Please wait a moment.' }
       ]);
     } finally {
       setIsAiTyping(false);
@@ -866,10 +866,10 @@ const ScriptEditorPage = () => {
   };
 
   const handleClearChat = () => {
-    const defaultMsg = [{ sender: 'AI', text: 'Đã xóa trí nhớ. Mình có thể giúp gì cho kịch bản mới của bạn?' }];
+    const defaultMsg = [{ sender: 'AI', text: 'Memory cleared. How can I help with your new script?' }];
     setChatMessages(defaultMsg);
     localStorage.setItem(`ai_chat_${projectId}`, JSON.stringify(defaultMsg));
-    notification.success({ message: 'Đã xóa lịch sử trò chuyện' });
+    notification.success({ message: 'Chat history cleared' });
   };
 
   const handleExit = async () => {
@@ -1302,10 +1302,10 @@ const ScriptEditorPage = () => {
                     </div>
                     <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }}>
                       {[
-                        "Tóm tắt kịch bản", 
-                        "Gợi ý một tình tiết giật gân, rùng rợn", 
-                        "Sửa lỗi chính tả", 
-                        "Viết tiếp một câu thoại"
+                        "Summarize the script", 
+                        "Suggest a suspenseful, eerie plot twist", 
+                        "Fix spelling and grammar", 
+                        "Continue a line of dialogue"
                       ].map((suggestion, index) => (
                         <Button 
                           key={index} 
@@ -1324,7 +1324,7 @@ const ScriptEditorPage = () => {
                       ))}
                       
                       {/* Nút Xóa lịch sử nằm cuối thanh gợi ý */}
-                      <Tooltip title="Tẩy não AI (Xóa lịch sử)">
+                      <Tooltip title="Clear AI memory (clear history)">
                         <Button 
                           size="small" 
                           icon={<DeleteOutlined />} 
@@ -1338,7 +1338,7 @@ const ScriptEditorPage = () => {
                     {/* Khối Input cũ của ông giữ nguyên */}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Input
-                        placeholder="Nhập một lệnh truy vấn cho script AI..."
+                        placeholder="Enter a query for the script AI..."
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         onPressEnter={() => handleSendChatMessage()}

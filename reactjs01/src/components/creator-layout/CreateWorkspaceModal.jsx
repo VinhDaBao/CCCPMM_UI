@@ -9,19 +9,19 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
     try {
       const res = await createWorkspaceMutation.mutateAsync(values);
       
-      // Nếu Backend vẫn cứng đầu trả 200 nhưng có errCode = 1
+      // If the backend still returns 200 but includes errCode = 1
       if (res && res.errCode && res.errCode !== 0) {
-        notification.error({ message: 'Lỗi tạo Workspace', description: res.message });
+        notification.error({ message: 'Workspace creation failed', description: res.message });
         return; 
       }
 
       form.resetFields();
       onCancel();
     } catch (submitError) {
-      // Khi Backend trả 400, nó sẽ nhảy thẳng xuống đây
-      const errorMsg = submitError?.response?.data?.message || 'Không thể tạo Workspace do lỗi máy chủ';
+      // When the backend returns 400, execution lands here directly
+      const errorMsg = submitError?.response?.data?.message || 'Unable to create workspace due to a server error';
       notification.error({ 
-        message: 'Từ chối tạo', 
+        message: 'Creation rejected', 
         description: errorMsg 
       });
     }

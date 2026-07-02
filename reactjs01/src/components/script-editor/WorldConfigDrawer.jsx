@@ -79,22 +79,22 @@ const WorldConfigDrawer = ({
           <div className="flex flex-col gap-5">
             <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
               <label className="text-xs font-bold text-blue-600 block mb-1 uppercase">
-                Góc nhìn từ {sourceNodeName} --&gt; {targetNodeName}
+                Perspective from {sourceNodeName} --&gt; {targetNodeName}
               </label>
               <Input
                 value={relationSideA}
                 onChange={(e) => handleUpdateBidirectionalEdge('A', e.target.value)}
-                placeholder="Ví dụ: Thần tượng, Yêu thầm..."
+                placeholder="e.g. Idolized, secretly in love..."
               />
             </div>
             <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100">
               <label className="text-xs font-bold text-purple-600 block mb-1 uppercase">
-                Góc nhìn từ {targetNodeName} --&gt; {sourceNodeName}
+                Perspective from {targetNodeName} --&gt; {sourceNodeName}
               </label>
               <Input
                 value={relationSideB}
                 onChange={(e) => handleUpdateBidirectionalEdge('B', e.target.value)}
-                placeholder="Ví dụ: Xem là công cụ, Ghét bỏ..."
+                placeholder="e.g. Sees as a tool, Resentful..."
               />
             </div>
             <div>

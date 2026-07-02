@@ -22,17 +22,17 @@ const resources = {
   vi: {
     translation: {
       sidebar: {
-        dashboard: "Bảng điều khiển",
-        workspace: "Bàn làm việc",
-        assets: "Kho Tài Nguyên",
-        settings: "Cài đặt",
-        users: "Quản lý Users",
-        logout: "Đăng xuất",
-        menu: "DANH MỤC"
+        dashboard: "Dashboard",
+        workspace: "Workspace",
+        assets: "Asset Library",
+        settings: "Settings",
+        users: "Manage Users",
+        logout: "Log out",
+        menu: "MENU"
       },
       topbar: {
-        search: "Tìm kiếm...",
-        new_script: "Tạo kịch bản",
+        search: "Search...",
+        new_script: "New Script",
       }
     }
   }

@@ -10,10 +10,10 @@ import useWorkspaces from '../hooks/useWorkspaces';
 import ProjectModal from '../components/creator-layout/ProjectModal';
 
 const COLUMNS_DEF = {
-  IDEA: { id: 'IDEA', title: 'Ý TƯỞNG', color: '#3b82f6' },
-  WRITING: { id: 'WRITING', title: 'ĐANG VIẾT', color: '#d97706' },
-  MEDIA: { id: 'MEDIA', title: 'LÀM MEDIA', color: '#9333ea' },
-  PUBLISHED: { id: 'PUBLISHED', title: 'ĐÃ ĐĂNG', color: '#16a34a' }
+  IDEA: { id: 'IDEA', title: 'IDEA', color: '#3b82f6' },
+  WRITING: { id: 'WRITING', title: 'WRITING', color: '#d97706' },
+  MEDIA: { id: 'MEDIA', title: 'MEDIA', color: '#9333ea' },
+  PUBLISHED: { id: 'PUBLISHED', title: 'PUBLISHED', color: '#16a34a' }
 };
 
 const KanbanPage = () => {
@@ -66,7 +66,7 @@ const KanbanPage = () => {
       try {
         await updateProject({ id: draggableId, data: { status: destStatus } });
       } catch (error) {
-        notification.error({ message: 'Lỗi khi cập nhật trạng thái', description: error.message });
+        notification.error({ message: 'Error updating status', description: error.message });
       }
     }
   };
@@ -81,34 +81,34 @@ const KanbanPage = () => {
     try {
       if (editingProject) {
         await updateProject({ id: editingProject._id || editingProject.id, data });
-        notification.success({ message: 'Cập nhật dự án thành công' });
+        notification.success({ message: 'Project updated successfully' });
       } else {
         const payload = { ...data, status: data.status || defaultStatus };
         await createProject(payload);
-        notification.success({ message: 'Tạo dự án thành công' });
+        notification.success({ message: 'Project created successfully' });
       }
       setProjectModalOpen(false);
       setEditingProject(null);
     } catch (error) {
-      notification.error({ message: 'Lỗi khi lưu dự án', description: error.message });
+      notification.error({ message: 'Error saving project', description: error.message });
     }
   };
 
   const handleDeleteProject = (project) => {
     const projectId = project._id || project.id;
     Modal.confirm({
-      title: 'Xóa dự án?',
-      content: `Bạn có chắc chắn muốn xóa "${project.title}"? Hành động này không thể hoàn tác.`,
-      okText: 'Xóa',
+      title: 'Delete Project?',
+      content: `Are you sure you want to delete "${project.title}"? This action cannot be undone.`,
+      okText: 'Delete',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: 'Cancel',
       centered: true,
       onOk: async () => {
         try {
           await deleteProject(projectId);
-          notification.success({ message: 'Xóa dự án thành công' });
+          notification.success({ message: 'Project deleted successfully' });
         } catch (error) {
-          notification.error({ message: 'Lỗi khi xóa dự án', description: error.message });
+          notification.error({ message: 'Error deleting project', description: error.message });
         }
       }
     });
@@ -142,7 +142,7 @@ const KanbanPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-void)' }}>
-      <TopBar title="DashBoard" subtitle="Quản lý tiến độ kịch bản bằng kéo thả" />
+      <TopBar title="Dashboard" subtitle="Drag & Drop Project Management" />
 
       <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '24px', display: 'flex', gap: '20px' }}>
         <DragDropContext onDragEnd={onDragEnd}>
@@ -179,7 +179,7 @@ const KanbanPage = () => {
                       // 1. SỐ LƯỢNG ASSET
                       const assetCount = project.assetCount || project.assets?.length || project.projectAssets?.length || 0;
 
-                      // 2. DANH SÁCH THÀNH VIÊN (Nếu không có mảng members thì hiện tạm người tạo)
+                      // 2. DANH SÁCH THÀNH VIÊN
                       const projectMembers = project.members?.length > 0 
                         ? project.members 
                         : (project.createdBy ? [project.createdBy] : []);
@@ -223,7 +223,6 @@ const KanbanPage = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                   <Avatar.Group maxCount={3} size="small" maxStyle={{ color: '#000', backgroundColor: 'var(--accent-amber)' }}>
                                     {projectMembers.map((member, idx) => {
-                                      // Đề phòng backend trả về ID chuỗi thay vì Object
                                       const name = typeof member === 'object' ? (member.fullName || member.email || 'Unknown') : 'Unknown';
                                       const initial = name.charAt(0).toUpperCase();
                                       

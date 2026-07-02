@@ -19,11 +19,11 @@ const useCreateWorkspace = (ownerId) => {
       return createWorkspaceApi(payload);
     },
     onSuccess: async (response) => {
-      if (res && res.errCode !== 0) return; 
+      if (response && response.errCode !== 0) return; 
 
       notification.success({ 
-          message: 'Thành công',
-          description: 'Đã tạo Workspace mới!' 
+        message: 'Success',
+        description: 'New workspace created successfully!' 
       });
 
       await queryClient.invalidateQueries({ queryKey: ['workspaces'] });

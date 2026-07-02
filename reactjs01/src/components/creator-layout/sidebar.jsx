@@ -18,11 +18,11 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   const auth = useSelector(state => state.auth);
   const user = auth?.user || {};
 
-  // Menu Navigation List
-  // Đọc mã Không gian làm việc đang hoạt động của nhóm từ localStorage
+  // Menu navigation list
+  // Read the active workspace id from localStorage
   const localActiveWorkspaceId = activeWorkspaceId || localStorage.getItem('active_workspace_id') || "6a2e999a3c0cbd9d2589efb4";
 
-  // Mảng menu mặc định
+  // Default menu items
   const navItems = [
     { id: "dashboard", path: "/workspace/dashboard", label: "Dashboard", icon: "kanban" },
     { id: "project", path: "/workspace/projects", label: "Project", icon: "grid" },
@@ -32,10 +32,10 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
     { id: "settings", path: "/workspace/settings", label: "Settings", icon: "settings" },
   ];
 
-  // If Admin, append Users management view
+  // If admin, append user management views
   if (user.role === 'admin') {
-    navItems.push({ id: "admin-analytics", path: "/admin/dashboard", label: "Biểu đồ Doanh thu", icon: "sparkles" });
-    navItems.push({ id: "users", path: "/user", label: "Quản lý Users", icon: "user" });
+    navItems.push({ id: "admin-analytics", path: "/admin/dashboard", label: "Revenue Chart", icon: "sparkles" });
+    navItems.push({ id: "users", path: "/user", label: "User Management", icon: "user" });
   }
 
   const handleLogout = async () => {
@@ -43,7 +43,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           await logoutApi();
       } catch (error) {
           console.log(
-              "Lỗi khi gọi API logout, nhưng vẫn ép đăng xuất ở Frontend",
+                "Logout API failed, but the frontend will still force sign-out",
               error
           );
       } finally {
@@ -59,11 +59,11 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   const showLogoutConfirm = () => {
     Modal.confirm({
-      title: 'Xác nhận đăng xuất',
-      content: 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này?',
-      okText: 'Đăng xuất',
+      title: 'Confirm sign out',
+      content: 'Are you sure you want to sign out of this account?',
+      okText: 'Sign out',
       okButtonProps: { danger: true }, 
-      cancelText: 'Hủy',
+      cancelText: 'Cancel',
       centered: true,
       onOk: handleLogout, 
     });
@@ -143,7 +143,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}
         >
           <Icon name="x" size={15} color="var(--accent-rust)" />
-          Logout
+          Sign out
         </button>
       </div>
 
