@@ -9,7 +9,7 @@ const CharacterNode = ({ data }) => {
   };
 
   return (
-    <div className="min-w-[200px] bg-white border-2 border-blue-500 rounded-xl p-3 shadow-lg flex items-center gap-3">
+    <div className="min-w-[200px] border-2 border-blue-500 rounded-xl p-3 shadow-lg flex items-center gap-3" style={{ background: 'var(--bg-raised)' }}>
       {/* Cổng vật lý bên trái: Tắt ID để mở kết nối tự do 2D */}
       <Handle
         type="target"
@@ -35,10 +35,10 @@ const CharacterNode = ({ data }) => {
       </div>
 
       <div className="flex flex-col overflow-hidden text-left">
-        <span className="text-sm font-bold text-gray-800 truncate">
+        <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
           {data?.label || 'Unknown'}
         </span>
-        <span className="text-xs text-gray-400 font-medium truncate">
+        <span className="text-xs font-medium truncate" style={{ color: 'var(--text-muted)' }}>
           {data?.role || 'No Role'}
         </span>
       </div>

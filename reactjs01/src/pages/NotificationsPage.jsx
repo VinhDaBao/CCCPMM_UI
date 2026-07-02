@@ -4,6 +4,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import dayjs from 'dayjs';
 import TopBar from '../components/creator-layout/topBar';
 import useNotifications from '../hooks/useNotifications';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
@@ -17,6 +18,7 @@ const typeColorMap = {
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const outletCtx = useOutletContext();
   const setActiveWorkspaceId = outletCtx?.setActiveWorkspaceId || (() => { });
 
@@ -53,15 +55,17 @@ const NotificationsPage = () => {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
-      <TopBar title="Notifications" subtitle="View and manage your activities, system alerts, and workspace updates" />
+      <TopBar title={t('notifications_page.title')} subtitle={t('notifications_page.subtitle')} />
 
       <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
         <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", background: 'var(--bg-surface)' }}>
           <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>All Notifications</Title>
+              <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>{t('notifications_page.all_notifications')}</Title>
               <Text type="secondary" style={{ color: 'var(--text-muted)' }}>
-                You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+                {unreadCount === 1
+                  ? t('notifications_page.unread_summary', { count: unreadCount })
+                  : t('notifications_page.unread_summary_plural', { count: unreadCount })}
               </Text>
             </div>
 
@@ -71,7 +75,7 @@ const NotificationsPage = () => {
                 onClick={() => markAllRead()}
                 style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#fff', fontWeight: 600 }}
               >
-                Mark All as Read
+                {t('notifications_page.mark_all_as_read')}
               </Button>
             )}
           </div>
@@ -81,7 +85,7 @@ const NotificationsPage = () => {
               <Spin size="large" />
             </div>
           ) : notifications.length === 0 ? (
-            <Empty description="No notifications found" style={{ padding: '60px 0' }} />
+            <Empty description={t('notifications_page.empty')} style={{ padding: '60px 0' }} />
           ) : (
             <div>
               <List

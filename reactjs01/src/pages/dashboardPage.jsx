@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { notification, Spin, Dropdown, Button, Modal, Tooltip, Avatar } from 'antd';
 import { LoadingOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import TopBar from '../components/creator-layout/TopBar';
@@ -10,14 +11,15 @@ import useWorkspaces from '../hooks/useWorkspaces';
 import ProjectModal from '../components/creator-layout/ProjectModal';
 
 const COLUMNS_DEF = {
-  IDEA: { id: 'IDEA', title: 'IDEA', color: '#3b82f6' },
-  WRITING: { id: 'WRITING', title: 'WRITING', color: '#d97706' },
-  MEDIA: { id: 'MEDIA', title: 'MEDIA', color: '#9333ea' },
-  PUBLISHED: { id: 'PUBLISHED', title: 'PUBLISHED', color: '#16a34a' }
+  IDEA: { id: 'IDEA', titleKey: 'dashboard_page.column_idea', color: '#3b82f6' },
+  WRITING: { id: 'WRITING', titleKey: 'dashboard_page.column_writing', color: '#d97706' },
+  MEDIA: { id: 'MEDIA', titleKey: 'dashboard_page.column_media', color: '#9333ea' },
+  PUBLISHED: { id: 'PUBLISHED', titleKey: 'dashboard_page.column_published', color: '#16a34a' }
 };
 
 const KanbanPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { activeWorkspaceId } = useOutletContext();
   
   const { data: workspaces = [] } = useWorkspaces();
@@ -66,7 +68,7 @@ const KanbanPage = () => {
       try {
         await updateProject({ id: draggableId, data: { status: destStatus } });
       } catch (error) {
-        notification.error({ message: 'Error updating status', description: error.message });
+        notification.error({ message: t('projects_page.update_status_failed'), description: error.message });
       }
     }
   };
@@ -81,34 +83,34 @@ const KanbanPage = () => {
     try {
       if (editingProject) {
         await updateProject({ id: editingProject._id || editingProject.id, data });
-        notification.success({ message: 'Project updated successfully' });
+        notification.success({ message: t('projects_page.project_updated') });
       } else {
         const payload = { ...data, status: data.status || defaultStatus };
         await createProject(payload);
-        notification.success({ message: 'Project created successfully' });
+        notification.success({ message: t('projects_page.project_created') });
       }
       setProjectModalOpen(false);
       setEditingProject(null);
     } catch (error) {
-      notification.error({ message: 'Error saving project', description: error.message });
+      notification.error({ message: t('projects_page.save_failed'), description: error.message });
     }
   };
 
   const handleDeleteProject = (project) => {
     const projectId = project._id || project.id;
     Modal.confirm({
-      title: 'Delete Project?',
-      content: `Are you sure you want to delete "${project.title}"? This action cannot be undone.`,
-      okText: 'Delete',
+      title: t('projects_page.delete_title'),
+      content: t('projects_page.delete_content', { title: project.title }),
+      okText: t('projects_page.delete_ok'),
       okButtonProps: { danger: true },
-      cancelText: 'Cancel',
+      cancelText: t('projects_page.delete_cancel'),
       centered: true,
       onOk: async () => {
         try {
           await deleteProject(projectId);
-          notification.success({ message: 'Project deleted successfully' });
+          notification.success({ message: t('projects_page.project_deleted') });
         } catch (error) {
-          notification.error({ message: 'Error deleting project', description: error.message });
+          notification.error({ message: t('projects_page.delete_failed'), description: error.message });
         }
       }
     });
@@ -116,8 +118,8 @@ const KanbanPage = () => {
 
   const buildProjectMenu = (project) => ({
     items: [
-      { key: 'edit', label: 'Edit Project', icon: <EditOutlined /> },
-      { key: 'delete', label: 'Delete Project', danger: true, icon: <DeleteOutlined /> },
+      { key: 'edit', label: t('projects_page.edit_project'), icon: <EditOutlined /> },
+      { key: 'delete', label: t('projects_page.delete_project'), danger: true, icon: <DeleteOutlined /> },
     ],
     onClick: (e) => {
       e.domEvent.stopPropagation();
@@ -142,7 +144,7 @@ const KanbanPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-void)' }}>
-      <TopBar title="Dashboard" subtitle="Drag & Drop Project Management" />
+      <TopBar title={t('dashboard_page.title')} subtitle={t('dashboard_page.subtitle')} />
 
       <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '24px', display: 'flex', gap: '20px' }}>
         <DragDropContext onDragEnd={onDragEnd}>
@@ -164,7 +166,7 @@ const KanbanPage = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: colDef.color }} />
                       <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>
-                        {colDef.title}
+                        {t(colDef.titleKey)}
                       </div>
                     </div>
                     <div style={{ background: 'var(--bg-raised)', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px' }}>
@@ -223,7 +225,7 @@ const KanbanPage = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                   <Avatar.Group maxCount={3} size="small" maxStyle={{ color: '#000', backgroundColor: 'var(--accent-amber)' }}>
                                     {projectMembers.map((member, idx) => {
-                                      const name = typeof member === 'object' ? (member.fullName || member.email || 'Unknown') : 'Unknown';
+                                      const name = typeof member === 'object' ? (member.fullName || member.email || t('projects_page.unknown')) : t('projects_page.unknown');
                                       const initial = name.charAt(0).toUpperCase();
                                       
                                       return (
@@ -274,7 +276,7 @@ const KanbanPage = () => {
                         onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-amber)'; e.currentTarget.style.borderColor = 'var(--accent-amber)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
                       >
-                        <Icon name="plus" size={14} /> Create Project
+                        <Icon name="plus" size={14} /> {t('projects_page.create_project')}
                       </button>
                     )}
                   </div>

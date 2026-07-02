@@ -8,10 +8,12 @@ import useProjects from '../hooks/useProjects';
 import useWorkspaces from '../hooks/useWorkspaces';
 import ProjectModal from '../components/creator-layout/ProjectModal';
 import TopBar from '../components/creator-layout/topBar';
+import { useTranslation } from 'react-i18next';
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Read activeWorkspaceId from CreatorLayout context
   
@@ -42,16 +44,16 @@ const ProjectsPage = () => {
     try {
       if (editingProject) {
         await updateProject({ id: editingProject._id || editingProject.id, data });
-        notification.success({ message: 'Project updated successfully' });
+        notification.success({ message: t('projects_page.project_updated') });
       } else {
         await createProject(data);
-        notification.success({ message: 'Project created successfully' });
+        notification.success({ message: t('projects_page.project_created') });
       }
       setProjectModalOpen(false);
       setEditingProject(null);
     } catch (error) {
       notification.error({
-        message: 'Failed to save project',
+        message: t('projects_page.save_failed'),
         description: error?.response?.data?.message || error?.message
       });
     }
@@ -60,19 +62,19 @@ const ProjectsPage = () => {
   const handleDeleteProject = (project) => {
     const projectId = project._id || project.id;
     Modal.confirm({
-      title: 'Delete Project?',
-      content: `Are you sure you want to delete "${project.title}"? This cannot be undone.`,
-      okText: 'Delete',
+      title: t('projects_page.delete_title'),
+      content: t('projects_page.delete_content', { title: project.title }),
+      okText: t('projects_page.delete_ok'),
       okButtonProps: { danger: true },
-      cancelText: 'Cancel',
+      cancelText: t('projects_page.delete_cancel'),
       centered: true,
       onOk: async () => {
         try {
           await deleteProject(projectId);
-          notification.success({ message: 'Project deleted successfully' });
+          notification.success({ message: t('projects_page.project_deleted') });
         } catch (error) {
           notification.error({
-            message: 'Failed to delete project',
+            message: t('projects_page.delete_failed'),
             description: error?.response?.data?.message || error?.message
           });
         }
@@ -82,8 +84,8 @@ const ProjectsPage = () => {
 
   const buildProjectMenu = (project) => ({
     items: [
-      { key: 'edit', label: 'Edit Project', icon: <EditOutlined /> },
-      { key: 'delete', label: 'Delete Project', danger: true, icon: <DeleteOutlined /> },
+      { key: 'edit', label: t('projects_page.edit_project'), icon: <EditOutlined /> },
+      { key: 'delete', label: t('projects_page.delete_project'), danger: true, icon: <DeleteOutlined /> },
     ],
     onClick: (e) => {
       e.domEvent.stopPropagation(); // Ngăn chặn nổi bọt sự kiện click (Không bị chuyển trang)
@@ -100,7 +102,7 @@ const ProjectsPage = () => {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg-void)' }}>
-      <TopBar title="Projects" subtitle="Manage and collaborate on movie & series scripts" />
+      <TopBar title={t('projects_page.title')} subtitle={t('projects_page.subtitle')} />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
         {isLoading ? (
@@ -124,7 +126,7 @@ const ProjectsPage = () => {
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.01)'; e.currentTarget.style.borderColor = 'var(--border-lit)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
               >
                 <PlusOutlined style={{ fontSize: 24, marginBottom: 8 }} />
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Create Project</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{t('projects_page.create_project')}</span>
               </div>
             )}
 
@@ -141,7 +143,7 @@ const ProjectsPage = () => {
                         <span key={idx} style={{ background: 'rgba(255,255,255,0.15)', padding: '2px 6px', borderRadius: 4, fontSize: 10 }}>{t}</span>
                       ))}
                     </div>
-                  ) : 'No tags'}
+                  ) : t('projects_page.no_tags')}
                   placement="top"
                   mouseEnterDelay={0.5}
                 >
@@ -157,12 +159,12 @@ const ProjectsPage = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                         <FolderOutlined style={{ color: 'var(--accent-amber)', fontSize: 16 }} />
                         <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '80%' }}>
-                          {project.title || 'Untitled Project'}
+                          {project.title || t('projects_page.untitled_project')}
                         </div>
                       </div>
 
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
-                        {project.description || 'No description provided.'}
+                        {project.description || t('projects_page.no_description')}
                       </div>
                     </div>
 
@@ -208,7 +210,7 @@ const ProjectsPage = () => {
 
         {!isLoading && projects.length === 0 && !canManageProjects && (
           <div style={{ textAlign: 'center', marginTop: 40, color: 'var(--text-muted)' }}>
-            No projects in this workspace yet.
+            {t('projects_page.no_projects_yet')}
           </div>
         )}
       </div>

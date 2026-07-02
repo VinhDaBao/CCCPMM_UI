@@ -2,11 +2,13 @@ import { notification, Table, Tag, Switch, Space, Typography, Card, Input, Selec
 import { useEffect, useState } from "react";
 import { getAllUsersApi, toggleUserStatusApi, sendSystemNotificationApi } from "../util/api"; 
 import TopBar from "../components/creator-layout/TopBar"; 
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 const { Search } = Input;
 
 const UserPage = () => {
+    const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +19,7 @@ const UserPage = () => {
 
     const handleSendSystemNotification = async () => {
         if (!systemNotiTitle.trim() || !systemNotiMessage.trim()) {
-            notification.error({ message: "Error", description: "Please enter both title and message" });
+            notification.error({ message: t('user_page.error'), description: t('user_page.title_and_message_required') });
             return;
         }
 
@@ -29,14 +31,14 @@ const UserPage = () => {
             });
 
             if (res && res.errCode === 0) {
-                notification.success({ message: "Success", description: "System notification sent to all users" });
+                notification.success({ message: t('user_page.success'), description: t('user_page.system_notification_sent') });
                 setSystemNotiTitle('');
                 setSystemNotiMessage('');
             } else {
-                notification.error({ message: "Failed to send", description: res?.message });
+                notification.error({ message: t('user_page.send_failed'), description: res?.message });
             }
         } catch (error) {
-            notification.error({ message: "System Error", description: error.message });
+            notification.error({ message: t('user_page.system_error'), description: error.message });
         } finally {
             setIsSendingNoti(false);
         }
@@ -58,10 +60,10 @@ const UserPage = () => {
                 setUsers(res.data.users);
                 setTotalUsers(res.data.pagination.totalItems);
             } else {
-                notification.error({ message: "Data loading error", description: res?.message });
+                notification.error({ message: t('user_page.data_loading_error'), description: res?.message });
             }
         } catch (error) {
-            notification.error({ message: "System Error", description: error.message });
+            notification.error({ message: t('user_page.system_error'), description: error.message });
         } finally {
             setIsLoading(false);
         }
@@ -107,29 +109,29 @@ const UserPage = () => {
                 fetchUsers(); 
             } else {
                 setUsers(users.map(u => u._id === userId ? { ...u, isActivated: currentStatus } : u));
-                notification.error({ message: "Failed", description: res?.message });
+                notification.error({ message: t('user_page.failed'), description: res?.message });
             }
         } catch (error) {
             fetchUsers(); 
-            notification.error({ message: "System error while changing status" });
+            notification.error({ message: t('user_page.status_change_error') });
         }
     };
 
     const columns = [
         {
-            title: "Full Name",
+            title: t('user_page.full_name'),
             dataIndex: "fullName",
             key: "fullName",
             fontWeight: "bold",
             render: (text) => <strong>{text}</strong>
         },
         {
-            title: "Email",
+            title: t('user_page.email'),
             dataIndex: "email",
             key: "email",
         },
         {
-            title: "Role",
+            title: t('user_page.role'),
             dataIndex: "role",
             key: "role",
             render: (role) => (
@@ -139,7 +141,7 @@ const UserPage = () => {
             )
         },
         {
-            title: "Plan",
+            title: t('user_page.plan'),
             key: "plan",
             align: "center",
             render: (_, record) => {
@@ -157,24 +159,24 @@ const UserPage = () => {
             }
         },
         {
-            title: "Status",
+            title: t('user_page.status'),
             dataIndex: "isActivated",
             key: "isActivated",
             render: (isActivated) => (
                 <Tag color={isActivated ? "success" : "error"}>
-                    {isActivated ? "ACTIVE" : "LOCKED"}
+                    {isActivated ? t('user_page.active') : t('user_page.locked')}
                 </Tag>
             )
         },
         {
-            title: "Action",
+            title: t('user_page.action'),
             key: "action",
             align: 'center',
             render: (_, record) => (
                 <Space size="middle">
                     <Switch
-                        checkedChildren="Unlock"
-                        unCheckedChildren="Lock"
+                        checkedChildren={t('user_page.unlock')}
+                        unCheckedChildren={t('user_page.lock')}
                         checked={record.isActivated}
                         onChange={() => handleToggleStatus(record._id, record.isActivated)}
                         disabled={record.role === 'admin'} 
@@ -186,27 +188,27 @@ const UserPage = () => {
 
     return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
-            <TopBar title="System Admin" subtitle="User Management" />
+            <TopBar title={t('user_page.title')} subtitle={t('user_page.subtitle')} />
             
             <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
                 <Card 
                     bordered={false} 
                     style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", marginBottom: 24 }}
-                    title={<span style={{ fontWeight: 700, fontSize: 16 }}>📣 Send System Notification</span>}
+                    title={<span style={{ fontWeight: 700, fontSize: 16 }}>📣 {t('user_page.send_system_notification')}</span>}
                 >
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         <div>
-                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Notification Title:</div>
+                            <div style={{ marginBottom: 4, fontWeight: 600 }}>{t('user_page.notification_title')}</div>
                             <Input 
-                                placeholder="Enter title (e.g., System Maintenance)..." 
+                                placeholder={t('user_page.notification_title_placeholder')} 
                                 value={systemNotiTitle}
                                 onChange={(e) => setSystemNotiTitle(e.target.value)}
                             />
                         </div>
                         <div>
-                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Message:</div>
+                            <div style={{ marginBottom: 4, fontWeight: 600 }}>{t('user_page.message')}</div>
                             <Input.TextArea 
-                                placeholder="Enter system notification message..." 
+                                placeholder={t('user_page.message_placeholder')} 
                                 rows={3}
                                 value={systemNotiMessage}
                                 onChange={(e) => setSystemNotiMessage(e.target.value)}
@@ -219,7 +221,7 @@ const UserPage = () => {
                                 onClick={handleSendSystemNotification}
                                 style={{ background: "var(--accent-rust)", borderColor: "var(--accent-rust)", color: "#fff", fontWeight: 600 }}
                               >
-                                Send to All Users
+                                                                {t('user_page.send_all_users')}
                             </Button>
                         </div>
                     </div>
@@ -228,8 +230,8 @@ const UserPage = () => {
                 <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <Title level={4} style={{ margin: 0 }}>Account List</Title>
-                            <p style={{ color: "var(--text-muted)", margin: 0 }}>Total: {totalUsers} users</p>
+                            <Title level={4} style={{ margin: 0 }}>{t('user_page.account_list')}</Title>
+                            <p style={{ color: "var(--text-muted)", margin: 0 }}>{t('user_page.total_users', { count: totalUsers })}</p>
                         </div>
                         
                         <div style={{ display: 'flex', gap: '12px' }}>
@@ -238,15 +240,15 @@ const UserPage = () => {
                                 style={{ width: 160 }}
                                 onChange={handleSortChange}
                                 options={[
-                                    { value: 'createdAt_desc', label: 'Newest' },
-                                    { value: 'createdAt_asc', label: 'Oldest' },
-                                    { value: 'fullName_asc', label: 'Name: A - Z' },
-                                    { value: 'fullName_desc', label: 'Name: Z - A' },
+                                    { value: 'createdAt_desc', label: t('user_page.newest') },
+                                    { value: 'createdAt_asc', label: t('user_page.oldest') },
+                                    { value: 'fullName_asc', label: t('user_page.name_az') },
+                                    { value: 'fullName_desc', label: t('user_page.name_za') },
                                 ]}
                             />
                             
                             <Search 
-                                placeholder="Search by Name or Email..." 
+                                placeholder={t('user_page.search_placeholder')} 
                                 allowClear 
                                 onSearch={handleSearch} 
                                 style={{ width: 250 }} 

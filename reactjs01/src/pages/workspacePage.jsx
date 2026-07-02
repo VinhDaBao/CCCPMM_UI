@@ -337,11 +337,11 @@ const WorkspacePage = () => {
           </div>
 
           {/* Vùng nền xám chứa Trang Giấy */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "#f4f5f7", padding: "32px 24px" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "var(--bg-base)", padding: "32px 24px" }}>
             
             {/* ĐÂY LÀ "TỜ GIẤY TRẮNG" (Frame) */}
             <div style={{ 
-              maxWidth: 820, margin: "0 auto", width: "100%", background: "#ffffff", 
+              maxWidth: 820, margin: "0 auto", width: "100%", background: "var(--bg-raised)", 
               border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 24px rgba(0,0,0,0.03)",
               display: "flex", flexDirection: "column", minHeight: "100%" 
             }}>

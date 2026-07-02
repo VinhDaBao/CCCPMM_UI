@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, Button, Select, Space, Tooltip, notification, Spin, Modal, Input, List, Checkbox, Avatar, Badge, Popover } from 'antd';
 
@@ -51,6 +52,16 @@ const roleLabels = {
   VIEWER: 'Viewer'
 };
 
+const getRoleLabel = (role, t) => {
+  switch (role) {
+    case 'OWNER': return t('script_editor.role_owner');
+    case 'ADMIN': return t('script_editor.role_admin');
+    case 'EDITOR': return t('script_editor.role_editor');
+    case 'VIEWER': return t('script_editor.role_viewer');
+    default: return role;
+  }
+};
+
 const ScriptEditorPage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
@@ -58,6 +69,7 @@ const ScriptEditorPage = () => {
 
   const auth = useSelector((state) => state.auth);
   const user = auth?.user || {};
+  const { t } = useTranslation();
 
   const { activeWorkspaceId } = useOutletContext();
 
@@ -104,7 +116,7 @@ const ScriptEditorPage = () => {
       }
     }
     return [
-      { sender: 'AI', text: 'Hello! I am your collaborative script assistant. Do you need help writing or reviewing a dialogue segment?' }
+      { sender: 'AI', text: t('script_editor.chat_welcome') }
     ];
   });
   useEffect(() => {
@@ -304,7 +316,7 @@ const ScriptEditorPage = () => {
           }
         } catch (err) {
           console.error('Failed to load Google voices:', err);
-          notification.error({ message: 'Failed to load premium voices' });
+          notification.error({ message: t('script_editor.premium_voices_failed') });
         }
       };
       loadGoogleVoices();
@@ -393,7 +405,7 @@ const ScriptEditorPage = () => {
         } catch (err) {
           console.error('TTS synthesis failed:', err);
           notification.error({
-            message: 'Synthesis Failed',
+            message: t('script_editor.synthesis_failed'),
             description: err.message || 'Could not synthesize voice.'
           });
           setReadingBlockId(null);
@@ -425,7 +437,7 @@ const ScriptEditorPage = () => {
 
       audio.play().catch(err => {
         console.error('Failed to play audio:', err);
-        notification.warning({ message: 'Playback issue. Please interact with page and try again.' });
+        notification.warning({ message: t('script_editor.playback_issue') });
         setReadingBlockId(null);
         setIsVoiceActive(false);
         setIsVoicePaused(false);
@@ -478,7 +490,7 @@ const ScriptEditorPage = () => {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    notification.info({ message: 'Reading Finished' });
+    notification.info({ message: t('script_editor.reading_finished') });
   };
 
   const handleTogglePauseVoice = () => {
@@ -855,10 +867,10 @@ const ScriptEditorPage = () => {
         throw new Error(data.message);
       }
     } catch (err) {
-      notification.error({ message: 'AI Error', description: 'Could not connect to AI service.' });
+      notification.error({ message: t('script_editor.ai_error'), description: t('script_editor.ai_connection_error') });
       setChatMessages((prev) => [
         ...prev, 
-        { sender: 'AI', text: 'Sorry, the AI service is currently busy. Please wait a moment.' }
+        { sender: 'AI', text: t('script_editor.ai_busy') }
       ]);
     } finally {
       setIsAiTyping(false);
@@ -866,7 +878,7 @@ const ScriptEditorPage = () => {
   };
 
   const handleClearChat = () => {
-    const defaultMsg = [{ sender: 'AI', text: 'Memory cleared. How can I help with your new script?' }];
+    const defaultMsg = [{ sender: 'AI', text: t('script_editor.chat_memory_cleared') }];
     setChatMessages(defaultMsg);
     localStorage.setItem(`ai_chat_${projectId}`, JSON.stringify(defaultMsg));
     notification.success({ message: 'Chat history cleared' });
@@ -901,11 +913,11 @@ const ScriptEditorPage = () => {
           <Button icon={<ArrowLeftOutlined />} onClick={handleExit} />
           <div>
             <h2 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-              {currentProject?.title || 'Script Editor'}
+              {currentProject?.title || t('script_editor.script_editor_title')}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Collaborative Script Editor
+                {t('script_editor.collaborative_editor')}
               </div>
 
               {/* Hiển thị danh sách Tags của Project */}
@@ -974,7 +986,7 @@ const ScriptEditorPage = () => {
                 const tooltipTitle = (
                   <div style={{ padding: '4px 8px' }}>
                     <div style={{ fontWeight: 600, color: '#fff' }}>{name}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.65)' }}>{roleLabels[m.role] || m.role}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.65)' }}>{getRoleLabel(m.role, t) || m.role}</div>
                     <div style={{ fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{
                         width: 6,
@@ -985,7 +997,7 @@ const ScriptEditorPage = () => {
                         boxShadow: isOnline ? '0 0 8px #52c41a' : 'none'
                       }} />
                       <span style={{ color: isOnline ? '#52c41a' : '#bfbfbf', fontWeight: 500 }}>
-                        {isOnline ? 'Online' : 'Offline'}
+                        {isOnline ? t('script_editor.online') : t('script_editor.offline')}
                       </span>
                     </div>
                   </div>
@@ -1017,7 +1029,7 @@ const ScriptEditorPage = () => {
                           {name}
                         </span>
                         <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                          {roleLabels[m.role] || m.role} • {isOnline ? 'Online' : 'Offline'}
+                          {getRoleLabel(m.role, t) || m.role} • {isOnline ? t('script_editor.online') : t('script_editor.offline')}
                         </span>
                       </div>
                     </div>
@@ -1059,7 +1071,7 @@ const ScriptEditorPage = () => {
                           {remainingMembers.map((m) => renderMemberAvatar(m, 'list'))}
                         </div>
                       }
-                      title={<div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>More Members</div>}
+                      title={<div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>{t('script_editor.more_members')}</div>}
                       trigger="click"
                       placement="bottomRight"
                       overlayStyle={{ zIndex: 1050 }}
@@ -1104,8 +1116,8 @@ const ScriptEditorPage = () => {
                 setVoiceEngine(val);
               }}
               options={[
-                { value: 'WEB_SPEECH', label: 'Browser Speech (Free)' },
-                { value: 'GOOGLE_CLOUD', label: 'Google Cloud TTS (Premium)' }
+                { value: 'WEB_SPEECH', label: t('script_editor.voice_browser') },
+                { value: 'GOOGLE_CLOUD', label: t('script_editor.voice_google') }
               ]}
               style={{ width: 200 }}
             />
@@ -1121,7 +1133,7 @@ const ScriptEditorPage = () => {
                     ? `${v.name} (${v.ssmlGender || 'NEUTRAL'})`
                     : `${v.name} (${v.lang || v.languageCodes?.join(', ')})`
                 }))}
-                placeholder="Choose voice"
+                placeholder={t('script_editor.choose_voice')}
                 style={{ width: 220 }}
               />
             )}
@@ -1130,7 +1142,7 @@ const ScriptEditorPage = () => {
               icon={(!isVoiceActive || isVoicePaused) ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
               onClick={handleTogglePauseVoice}
             >
-              {!isVoiceActive ? 'Play Voice' : (isVoicePaused ? 'Resume Voice' : 'Pause Voice')}
+              {!isVoiceActive ? t('script_editor.play_voice') : (isVoicePaused ? t('script_editor.resume_voice') : t('script_editor.pause_voice'))}
             </Button>
 
             {isVoiceActive && (
@@ -1139,29 +1151,29 @@ const ScriptEditorPage = () => {
                 onClick={handleStopReading}
                 danger
               >
-                Stop
+                {t('script_editor.stop')}
               </Button>
             )}
           </Space>
 
           <Space size="middle">
             <Button icon={<CameraOutlined />} disabled={isViewer} onClick={handleSaveSnapshot}>
-              Save Snapshot
+              {t('script_editor.save_snapshot')}
             </Button>
             <Button icon={<HistoryOutlined />} onClick={() => setSnapshotModalOpen(true)}>
-              History
+              {t('script_editor.history')}
             </Button>
             <Button icon={<ProfileOutlined />} onClick={() => setLogModalOpen(true)}>
-              Timeline Log
+              {t('script_editor.timeline_log')}
             </Button>
             <Button icon={<CopyOutlined />} disabled={isViewer} onClick={handleDuplicateProject}>
-              Duplicate
+              {t('script_editor.duplicate')}
             </Button>
             <Button
               icon={sidebarVisible ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
               onClick={() => setSidebarVisible(!sidebarVisible)}
             >
-              {sidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+              {sidebarVisible ? t('script_editor.hide_sidebar') : t('script_editor.show_sidebar')}
             </Button>
           </Space>
         </div>
@@ -1188,7 +1200,7 @@ const ScriptEditorPage = () => {
                 borderRadius: 12
               }}
             >
-              <h3 style={{ color: 'var(--text-muted)' }}>No blocks inside this script</h3>
+              <h3 style={{ color: 'var(--text-muted)' }}>{t('script_editor.no_blocks')}</h3>
               {!isViewer && (
                 <Button
                   type="primary"
@@ -1196,7 +1208,7 @@ const ScriptEditorPage = () => {
                   onClick={() => handleAddBlockClick(0)}
                   style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
                 >
-                  Create First Block
+                  {t('script_editor.create_first_block')}
                 </Button>
               )}
             </div>
@@ -1227,7 +1239,7 @@ const ScriptEditorPage = () => {
                     setIsVoiceActive(false);
                     setIsVoicePaused(false);
                     setReadingBlockId(id);
-                    notification.info({ message: 'Reading pointer moved to this block' });
+                    notification.info({ message: t('script_editor.reading_pointer_moved') });
                   }}
                   onCreateCharacterClick={() => setCharModalOpen(true)}
                   onDragStart={handleBlockDragStart}
@@ -1256,7 +1268,7 @@ const ScriptEditorPage = () => {
                   fontSize: 12,
                   marginTop: 20
                 }}>
-                  Drag & drop media assets here to append at the end of the script
+                  {t('script_editor.append_media_hint')}
                 </div>
               )}
             </div>
@@ -1274,7 +1286,7 @@ const ScriptEditorPage = () => {
             items={[
               {
                 key: 'chat',
-                label: 'AI Chat',
+                label: t('script_editor.ai_chat'),
                 children: (
                   <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
                     <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1324,7 +1336,7 @@ const ScriptEditorPage = () => {
                       ))}
                       
                       {/* Nút Xóa lịch sử nằm cuối thanh gợi ý */}
-                      <Tooltip title="Clear AI memory (clear history)">
+                      <Tooltip title={t('script_editor.clear_ai_memory_title')}>
                         <Button 
                           size="small" 
                           icon={<DeleteOutlined />} 
@@ -1338,7 +1350,7 @@ const ScriptEditorPage = () => {
                     {/* Khối Input cũ của ông giữ nguyên */}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Input
-                        placeholder="Enter a query for the script AI..."
+                        placeholder={t('script_editor.ai_input_placeholder')}
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         onPressEnter={() => handleSendChatMessage()}
@@ -1355,14 +1367,14 @@ const ScriptEditorPage = () => {
               },
               {
                 key: 'assets',
-                label: 'Assets',
+                label: t('script_editor.assets_tab'),
                 children: (
                   <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Attached Media</h4>
+                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>{t('script_editor.attached_media')}</h4>
                       {!isViewer && (
                         <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleOpenAttachModal} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}>
-                          Add Asset
+                          {t('script_editor.add_asset')}
                         </Button>
                       )}
                     </div>
@@ -1370,7 +1382,7 @@ const ScriptEditorPage = () => {
                     <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
                       {projectAssets.length === 0 ? (
                         <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                          No assets attached yet. Drag-and-drop assets into the script.
+                          {t('script_editor.no_assets_attached')}
                         </div>
                       ) : (
                         projectAssets.map((assetItem) => {
@@ -1383,8 +1395,8 @@ const ScriptEditorPage = () => {
                               key={assetItem._id || assetItem.id}
                               title={
                                 originalAsset.tags && originalAsset.tags.length > 0
-                                  ? `Tags: ${originalAsset.tags.join(', ')}`
-                                  : 'No tags'
+                                  ? `${t('script_editor.tags_prefix')} ${originalAsset.tags.join(', ')}`
+                                  : t('script_editor.no_tags')
                               }
                               placement="left"
                             >
@@ -1435,12 +1447,12 @@ const ScriptEditorPage = () => {
                                   </div>
                                   <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
                                     <span>{originalAsset.type}</span>
-                                    <Badge status={isUsed ? 'success' : 'default'} text={isUsed ? `USED (${assetItem.usageCount || 0})` : 'UNUSED'} />
+                                    <Badge status={isUsed ? 'success' : 'default'} text={isUsed ? `${t('script_editor.used')} (${assetItem.usageCount || 0})` : t('script_editor.unused')} />
                                   </div>
                                 </div>
 
                                 {!isViewer && (
-                                  <Tooltip title={isUsed ? "Cannot delete asset in use" : "Remove asset from project"}>
+                                  <Tooltip title={isUsed ? t('script_editor.cannot_delete_used') : t('script_editor.remove_asset')}>
                                     <Button
                                       type="text"
                                       danger
@@ -1462,14 +1474,14 @@ const ScriptEditorPage = () => {
               },
               {
                 key: 'snippets',
-                label: 'Snippets',
+                label: t('script_editor.snippets_tab'),
                 children: (
                   <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>Workspace Snippets</h4>
+                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>{t('script_editor.workspace_snippets')}</h4>
                     <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
                       {snippets.length === 0 ? (
                         <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                          No snippets created yet.
+                          {t('script_editor.no_snippets')}
                         </div>
                       ) : (
                         snippets.map((snip) => (
@@ -1521,7 +1533,7 @@ const ScriptEditorPage = () => {
 
       {/* Attachable Workspace Assets Modal */}
       <Modal
-        title="Attach Workspace Assets"
+        title={t('script_editor.attach_workspace_assets')}
         open={attachModalOpen}
         onCancel={() => setAttachModalOpen(false)}
         onOk={handleAttachAssets}
@@ -1531,7 +1543,7 @@ const ScriptEditorPage = () => {
         destroyOnClose
       >
         <Input
-          placeholder="Search workspace assets by tags..."
+          placeholder={t('script_editor.search_assets_placeholder')}
           value={searchAsset}
           onChange={(e) => setSearchAsset(e.target.value)}
           style={{ marginBottom: 16, marginTop: 12 }}
@@ -1598,7 +1610,7 @@ const ScriptEditorPage = () => {
 
       {/* Choose Block Type Modal */}
       <Modal
-        title="Choose Block Type"
+        title={t('script_editor.choose_block_type')}
         open={blockTypeModalOpen}
         onCancel={() => setBlockTypeModalOpen(false)}
         footer={null}
@@ -1606,7 +1618,7 @@ const ScriptEditorPage = () => {
         destroyOnClose
       >
         <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>
-          Choose between Text or Dialogue block to insert.
+          {t('script_editor.choose_block_desc')}
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
           <Button
@@ -1617,7 +1629,7 @@ const ScriptEditorPage = () => {
             }}
             style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
           >
-            Text Block
+            {t('script_editor.text_block')}
           </Button>
           <Button
             type="primary"
@@ -1627,7 +1639,7 @@ const ScriptEditorPage = () => {
             }}
             style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
           >
-            Dialogue Block
+            {t('script_editor.dialogue_block')}
           </Button>
         </div>
       </Modal>
@@ -1639,10 +1651,10 @@ const ScriptEditorPage = () => {
         onSave={async (data) => {
           try {
             await createCharacter(data);
-            notification.success({ message: 'Character created successfully' });
+            notification.success({ message: t('script_editor.character_created') });
             setCharModalOpen(false);
           } catch (error) {
-            notification.error({ message: 'Failed to create character' });
+            notification.error({ message: t('script_editor.character_create_failed') });
           }
         }}
       />
@@ -1662,12 +1674,12 @@ const ScriptEditorPage = () => {
       />
 
       <Modal
-        title="Save as Snippet"
+        title={t('script_editor.save_as_snippet')}
         open={snippetModalOpen}
         onCancel={() => setSnippetModalOpen(false)}
         onOk={async () => {
           if (!snippetTitle.trim()) {
-            notification.warning({ message: 'Title is required' });
+            notification.warning({ message: t('script_editor.snippet_title_required') });
             return;
           }
           try {
@@ -1692,10 +1704,10 @@ const ScriptEditorPage = () => {
               tags: snippetTags,
               content: contentData
             });
-            notification.success({ message: 'Snippet created successfully' });
+            notification.success({ message: t('script_editor.snippet_created') });
             setSnippetModalOpen(false);
           } catch (err) {
-            notification.error({ message: 'Failed to create snippet', description: err.message });
+            notification.error({ message: t('script_editor.snippet_create_failed'), description: err.message });
           }
         }}
         okButtonProps={{ style: { background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 } }}
@@ -1704,25 +1716,25 @@ const ScriptEditorPage = () => {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 10 }}>
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Snippet Title</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('script_editor.snippet_title_label')}</label>
             <Input
               value={snippetTitle}
               onChange={(e) => setSnippetTitle(e.target.value)}
-              placeholder="Enter snippet title..."
+              placeholder={t('script_editor.snippet_title_placeholder')}
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Tags</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('script_editor.tags_label')}</label>
             <Select
               mode="tags"
               style={{ width: '100%' }}
-              placeholder="Type tag and press Enter..."
+              placeholder={t('script_editor.tags_placeholder')}
               value={snippetTags}
               onChange={(value) => setSnippetTags(value)}
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Content Preview</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('script_editor.content_preview')}</label>
             <div style={{
               padding: 10,
               background: 'var(--bg-hover)',
@@ -1736,13 +1748,13 @@ const ScriptEditorPage = () => {
               {snippetSourceBlock ? (
                 snippetSourceBlock.type === 'DIALOGUE' ? (
                   <div>
-                    <strong style={{ color: 'var(--accent-amber)' }}>DIALOGUE:</strong>
+                    <strong style={{ color: 'var(--accent-amber)' }}>{t('script_editor.dialogue_label')}</strong>
                     <div dangerouslySetInnerHTML={{ __html: snippetContentHtml || '' }} />
                   </div>
                 ) : (
                   <div dangerouslySetInnerHTML={{ __html: snippetContentHtml || '' }} />
                 )
-              ) : 'No block selected'}
+              ) : t('script_editor.no_block_selected')}
             </div>
           </div>
         </div>

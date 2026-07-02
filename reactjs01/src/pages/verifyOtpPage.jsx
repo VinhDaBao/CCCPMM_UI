@@ -3,6 +3,7 @@ import { Button, Form, Input, notification } from 'antd';
 import { ArrowLeftOutlined, SafetyOutlined } from '@ant-design/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { verifyOtpApi, verifyRegisterOtpApi, forgotPasswordApi } from '../util/api';
+import { useTranslation } from 'react-i18next';
 
 const VerifyOtpPage = () => {
 const navigate = useNavigate();
@@ -17,17 +18,18 @@ const type = location?.state?.type;
 const [countdown, setCountdown] = useState(300);
 const [isVerifying, setIsVerifying] = useState(false);
 const [isResending, setIsResending] = useState(false);
+const { t } = useTranslation();
 
 useEffect(() => {
     if (!email) {
         notification.warning({
-            message: "Session expired",
-            description: "Please restart the process",
+            message: t('auth_verify.session_expired_title'),
+            description: t('auth_verify.session_expired_desc'),
         });
 
         navigate("/forgot-password");
     }
-}, [email, navigate]);
+}, [email, navigate, t]);
 
 useEffect(() => {
     if (countdown <= 0) return;
@@ -62,7 +64,7 @@ const onFinish = async (values) => {
                 );
 
             notification.success({
-                message: "ACCOUNT ACTIVATED",
+                message: t('auth_verify.account_activated'),
                 description:
                     res.message || "Success!",
             });
@@ -81,8 +83,7 @@ const onFinish = async (values) => {
             );
 
             notification.success({
-                message:
-                    "VERIFICATION SUCCESSFUL",
+                message: t('auth_verify.verification_success'),
                 description:
                     res.message || "Success!",
             });
@@ -93,14 +94,14 @@ const onFinish = async (values) => {
         notification.error({
             message:
                 type === "register"
-                    ? "ACTIVATION FAILED"
-                    : "VERIFICATION FAILED",
+                    ? t('auth_verify.activation_failed')
+                    : t('auth_verify.verification_failed'),
 
             description:
                 error?.response?.data
                     ?.message ||
                 error?.message ||
-                "System error",
+                t('auth_verify.system_error'),
         });
     } finally {
         setIsVerifying(false);
@@ -117,19 +118,19 @@ const handleResendOtp = async () => {
             await forgotPasswordApi(email);
 
         notification.success({
-            message: "RESEND OTP",
+            message: t('auth_verify.resend_otp_title'),
             description: res.message,
         });
 
         setCountdown(120);
     } catch (error) {
         notification.error({
-            message: "RESEND OTP FAILED",
+            message: t('auth_verify.resend_otp_failed_title'),
             description:
                 error?.response?.data
                     ?.message ||
                 error?.message ||
-                "Error resending OTP",
+                t('auth_verify.resend_otp_failed_default'),
         });
     } finally {
         setIsResending(false);
@@ -138,7 +139,7 @@ const handleResendOtp = async () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">
-            <div className="w-full max-w-md bg-white/80 backdrop-blur-lg shadow-2xl rounded-3xl p-8 border border-white/40">
+            <div className="w-full max-w-md backdrop-blur-lg shadow-2xl rounded-3xl p-8" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
                 
                 {/* Logo & Tiêu đề linh hoạt */}
                 <div className="text-center mb-8">
@@ -148,24 +149,24 @@ const handleResendOtp = async () => {
                         </svg>
                     </div>
                     <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
-                        {type === "register" ? "Activate Account" : "Verify OTP"}
+                        {type === "register" ? t('auth_verify.title_activate') : t('auth_verify.title_verify')}
                     </h1>
                     <p className="text-gray-500 mt-2 text-sm">
-                        Enter the OTP code sent to your email
+                        {t('auth_verify.subtitle')}
                     </p>
                 </div>
 
                 <Form layout='vertical' onFinish={onFinish} autoComplete="off">
                     <Form.Item 
-                        label="OTP Code" 
+                        label={t('auth_verify.otp_label')} 
                         name="otp" 
-                        rules={[{ required: true, message: "Please input OTP!" }]}
+                        rules={[{ required: true, message: t('auth_verify.otp_required') }]}
                     >
-                        <Input size="large" prefix={<SafetyOutlined className="text-gray-400" />} placeholder='Enter OTP' className="!rounded-xl !py-2.5" />
+                        <Input size="large" prefix={<SafetyOutlined className="text-gray-400" />} placeholder={t('auth_verify.otp_placeholder')} className="!rounded-xl !py-2.5" />
                     </Form.Item>
 
                     <div className={`mb-6 text-sm text-center font-medium ${countdown <= 10 ? "text-red-500" : "text-gray-500"}`}>
-                        OTP expires in: {formatTime(countdown)}
+                        {t('auth_verify.expires_in')} {formatTime(countdown)}
                     </div>
 
                     <Form.Item className="mb-0">
@@ -177,24 +178,24 @@ const handleResendOtp = async () => {
                             size="large" 
                             className="!h-12 !rounded-xl !font-semibold !text-lg !bg-gradient-to-r !from-orange-500 !to-amber-600 !border-none hover:!opacity-95"
                         >
-                            {type === "register" ? "Activate Now" : "Verify OTP"}
+                            {type === "register" ? t('auth_verify.activate_now') : t('auth_verify.verify_otp')}
                         </Button>
                     </Form.Item>
                 </Form>
 
                 <div className="text-center mt-6 text-gray-500 text-sm">
                     <div className="mb-4">
-                        Didn't receive OTP?{" "}
+                        {t('auth_verify.did_not_receive')} {" "}
                         <button 
                             disabled={countdown > 0 || isResending} 
                             onClick={handleResendOtp}
                             className={`font-medium transition-colors bg-transparent border-none p-0 ${(countdown > 0 || isResending) ? "text-gray-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700 cursor-pointer"}`}
                         >
-                            Resend OTP
+                            {t('auth_verify.resend_otp')}
                         </button>
                     </div>
                     <Link to="/login" className="inline-flex items-center gap-2 text-sm hover:text-orange-600 transition-colors">
-                        <ArrowLeftOutlined /> Back to Login
+                        <ArrowLeftOutlined /> {t('auth_verify.back_login')}
                     </Link>
                 </div>
 

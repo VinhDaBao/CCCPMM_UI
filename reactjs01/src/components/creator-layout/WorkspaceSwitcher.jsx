@@ -9,6 +9,7 @@ import CreateWorkspaceModal from './CreateWorkspaceModal';
 import UpdateWorkspaceModal from './UpdateWorkspaceModal';
 import WorkspaceMembersModal from './WorkspaceMembersModal';
 import WorkspaceInvitesModal from './WorkspaceInvitesModal';
+import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEY = 'active_workspace_id';
 
@@ -16,6 +17,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   const auth = useSelector((state) => state.auth);
   const user = auth?.user || {};
   const ownerId = user?._id || user?.id;
+  const { t } = useTranslation();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -54,17 +56,17 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
       return;
     }
 
-    const errorMessage = error?.response?.data?.message ?? error?.message ?? 'Unable to load workspaces';
+    const errorMessage = error?.response?.data?.message ?? error?.message ?? t('workspace_switcher.list_error_default');
     if (lastErrorRef.current === errorMessage) {
       return;
     }
 
     lastErrorRef.current = errorMessage;
     notification.error({
-      message: 'Workspace list failed',
+      message: t('workspace_switcher.list_failed'),
       description: errorMessage,
     });
-  }, [error, isError]);
+  }, [error, isError, t]);
 
   const activeWorkspace = workspaceList.find((workspace) => String(workspace?._id || workspace?.id) === String(selectedWorkspaceId));
 
@@ -86,18 +88,18 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   const handleDeleteWorkspace = (workspace) => {
     const workspaceId = String(workspace?._id || workspace?.id || '');
-    const workspaceName = workspace?.name || 'Untitled workspace';
+    const workspaceName = workspace?.name || t('workspace_switcher.untitled_workspace');
 
     if (!workspaceId) {
       return;
     }
 
     Modal.confirm({
-      title: 'Delete workspace?',
-      content: `Delete "${workspaceName}"? This action cannot be undone.`,
-      okText: 'Delete',
+      title: t('workspace_switcher.delete_title'),
+      content: t('workspace_switcher.delete_content', { name: workspaceName }),
+      okText: t('workspace_switcher.delete_ok'),
       okButtonProps: { danger: true },
-      cancelText: 'Cancel',
+      cancelText: t('workspace_switcher.delete_cancel'),
       centered: true,
       onOk: async () => {
         const nextWorkspaces = workspaceList.filter((item) => String(item?._id || item?.id || '') !== workspaceId);
@@ -126,7 +128,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
     const items = [
       {
         key: 'members',
-        label: 'Manage members',
+        label: t('workspace_switcher.manage_members'),
         icon: <DatabaseOutlined />,
       },
     ];
@@ -134,7 +136,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
     if (canManageInvites) {
       items.push({
         key: 'invites',
-        label: 'Manage invites',
+        label: t('workspace_switcher.manage_invites'),
         icon: <UserSwitchOutlined />,
       });
     }
@@ -143,12 +145,12 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
       items.push(
         {
           key: 'update',
-          label: 'Update workspace',
+          label: t('workspace_switcher.update_workspace'),
           icon: <EditOutlined />,
         },
         {
           key: 'delete',
-          label: 'Delete workspace',
+          label: t('workspace_switcher.delete_workspace'),
           danger: true,
           icon: <DeleteOutlined />,
         }
@@ -181,11 +183,11 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   const workspaceOptions = workspaceList.map((workspace) => ({
     value: String(workspace?._id || workspace?.id || ''),
-    label: workspace?.name || 'Untitled workspace',
+    label: workspace?.name || t('workspace_switcher.untitled_workspace'),
   }));
 
   const dropdownContent = (
-    <div style={{ width: '100%', maxWidth: 260 }}>
+    <div style={{ width: '100%', maxWidth: 260, background: 'var(--bg-raised)', color: 'var(--text-primary)', borderRadius: 8, padding: 8 }}>
       <Button
         block
         type="text"
@@ -199,7 +201,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           fontWeight: 600,
         }}
       >
-        Create workspace
+        {t('workspace_switcher.create_workspace')}
       </Button>
 
       <Divider style={{ margin: '8px 0' }} />
@@ -228,15 +230,15 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
               onMouseLeave={(e) =>
                 (e.currentTarget.style.background = 'transparent')
               }
-            >
+              >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', flex: 1 }}>
-                <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
                   {ws.name || 'Untitled workspace'}
                 </span>
 
                 {String(ws._id || ws.id) === selectedWorkspaceId && (
                   <span style={{ fontSize: 10, color: 'var(--accent-amber)', flexShrink: 0 }}>
-                    ACTIVE
+                    {t('workspace_switcher.active')}
                   </span>
                 )}
               </div>
@@ -282,7 +284,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <span style={{ color: 'var(--text-muted)' }}>
-              No workspaces yet
+              {t('workspace_switcher.no_workspaces')}
             </span>
           }
         />
@@ -294,7 +296,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
     <div style={{ padding: '12px 12px 14px', borderBottom: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          Workspace
+          {t('workspace_switcher.workspace_label')}
         </div>
         <DatabaseOutlined style={{ color: 'var(--accent-amber)', fontSize: 14 }} />
       </div>
@@ -313,10 +315,11 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           onOpenChange={setDropdownOpen}
           open={dropdownOpen}
           loading={isLoading}
-          placeholder="Select workspace"
+          placeholder={t('workspace_switcher.select_workspace')}
           suffixIcon={<DownOutlined style={{ color: 'var(--text-muted)' }} />}
           popupRender={() => dropdownContent}
-          style={{ flex: 1 }}
+          dropdownStyle={{ background: 'var(--bg-raised)', color: 'var(--text-primary)' }}
+          style={{ flex: 1, background: 'var(--bg-surface)', color: 'var(--text-primary)', borderRadius: 8 }}
           variant="filled"
           allowClear={false}
           size="middle"

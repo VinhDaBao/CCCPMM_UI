@@ -63,7 +63,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
 
   const renderPopoverTitle = () => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0 2px 0' }}>
-      <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>Notifications</span>
+      <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>{t('topbar.notifications')}</span>
       {unreadCount > 0 && (
         <Button 
           type="link" 
@@ -71,7 +71,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
           onClick={() => markAllRead()} 
           style={{ padding: 0, fontSize: 12, color: 'var(--accent-amber)', fontWeight: 600 }}
         >
-          Mark all read
+          {t('topbar.mark_all_read')}
         </Button>
       )}
     </div>
@@ -89,7 +89,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
     if (notifications.length === 0) {
       return (
         <div style={{ width: 300 }}>
-          <Empty description="No notifications" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: '12px 0' }} />
+          <Empty description={t('topbar.no_notifications')} image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: '12px 0' }} />
         </div>
       );
     }
@@ -151,7 +151,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
             onClick={() => navigate('/notifications')} 
             style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}
           >
-            See all notifications
+            {t('topbar.see_all_notifications')}
           </Button>
         </div>
       </div>
@@ -167,7 +167,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
     }}>
       {/* Title */}
       <div style={{ flex: 1 }}>
-        <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 20, color: "var(--text-primary)" }}>{title || "Workspace"}</div>
+        <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 20, color: "var(--text-primary)" }}>{title || t('topbar.workspace_fallback')}</div>
         {subtitle && <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginTop: 1 }}>{subtitle}</div>}
       </div>
 
@@ -243,7 +243,7 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
       </div>
 
       {/* Avatar */}
-      <div onClick={handleGoToProfile} title="My Profile" style={{ cursor: "pointer", marginLeft: 8 }}>
+      <div onClick={handleGoToProfile} title={t('topbar.profile_title')} style={{ cursor: "pointer", marginLeft: 8 }}>
         {avatarUrl ? (
            <img src={avatarUrl} alt="avatar" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border-lit)" }} />
         ) : (
