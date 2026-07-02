@@ -1,7 +1,8 @@
-import React from 'react'
+import React from 'react';
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/global.css';
+<<<<<<< HEAD
 import { Provider } from "react-redux";
 
 import { store } from "./redux/store";
@@ -9,43 +10,100 @@ import {
 createBrowserRouter,
 RouterProvider,
 } from "react-router-dom";
+=======
+import { getStoredDisplayMode, applyDisplayMode } from './util/theme';
+import { Provider } from "react-redux";
+import { store } from "./redux/store";  
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Import Pages
+>>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
 import RegisterPage from './pages/register.jsx';
 import UserPage from './pages/user.jsx';
-import HomePage from './pages/home.jsx';
 import LoginPage from './pages/login.jsx';
-import { AuthWrapper } from './components/context/auth.context.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import VerifyOtpPage from './pages/VerifyOtpPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
+
+import CreatorLayout from './components/creator-layout/CreatorLayout.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
+import WorkspacePage from './pages/WorkspacePage.jsx';
+import AssetLibraryPage from './pages/AssetLibraryPage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
+import InvitePage from './pages/InvitePage.jsx';
+import ScriptEditorPage from './pages/ScriptEditorPage.jsx';
+import ProjectsPage from './pages/ProjectsPage.jsx';
+import NotificationsPage from './pages/NotificationsPage.jsx';
+import './i18n';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import WorkspaceWorldPage from './pages/workspaceWorldPage';
+import AdminRoute from './components/AdminRoute.jsx';
+
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
-{
-path: "/",
-element: <App />,
-children: [
-{
-index: true,
-element: <HomePage />
-},
-{
-path: "/register",
-element: <RegisterPage />
-},
-{
-path: "/login",
-element: <LoginPage />
-},
-{
-path: "/user",
-element: <UserPage />
-}
-]
-}
+  {
+    path: "/",
+    element: <App />, 
+    children: [
+      { index: true, element: <Navigate to="/workspace/dashboard" replace /> },
+      
+      { path: "register", element: <RegisterPage /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "verify-otp", element: <VerifyOtpPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
+      { path: "invite/:token", element: <InvitePage /> },
+
+      // NHÓM GIAO DIỆN CÓ SIDEBAR (CREATOR LAYOUT)
+      {
+        element: <ProtectedRoute><CreatorLayout /></ProtectedRoute>,
+        children: [
+          // Nhánh Workspace
+          { path: "workspace/dashboard", element: <DashboardPage /> },
+          { path: "workspace/projects", element: <ProjectsPage /> },
+          { path: "workspace/assets", element: <AssetLibraryPage /> },
+          { path: "workspace/settings", element: <SettingsPage /> },
+          { path: "projects/:projectId", element: <ScriptEditorPage /> },
+          
+          // Notifications Page (No /workspace prefix)
+          { path: "notifications", element: <NotificationsPage /> },
+
+          // Giữ nguyên 2 link Profile độc lập của bạn tại đây
+          { path: "user/profile", element: <ProfilePage /> },
+          { path: "admin/profile", element: <ProfilePage /> },
+
+          { path: "workspace/world/:worldId", element: <WorkspaceWorldPage /> },
+          { path: "admin/dashboard", element: <AdminRoute><AdminDashboardPage /></AdminRoute> },
+          { path: "user", element: <AdminRoute><UserPage /></AdminRoute> } 
+        ]
+      }
+    ]
+  }
 ]);
+
+// Apply saved display mode before rendering to avoid FOUC
+try {
+  const mode = getStoredDisplayMode();
+  applyDisplayMode(mode);
+} catch (e) { console.warn('Failed to apply display mode', e); }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
+<<<<<<< HEAD
  <Provider store={store}>
 
       <RouterProvider router={router} />
 
+=======
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+>>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
     </Provider>
   </React.StrictMode>,
 )

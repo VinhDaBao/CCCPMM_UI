@@ -1,0 +1,233 @@
+import { useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { Spin, Card, Button, Dropdown, Modal, Tooltip, notification, Badge } from 'antd';
+// Bổ sung thêm MoreOutlined
+import { PlusOutlined, EditOutlined, DeleteOutlined, LoadingOutlined, FolderOutlined, MoreOutlined } from '@ant-design/icons';
+import useProjects from '../hooks/useProjects';
+import useWorkspaces from '../hooks/useWorkspaces';
+import ProjectModal from '../components/creator-layout/ProjectModal';
+import TopBar from '../components/creator-layout/topBar';
+import { useTranslation } from 'react-i18next';
+
+const ProjectsPage = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  // Read activeWorkspaceId from CreatorLayout context
+  
+  const { activeWorkspaceId } = useOutletContext();
+
+  const { data: workspaces = [] } = useWorkspaces();
+  const activeWorkspace = workspaces.find(ws => String(ws._id || ws.id) === String(activeWorkspaceId));
+  const memberRole = activeWorkspace?.memberRole || 'VIEWER';
+  const canManageProjects = memberRole === 'OWNER' || memberRole === 'ADMIN';
+
+  const {
+    data: projects = [],
+    isLoading,
+    createProject,
+    updateProject,
+    deleteProject,
+  } = useProjects(activeWorkspaceId);
+
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+
+  const handleCreateProjectClick = () => {
+    setEditingProject(null);
+    setProjectModalOpen(true);
+  };
+
+  const handleSaveProject = async (data) => {
+    try {
+      if (editingProject) {
+        await updateProject({ id: editingProject._id || editingProject.id, data });
+        notification.success({ message: t('projects_page.project_updated') });
+      } else {
+        await createProject(data);
+        notification.success({ message: t('projects_page.project_created') });
+      }
+      setProjectModalOpen(false);
+      setEditingProject(null);
+    } catch (error) {
+      notification.error({
+        message: t('projects_page.save_failed'),
+        description: error?.response?.data?.message || error?.message
+      });
+    }
+  };
+
+  const handleDeleteProject = (project) => {
+    const projectId = project._id || project.id;
+    Modal.confirm({
+      title: t('projects_page.delete_title'),
+      content: t('projects_page.delete_content', { title: project.title }),
+      okText: t('projects_page.delete_ok'),
+      okButtonProps: { danger: true },
+      cancelText: t('projects_page.delete_cancel'),
+      centered: true,
+      onOk: async () => {
+        try {
+          await deleteProject(projectId);
+          notification.success({ message: t('projects_page.project_deleted') });
+        } catch (error) {
+          notification.error({
+            message: t('projects_page.delete_failed'),
+            description: error?.response?.data?.message || error?.message
+          });
+        }
+      }
+    });
+  };
+
+  const buildProjectMenu = (project) => ({
+    items: [
+      { key: 'edit', label: t('projects_page.edit_project'), icon: <EditOutlined /> },
+      { key: 'delete', label: t('projects_page.delete_project'), danger: true, icon: <DeleteOutlined /> },
+    ],
+    onClick: (e) => {
+      e.domEvent.stopPropagation(); // Ngăn chặn nổi bọt sự kiện click (Không bị chuyển trang)
+      if (e.key === 'edit') {
+        setEditingProject(project);
+        setProjectModalOpen(true);
+      } else if (e.key === 'delete') {
+        handleDeleteProject(project);
+      }
+    }
+  });
+
+  const uniqueTags = Array.from(new Set(projects.flatMap(p => p.tags || [])));
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg-void)' }}>
+      <TopBar title={t('projects_page.title')} subtitle={t('projects_page.subtitle')} />
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 80 }}>
+            <Spin indicator={<LoadingOutlined spin />} size="large" />
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: 20
+          }}>
+            {/* Create Project Card */}
+            {canManageProjects && (
+              <div
+                onClick={handleCreateProjectClick}
+                style={{
+                  height: 160, borderRadius: 12, border: '2px dashed var(--border-lit)', background: 'rgba(255, 255, 255, 0.01)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', color: 'var(--text-secondary)'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--accent-amber)'; e.currentTarget.style.color = 'var(--accent-amber)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.01)'; e.currentTarget.style.borderColor = 'var(--border-lit)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >
+                <PlusOutlined style={{ fontSize: 24, marginBottom: 8 }} />
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{t('projects_page.create_project')}</span>
+              </div>
+            )}
+
+            {/* List Projects */}
+            {projects.map((project) => {
+              const projectId = project._id || project.id;
+
+              return (
+                <Tooltip
+                  key={projectId}
+                  title={project.tags && project.tags.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {project.tags.map((t, idx) => (
+                        <span key={idx} style={{ background: 'rgba(255,255,255,0.15)', padding: '2px 6px', borderRadius: 4, fontSize: 10 }}>{t}</span>
+                      ))}
+                    </div>
+                  ) : t('projects_page.no_tags')}
+                  placement="top"
+                  mouseEnterDelay={0.5}
+                >
+                  <Card
+                    hoverable
+                    onClick={() => navigate(`/projects/${projectId}`)}
+                    style={{
+                      height: 160, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', cursor: 'pointer'
+                    }}
+                    bodyStyle={{ padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <FolderOutlined style={{ color: 'var(--accent-amber)', fontSize: 16 }} />
+                        <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '80%' }}>
+                          {project.title || t('projects_page.untitled_project')}
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
+                        {project.description || t('projects_page.no_description')}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 }}>
+                      {/* Cụm Tags */}
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {project.tags && project.tags.length > 0 && project.tags.slice(0, 3).map((tag, idx) => (
+                          <span key={idx} style={{ fontSize: 10, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-muted)' }}>
+                            {tag}
+                          </span>
+                        ))}
+                        {project.tags && project.tags.length > 3 && (
+                          <span style={{ fontSize: 10, padding: '2px 4px', color: 'var(--text-muted)' }}>
+                            +{project.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 👇 NÚT 3 CHẤM BÊN GÓC PHẢI DƯỚI CÙNG 👇 */}
+                      {canManageProjects && (
+                        <div 
+                          onClick={(e) => e.stopPropagation()} // Chặn click lan ra Card
+                          onPointerDown={(e) => e.stopPropagation()} 
+                        >
+                          <Dropdown menu={buildProjectMenu(project)} trigger={['click']} placement="bottomRight">
+                            <Button 
+                              type="text" 
+                              size="small" 
+                              icon={<MoreOutlined style={{ fontSize: 18, color: 'var(--text-primary)' }} />} 
+                              style={{ padding: 0, width: 28, height: 28 }}
+                            />
+                          </Dropdown>
+                        </div>
+                      )}
+                      {/* 👆 KẾT THÚC NÚT 3 CHẤM 👆 */}
+                    </div>
+                  </Card>
+                </Tooltip>
+              );
+            })}
+          </div>
+        )}
+
+        {!isLoading && projects.length === 0 && !canManageProjects && (
+          <div style={{ textAlign: 'center', marginTop: 40, color: 'var(--text-muted)' }}>
+            {t('projects_page.no_projects_yet')}
+          </div>
+        )}
+      </div>
+
+      <ProjectModal
+        open={projectModalOpen}
+        onCancel={() => {
+          setProjectModalOpen(false);
+          setEditingProject(null);
+        }}
+        onSave={handleSaveProject}
+        project={editingProject}
+        initialValues={{ status: 'IDEA' }}
+        existingTags={uniqueTags}
+      />
+    </div>
+  );
+};
+
+export default ProjectsPage;
