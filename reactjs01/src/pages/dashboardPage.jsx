@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { notification, Spin, Dropdown, Button, Modal, Tooltip, Avatar } from 'antd';
-import { LoadingOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { notification, Spin, Dropdown, Button, Modal, Tooltip, Avatar, Input } from 'antd';
+import { LoadingOutlined, MoreOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import TopBar from '../components/creator-layout/TopBar';
 import Icon from '../components/creator-layout/Icons';
 import useProjects from '../hooks/useProjects';
@@ -39,16 +39,39 @@ const KanbanPage = () => {
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [defaultStatus, setDefaultStatus] = useState('IDEA');
+  
+  // State lưu trữ từ khóa tìm kiếm
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     const board = { IDEA: [], WRITING: [], MEDIA: [], PUBLISHED: [] };
-    projects.forEach(project => {
+    
+    // Xử lý logic lọc dữ liệu dựa trên searchText
+    const filteredProjects = projects.filter(project => {
+      if (!searchText) return true;
+      
+      const query = searchText.trim().toLowerCase();
+      
+      // Nếu bắt đầu bằng '#' -> Tìm theo tag
+      if (query.startsWith('#')) {
+        const tagQuery = query.slice(1).trim();
+        if (!tagQuery) return true; // Nếu chỉ mới gõ mỗi dấu '#' thì vẫn hiện tất cả
+        return project.tags?.some(tag => tag.toLowerCase().includes(tagQuery));
+      } 
+      // Ngược lại -> Tìm theo tên dự án
+      else {
+        return project.title?.toLowerCase().includes(query);
+      }
+    });
+
+    // Phân loại các dự án đã lọc vào từng cột
+    filteredProjects.forEach(project => {
       if (board[project.status]) {
         board[project.status].push(project);
       }
     });
     setColumns(board);
-  }, [projects]);
+  }, [projects, searchText]);
 
   const onDragEnd = async (result) => {
     const { source, destination, draggableId } = result;
@@ -145,6 +168,25 @@ const KanbanPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-void)' }}>
       <TopBar title={t('dashboard_page.title')} subtitle={t('dashboard_page.subtitle')} />
+
+      {/* THANH TÌM KIẾM */}
+      <div style={{ padding: '24px 24px 0 24px' }}>
+        <Input
+          placeholder={t('dashboard_page.search_placeholder', 'Tìm kiếm theo tên hoặc #tag...')}
+          prefix={<SearchOutlined style={{ color: 'var(--text-muted)' }} />}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          allowClear
+          size="large"
+          style={{
+            maxWidth: '400px',
+            borderRadius: '8px',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-base)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+          }}
+        />
+      </div>
 
       <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '24px', display: 'flex', gap: '20px' }}>
         <DragDropContext onDragEnd={onDragEnd}>

@@ -171,19 +171,6 @@ const TopBar = ({ title, subtitle, onNewScript }) => {
         {subtitle && <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginTop: 1 }}>{subtitle}</div>}
       </div>
 
-      {/* Search */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        background: "var(--bg-surface)", border: "1px solid var(--border)",
-        borderRadius: 8, padding: "6px 12px", width: 220,
-      }}>
-        <Icon name="search" size={14} color="var(--text-muted)" />
-        <input placeholder={t('topbar.search')} style={{
-          background: "none", border: "none", outline: "none",
-          color: "var(--text-primary)", fontSize: 13, fontFamily: "'Lato', sans-serif", width: "100%",
-        }} />
-      </div>
-
       {/* Nút Tạo Kịch Bản */}
       {onNewScript && (
         <button onClick={onNewScript} style={{

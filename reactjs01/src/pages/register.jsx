@@ -52,12 +52,12 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">
+        <div className="min-h-screen flex items-center justify-center page-hero px-4">
             <div className="w-full max-w-md backdrop-blur-lg shadow-2xl rounded-3xl p-8" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
                 
                 {/* Chỉ giữ lại chữ Register */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">{t('auth_register.page_title')}</h1>
+                    <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('auth_register.page_title')}</h1>
                 </div>
                 
                 <Form layout="vertical" onFinish={onFinish} autoComplete="off">

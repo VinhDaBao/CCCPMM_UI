@@ -41,7 +41,7 @@ const ForgotPasswordPage = () => {
   };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">
+        <div className="min-h-screen flex items-center justify-center page-hero px-4">
             <div className="w-full max-w-md backdrop-blur-lg shadow-2xl rounded-3xl p-8" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
                 
                 {/* Logo & Tiêu đề */}
