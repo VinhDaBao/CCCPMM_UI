@@ -4,7 +4,7 @@ import App from './App.jsx'
 import './styles/global.css';
 import { getStoredDisplayMode, applyDisplayMode } from './util/theme';
 import { Provider } from "react-redux";
-import { store } from "./redux/store";
+import { store } from "./redux/store";  
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -37,10 +37,10 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <App />, 
     children: [
       { index: true, element: <Navigate to="/workspace/dashboard" replace /> },
-
+      
       { path: "register", element: <RegisterPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "forgot-password", element: <ForgotPasswordPage /> },
@@ -58,7 +58,7 @@ const router = createBrowserRouter([
           { path: "workspace/assets", element: <AssetLibraryPage /> },
           { path: "workspace/settings", element: <SettingsPage /> },
           { path: "projects/:projectId", element: <ScriptEditorPage /> },
-
+          
           // Notifications Page (No /workspace prefix)
           { path: "notifications", element: <NotificationsPage /> },
 
@@ -68,7 +68,7 @@ const router = createBrowserRouter([
 
           { path: "workspace/world/:worldId", element: <WorkspaceWorldPage /> },
           { path: "admin/dashboard", element: <AdminRoute><AdminDashboardPage /></AdminRoute> },
-          { path: "user", element: <AdminRoute><UserPage /></AdminRoute> }
+          { path: "user", element: <AdminRoute><UserPage /></AdminRoute> } 
         ]
       }
     ]

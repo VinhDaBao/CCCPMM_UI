@@ -1,74 +1,17 @@
-<<<<<<< HEAD
-import Header from "./components/layout/header";
-
-import axios from "./util/axios.customize";
-
-import { useEffect } from "react";
-
-import { Spin } from "antd";
-
-import { Outlet } from "react-router-dom";
-=======
 import axios from "./util/axios.customize";
 import { useEffect, useState } from "react";
 import { Spin } from "antd";
 import { Outlet } from "react-router-dom"; 
-import { useDispatch } from "react-redux";
+import { useDispatch,   useSelector
+ } from "react-redux";
 import { loginSuccess } from "./redux/authSlice";
->>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
 
-import {
-  useDispatch,
-  useSelector
-} from "react-redux";
 
-import {
-  loginSuccess
-} from "./redux/authSlice";
 
 function App() {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
 
-<<<<<<< HEAD
-  const dispatch = useDispatch();
-
-  const auth = useSelector(
-    state => state.auth
-  );
-
-  useEffect(() => {
-
-    const fetchAccount = async () => {
-
-      try {
-
-        const res = await axios.get(
-          "/api/auth/user/profile"
-        );
-
-        console.log(
-          "FETCH ACCOUNT RESPONSE:",
-          res
-        );
-
-        if (
-          res &&
-          res.user &&
-          res.user.user
-        ) {
-
-          dispatch(
-            loginSuccess(
-              res.user.user
-            )
-          );
-        }
-
-      } catch (error) {
-
-        console.log(error);
-=======
   useEffect(() => {
     const fetchAccount = async () => {
       const token = localStorage.getItem("access_token");
@@ -98,17 +41,10 @@ function App() {
         localStorage.removeItem("access_token");
       } finally {
         setIsLoading(false);
->>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
       }
     };
 
     fetchAccount();
-<<<<<<< HEAD
-
-  }, [dispatch]);
-
-  return (<div> { auth.loading ? <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}> <Spin /> </div> : <> <Header /> <Outlet /> </> } </div>)
-=======
   }, [dispatch]);
 
   return (
@@ -123,7 +59,6 @@ function App() {
       )}
     </div>
   );
->>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
 }
 
 export default App;

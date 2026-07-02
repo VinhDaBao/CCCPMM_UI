@@ -2,99 +2,6 @@ import React from 'react';
 import { Button, Form, Input, notification } from 'antd';
 import { loginApi } from '../util/api';
 import { Link, useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
-import { AuthContext } from '../components/context/auth.context';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import { useDispatch } from "react-redux";
-import { loginSuccess } from "../redux/authSlice";
-const LoginPage = () => {
-    const navigate = useNavigate();
-    //const { setAuth } = useContext(AuthContext);
-    const dispatch = useDispatch();
-    const onFinish = async (values) => {
-        const { email, password } = values;
-
-        const res = await loginApi(email, password);
-        console.log("LOGIN RESPONSE:", res);
-        if (res && res.token) {
-            localStorage.setItem("access_token", res.token);
-            notification.success({
-                message: "LOGIN USER",
-                description: "Success"
-            });
-            dispatch(
-                loginSuccess({
-                    email: res?.user?.email ?? "",
-                    name: res?.user?.name ?? "",
-                })
-            );
-            navigate("/user");
-        } else {
-            notification.error({
-                message: "LOGIN USER",
-                description: res?.message ?? "Error"
-            })
-        }
-    };
-    return (
-        <Row justify={"center"} style={{ marginTop: "30px" }}>
-            <Col xs={24} md={16} lg={8}>
-                <fieldset style={{
-                    padding: "15px",
-                    margin: "5px",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px"
-                }}>
-                    <legend>Đăng Nhập</legend>
-                    <Form
-                        name="basic"
-                        onFinish={onFinish}
-                        autoComplete="off"
-                        layout='vertical'
-                    >
-                        <Form.Item
-                            label="Email"
-                            name="email"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your email!',
-                                },
-                            ]}
-                        >
-                            <Input />
-                        </Form.Item>
-                        <Form.Item
-                            label="Password"
-                            name="password"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your password!',
-                                },
-                            ]}
-                        >
-                            <Input.Password />
-                        </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block>
-                                Login
-                            </Button>
-                        </Form.Item>
-
-                    </Form>
-                    <Link to={"/"}><ArrowLeftOutlined /> Back to Home </Link>
-                    <Divider />
-                    <div style={{ textAlign: "center" }}>
-                        <span>Don't have an account? </span>
-                        <Link to={"/register"}>Register now</Link>
-                    </div>
-                </fieldset>
-            </Col>
-        </Row>
-    )
-}
-=======
 import { ArrowLeftOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice";
@@ -172,7 +79,6 @@ const LoginPage = () => {
                     <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>CreatorSpace</h1>
                     <p style={{ color: 'var(--text-muted)' }}>{t('auth_login.sign_in_subtitle')}</p>
                 </div>
->>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
 
                 <Form name="basic" onFinish={onFinish} autoComplete="off" layout='vertical'>
                     <Form.Item label={t('auth_login.email_label')} name="email" rules={[{ required: true, message: t('auth_login.email_required') }]}>

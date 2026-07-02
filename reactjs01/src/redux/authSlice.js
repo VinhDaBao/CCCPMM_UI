@@ -4,13 +4,9 @@ const initialState = {
   isAuthenticated: false,
   user: {
     email: "",
-<<<<<<< HEAD
-    name: "",
-=======
     role: "",
     fullName: "",
     avatar: ""
->>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
   },
     registerLoading: false,
 
@@ -39,13 +35,9 @@ const authSlice = createSlice({
 
       state.user = {
         email: "",
-<<<<<<< HEAD
-        name: "",
-=======
         role: "",
         fullName: "",
         avatar: ""
->>>>>>> 46e75d21f45e5f272338458849bcf7e1b5f87b74
       };
     },
       registerStart: (state) => {
