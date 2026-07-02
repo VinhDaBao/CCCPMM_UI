@@ -181,7 +181,7 @@ const BlockItem = ({
         {selectedCharacter.tags && selectedCharacter.tags.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
             {selectedCharacter.tags.map((t, idx) => (
-              <span key={idx} style={{ fontSize: 10, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-secondary)' }}>
+              <span key={idx} style={{ fontSize: 10, background: 'var(--bg-hover)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-secondary)' }}>
                 {t}
               </span>
             ))}
@@ -208,14 +208,14 @@ const BlockItem = ({
     switch (block.type) {
       case 'TEXT':
         return (
-          <div className="tiptap-wrapper" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'rgba(255,255,255,0.01)' }}>
+          <div className="tiptap-wrapper" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'var(--bg-hover)' }}>
             <EditorContent editor={editor} />
           </div>
         );
 
       case 'DIALOGUE':
         return (
-          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 14, background: 'rgba(255,255,255,0.02)' }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 14, background: 'var(--bg-hover)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Character:</span>
               <Select
@@ -265,7 +265,7 @@ const BlockItem = ({
 
       case 'IMAGE':
         return (
-          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'var(--bg-hover)', textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textAlign: 'left', textTransform: 'uppercase', fontWeight: 600 }}>
               IMAGE BLOCK ({blockContent?.name || 'Attached Image'})
             </div>
@@ -275,7 +275,7 @@ const BlockItem = ({
 
       case 'VIDEO':
         return (
-          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'var(--bg-hover)', textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textAlign: 'left', textTransform: 'uppercase', fontWeight: 600 }}>
               VIDEO BLOCK ({blockContent?.name || 'Attached Video'})
             </div>
@@ -285,7 +285,7 @@ const BlockItem = ({
 
       case 'AUDIO':
         return (
-          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16, background: 'rgba(255,255,255,0.01)' }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16, background: 'var(--bg-hover)' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', fontWeight: 600 }}>
               AUDIO BLOCK ({blockContent?.name || 'Attached Audio'})
             </div>

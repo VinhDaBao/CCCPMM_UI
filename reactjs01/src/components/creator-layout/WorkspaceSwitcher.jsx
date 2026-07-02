@@ -259,7 +259,7 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
                     transition: 'background 0.2s, color 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.background = 'var(--bg-hover)';
                     e.currentTarget.style.color = 'var(--accent-amber)';
                   }}
                   onMouseLeave={(e) => {
@@ -332,10 +332,23 @@ const WorkspaceSwitcher = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
             menu={buildWorkspaceMenu(activeWorkspace)}
             trigger={['click']}
             placement="bottomRight"
+            overlayStyle={{ background: 'var(--bg-raised)', color: 'var(--text-primary)' }}
           >
             <Button
               type="text"
               icon={<SettingOutlined />}
+              style={{
+                color: 'var(--text-primary)',
+                borderRadius: 8,
+                padding: '4px',
+                transition: 'background 0.2s, color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
             />
           </Dropdown>
         )}

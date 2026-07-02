@@ -41,6 +41,7 @@ import BlockItem from '../components/script-editor/BlockItem';
 import CharacterModal from '../components/script-editor/CharacterModal';
 import ActivityLogModal from '../components/script-editor/ActivityLogModal';
 import SnapshotHistoryModal from '../components/script-editor/SnapshotHistoryModal';
+import TopBar from '../components/creator-layout/topBar';
 
 // API helpers
 import { getAllAssetsApi, getAssetUrl, synthesizeTtsApi, getTtsVoicesApi } from '../util/api';
@@ -905,11 +906,18 @@ const ScriptEditorPage = () => {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: 'var(--bg-void)' }}>
-      {/* LEFT AREA: Editor & Main Workspace */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
-        {/* Navigation & Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', overflow: 'hidden', background: 'var(--bg-void)' }}>
+      {/* TOP BAR */}
+      <div style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
+        <TopBar title={currentProject?.title || t('script_editor.script_editor_title')} />
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* LEFT AREA: Editor & Main Workspace */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
+          {/* Navigation & Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={handleExit} />
           <div>
             <h2 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
@@ -930,7 +938,7 @@ const ScriptEditorPage = () => {
                     <span 
                       key={idx} 
                       style={{ 
-                        background: 'rgba(255,255,255,0.06)', 
+                        background: 'var(--bg-hover)', 
                         border: '1px solid var(--border-lit)',
                         color: 'var(--text-secondary)', 
                         fontSize: '11px', 
@@ -985,8 +993,8 @@ const ScriptEditorPage = () => {
 
                 const tooltipTitle = (
                   <div style={{ padding: '4px 8px' }}>
-                    <div style={{ fontWeight: 600, color: '#fff' }}>{name}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.65)' }}>{getRoleLabel(m.role, t) || m.role}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{getRoleLabel(m.role, t) || m.role}</div>
                     <div style={{ fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{
                         width: 6,
@@ -1015,9 +1023,9 @@ const ScriptEditorPage = () => {
                         <Avatar
                           size="small"
                           style={{
-                            background: 'rgba(255,255,255,0.05)',
+                            background: 'var(--badge-bg)',
                             color: 'var(--text-primary)',
-                            border: `2px solid ${isOnline ? avatarColor : 'rgba(255,255,255,0.15)'}`,
+                            border: `2px solid ${isOnline ? avatarColor : 'var(--border-lit)'}`,
                             opacity: isOnline ? 1 : 0.6,
                           }}
                         >
@@ -1046,9 +1054,9 @@ const ScriptEditorPage = () => {
                     >
                       <Avatar
                         style={{
-                          background: 'rgba(255,255,255,0.05)',
+                          background: 'var(--badge-bg)',
                           color: 'var(--text-primary)',
-                          border: `2px solid ${isOnline ? avatarColor : 'rgba(255,255,255,0.15)'}`,
+                          border: `2px solid ${isOnline ? avatarColor : 'var(--border-lit)'}`,
                           opacity: isOnline ? 1 : 0.45,
                           transition: 'all 0.2s',
                           cursor: 'pointer'
@@ -1078,7 +1086,7 @@ const ScriptEditorPage = () => {
                     >
                       <Avatar
                         style={{
-                          background: 'rgba(255,255,255,0.08)',
+                          background: 'var(--bg-hover)',
                           border: '1px solid var(--border)',
                           cursor: 'pointer',
                           color: 'var(--text-muted)',
@@ -1263,7 +1271,7 @@ const ScriptEditorPage = () => {
                   border: '1px dashed var(--border)',
                   borderRadius: 10,
                   textAlign: 'center',
-                  background: 'rgba(255,255,255,0.01)',
+                  background: 'var(--bg-hover)',
                   color: 'var(--text-muted)',
                   fontSize: 12,
                   marginTop: 20
@@ -1277,8 +1285,8 @@ const ScriptEditorPage = () => {
       </div>
 
       {/* RIGHT SIDEBAR: Tabs Pane (AI Chat, Snippets, Assets) */}
-      {sidebarVisible && (
-        <div style={{ width: 340, minWidth: 340, background: 'var(--bg-base)', borderLeft: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {sidebarVisible && (
+          <div style={{ width: 340, minWidth: 340, background: 'var(--bg-base)', borderLeft: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
@@ -1326,7 +1334,7 @@ const ScriptEditorPage = () => {
                           style={{ 
                             borderRadius: 12, 
                             fontSize: 12, 
-                            background: 'rgba(255,255,255,0.05)', 
+                            background: 'var(--bg-hover)', 
                             color: 'var(--text-secondary)', 
                             border: '1px solid var(--border)' 
                           }}
@@ -1490,7 +1498,7 @@ const ScriptEditorPage = () => {
                             onClick={() => handleSnippetClick(snip)}
                             style={{
                               padding: '10px 12px',
-                              background: 'rgba(255,255,255,0.01)',
+                              background: 'var(--bg-hover)',
                               border: '1px solid var(--border)',
                               borderRadius: 8,
                               marginBottom: 8,
@@ -1498,11 +1506,11 @@ const ScriptEditorPage = () => {
                               transition: 'all 0.2s',
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--bg-hover)';
+                              e.currentTarget.style.background = 'var(--bg-base)';
                               e.currentTarget.style.borderColor = 'var(--border-lit)';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
+                              e.currentTarget.style.background = 'var(--bg-hover)';
                               e.currentTarget.style.borderColor = 'var(--border)';
                             }}
                           >
@@ -1515,7 +1523,7 @@ const ScriptEditorPage = () => {
                             {snip.tags && snip.tags.length > 0 && (
                               <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
                                 {snip.tags.map((tag, i) => (
-                                  <span key={i} style={{ fontSize: 9, background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, color: 'var(--text-muted)' }}>{tag}</span>
+                                  <span key={i} style={{ fontSize: 9, background: 'var(--bg-base)', padding: '1px 5px', borderRadius: 4, color: 'var(--text-muted)' }}>{tag}</span>
                                 ))}
                               </div>
                             )}
@@ -1530,6 +1538,8 @@ const ScriptEditorPage = () => {
           />
         </div>
       )}
+
+      </div>
 
       {/* Attachable Workspace Assets Modal */}
       <Modal
@@ -1595,7 +1605,7 @@ const ScriptEditorPage = () => {
                         <Space>
                           <span>{asset.type}</span>
                           {asset.tags?.map((t, idx) => (
-                            <span key={idx} style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>{t}</span>
+                            <span key={idx} style={{ background: 'var(--bg-hover)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>{t}</span>
                           ))}
                         </Space>
                       }

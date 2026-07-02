@@ -116,3 +116,116 @@ button {
 
 .pulse { animation: pulse 2s ease infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* --- Ant Design Components Styling for Dark Mode --- */
+.mode-dark .ant-tabs-tab {
+    color: var(--text-secondary) !important;
+}
+
+.mode-dark .ant-tabs-tab-active {
+    color: var(--accent-amber) !important;
+}
+
+.mode-dark .ant-tabs-tab:hover {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-tabs-ink-bar {
+    background: var(--accent-amber) !important;
+}
+
+.mode-dark .ant-input,
+.mode-dark .ant-input-affix-wrapper,
+.mode-dark .ant-input-affix-wrapper-focused,
+.mode-dark .ant-select-selector,
+.mode-dark .ant-select-selection-item,
+.mode-dark .ant-select-selection-placeholder,
+.mode-dark .ant-select-selection-search-input {
+    background: var(--bg-base) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-input::placeholder,
+.mode-dark .ant-input-affix-wrapper .ant-input::placeholder,
+.mode-dark .ant-select-selection-placeholder {
+    color: var(--text-muted) !important;
+}
+
+.mode-dark .ant-select-dropdown,
+.mode-dark .ant-select-dropdown .ant-select-item-option,
+.mode-dark .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.mode-dark .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+.mode-dark .ant-select-dropdown .ant-select-item-option-content,
+.mode-dark .ant-select-dropdown .ant-select-item-option-grouped {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.mode-dark .ant-dropdown-menu-item-active,
+.mode-dark .ant-dropdown-menu-item-selected {
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-dropdown-menu,
+.mode-dark .ant-select-dropdown {
+    background: var(--bg-surface) !important;
+    border-color: var(--border) !important;
+}
+
+.mode-dark .ant-btn {
+    background: var(--bg-base) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-btn:hover,
+.mode-dark .ant-btn:focus,
+.mode-dark .ant-btn:active {
+    background: var(--bg-hover) !important;
+    border-color: var(--border-lit) !important;
+}
+
+.mode-dark .ant-btn-primary {
+    background: var(--accent-amber) !important;
+    border-color: var(--accent-amber) !important;
+    color: #000 !important;
+}
+
+.mode-dark .ant-select,
+.mode-dark .ant-select-single .ant-select-selector,
+.mode-dark .ant-select-selector,
+.mode-dark .ant-select-selection-item,
+.mode-dark .ant-select-selection-placeholder,
+.mode-dark .ant-select-selector:hover,
+.mode-dark .ant-select-open .ant-select-selector,
+.mode-dark .ant-select-focused .ant-select-selector,
+.mode-dark .ant-select:not(.ant-select-disabled) .ant-select-selector {
+    background: var(--bg-base) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select .ant-select-selector .ant-select-selection-item,
+.mode-dark .ant-select .ant-select-selector .ant-select-selection-placeholder,
+.mode-dark .ant-select .ant-select-selector input {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select-arrow,
+.mode-dark .ant-select .anticon {
+    color: var(--text-muted) !important;
+}
+
+.mode-dark .ant-dropdown-menu-item,
+.mode-dark .ant-dropdown-menu-item a {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-dropdown-menu-item:hover,
+.mode-dark .ant-dropdown-menu-item-active,
+.mode-dark .ant-dropdown-menu-item-selected {
+    background: var(--bg-hover) !important;
+}
