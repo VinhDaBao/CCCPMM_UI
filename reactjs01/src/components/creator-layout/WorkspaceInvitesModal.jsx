@@ -4,10 +4,12 @@ import { CloseOutlined, MailOutlined, SendOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { workspaceInviteApi } from '../../util/api';
+import { useTranslation } from 'react-i18next';
 
 const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
   const workspaceId = workspace?._id || workspace?.id;
   const [form] = Form.useForm();
+  const { t } = useTranslation();
 
   const { data: invites = [], isLoading, refetch } = useQuery({
     queryKey: ['workspace-invites', workspaceId],
@@ -22,16 +24,16 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
     mutationFn: (data) => workspaceInviteApi.invite(data),
     onSuccess: () => {
       notification.success({
-        message: 'Invitation Sent',
-        description: 'The invitation email has been sent successfully.',
+        message: t('workspace_invites.sent_title'),
+        description: t('workspace_invites.sent_desc'),
       });
       refetch();
       form.resetFields();
     },
     onError: (err) => {
       notification.error({
-        message: 'Invitation Failed',
-        description: err?.response?.data?.message ?? err?.message ?? 'Unable to send invitation.',
+        message: t('workspace_invites.failed_title'),
+        description: err?.response?.data?.message ?? err?.message ?? t('workspace_invites.failed_default'),
       });
     },
   });
@@ -40,15 +42,15 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
     mutationFn: ({ workspaceId, token }) => workspaceInviteApi.cancel( workspaceId, token ),
     onSuccess: () => {
       notification.success({
-        message: 'Invitation Cancelled',
-        description: 'The invitation has been cancelled and marked as expired.',
+        message: t('workspace_invites.cancelled_title'),
+        description: t('workspace_invites.cancelled_desc'),
       });
       refetch();
     },
     onError: (err) => {
       notification.error({
-        message: 'Cancel Failed',
-        description: err?.response?.data?.message ?? err?.message ?? 'Unable to cancel invitation.',
+        message: t('workspace_invites.cancel_failed_title'),
+        description: err?.response?.data?.message ?? err?.message ?? t('workspace_invites.cancel_failed_default'),
       });
     },
   });
@@ -70,7 +72,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
 
   const columns = [
     {
-      title: 'Email',
+      title: t('workspace_invites.col_email'),
       dataIndex: 'email',
       key: 'email',
       render: (text) => (
@@ -78,7 +80,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
       ),
     },
     {
-      title: 'Role',
+      title: t('workspace_invites.col_role'),
       dataIndex: 'role',
       key: 'role',
       render: (role) => {
@@ -89,13 +91,13 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
       },
     },
     {
-      title: 'Expires At',
+      title: t('workspace_invites.col_expires_at'),
       dataIndex: 'expiresAt',
       key: 'expiresAt',
       render: (date) => dayjs(date).format('YYYY-MM-DD HH'),
     },
     {
-      title: 'Status',
+      title: t('workspace_invites.col_status'),
       dataIndex: 'status',
       key: 'status',
       render: (status, record) => {
@@ -113,7 +115,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
       },
     },
     {
-      title: 'Action',
+      title: t('workspace_invites.col_action'),
       key: 'action',
       align: 'center',
       render: (_, record) => {
@@ -123,7 +125,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
         if (!isPending) return null;
 
         return (
-          <Tooltip title="Cancel invitation">
+          <Tooltip title={t('workspace_invites.cancel_invitation')}>
             <Button
               type="text"
               danger
@@ -140,7 +142,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
 
   return (
     <Modal
-      title="Manage Workspace Invitations"
+      title={t('workspace_invites.title')}
       open={open}
       onCancel={onCancel}
       footer={null}
@@ -149,7 +151,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
     >
       <div style={{ marginBottom: 24, padding: 16, background: 'var(--bg-hover)', borderRadius: 8 }}>
         <h4 style={{ margin: '0 0 12px 0', fontSize: 14, color: 'var(--text-primary)' }}>
-          Send New Invitation
+          {t('workspace_invites.send_new_invitation')}
         </h4>
         <Form
           form={form}
@@ -164,12 +166,12 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
           <Form.Item
             name="email"
             rules={[
-              { required: true, message: 'Required' },
-              { type: 'email', message: 'Invalid email' },
+              { required: true, message: t('workspace_invites.email_required') },
+              { type: 'email', message: t('workspace_invites.email_invalid') },
             ]}
             style={{ flex: '1 1 180px', margin: 0 }}
           >
-            <Input prefix={<MailOutlined style={{ color: 'var(--text-muted)' }} />} placeholder="Collaborator's email" />
+            <Input prefix={<MailOutlined style={{ color: 'var(--text-muted)' }} />} placeholder={t('workspace_invites.collaborator_email')} />
           </Form.Item>
 
           <Form.Item name="role" style={{ width: 110, margin: 0 }}>
@@ -186,7 +188,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
             <DatePicker
               showTime={{ format: 'HH', defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
               format="YYYY-MM-DD HH"
-              placeholder="Expires At"
+              placeholder={t('workspace_invites.expires_at_placeholder')}
               style={{ width: '100%' }}
             />
           </Form.Item>
@@ -199,14 +201,14 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
               loading={inviteMutation.isPending}
               style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
             >
-              Invite
+              {t('workspace_invites.invite_button')}
             </Button>
           </Form.Item>
         </Form>
       </div>
 
       <h4 style={{ margin: '0 0 12px 0', fontSize: 14, color: 'var(--text-primary)' }}>
-        Pending Invitations
+        {t('workspace_invites.pending_invitations')}
       </h4>
 
       <Table
@@ -216,7 +218,7 @@ const WorkspaceInvitesModal = ({ open, onCancel, workspace }) => {
         loading={isLoading}
         pagination={{ pageSize: 5 }}
         locale={{
-          emptyText: <Empty description="No pending invitations" />,
+          emptyText: <Empty description={t('workspace_invites.no_pending_invitations')} />,
         }}
         size="middle"
       />

@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { Form, Input, Modal } from 'antd';
 import useUpdateWorkspace from '../../hooks/useUpdateWorkspace';
+import { useTranslation } from 'react-i18next';
 
 const UpdateWorkspaceModal = ({ open, onCancel, workspace }) => {
   const [form] = Form.useForm();
   const updateWorkspaceMutation = useUpdateWorkspace();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (open && workspace) {
@@ -30,11 +32,11 @@ const UpdateWorkspaceModal = ({ open, onCancel, workspace }) => {
 
   return (
     <Modal
-      title="Update workspace"
+      title={t('workspace_modal.update_title')}
       open={open}
       onCancel={onCancel}
       onOk={() => form.submit()}
-      okText="Update workspace"
+      okText={t('workspace_modal.update_ok')}
       confirmLoading={updateWorkspaceMutation.isPending}
       destroyOnClose
       afterClose={() => form.resetFields()}
@@ -51,21 +53,21 @@ const UpdateWorkspaceModal = ({ open, onCancel, workspace }) => {
         preserve={false}
       >
         <Form.Item
-          label="Workspace name"
+          label={t('workspace_modal.workspace_name_label')}
           name="name"
           rules={[
             {
               required: true,
-              message: 'Please enter a workspace name',
+              message: t('workspace_modal.workspace_name_required'),
             },
           ]}
         >
-          <Input placeholder="e.g. Story Universe" maxLength={120} />
+          <Input placeholder={t('workspace_modal.workspace_name_placeholder')} maxLength={120} />
         </Form.Item>
 
-        <Form.Item label="Description" name="description">
+        <Form.Item label={t('workspace_modal.description_label')} name="description">
           <Input.TextArea
-            placeholder="Optional workspace description"
+            placeholder={t('workspace_modal.description_placeholder')}
             rows={4}
             maxLength={500}
             showCount

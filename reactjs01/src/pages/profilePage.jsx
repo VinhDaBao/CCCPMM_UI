@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getUserApi, updateProfileApi } from '../util/api';
 import { loginSuccess } from "../redux/authSlice";
+import { useTranslation } from 'react-i18next';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const ProfilePage = () => {
@@ -15,6 +16,7 @@ const ProfilePage = () => {
     const [imageUrl, setImageUrl] = useState(null);
     const auth = useSelector((state) => state.auth);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (!auth?.user?.role) return;
@@ -83,10 +85,10 @@ const ProfilePage = () => {
         );
 
         notification.success({
-            message: "SUCCESS",
+            message: t('profile_page.success'),
             description:
                 res?.message ??
-                "Profile updated successfully!",
+                t('profile_page.updated_success'),
         });
 
         dispatch(loginSuccess(res.user));
@@ -102,11 +104,11 @@ const ProfilePage = () => {
         }
     } catch (error) {
         notification.error({
-            message: "FAILED",
+            message: t('profile_page.failed'),
             description:
                 error?.response?.data?.message ||
                 error?.message ||
-                "Profile update failed!",
+                t('profile_page.updated_failed'),
         });
     } finally {
         setLoading(false);
@@ -118,26 +120,26 @@ const ProfilePage = () => {
             <Col xs={24} md={16} lg={8}>
                 <fieldset className="m-1 rounded-lg border border-gray-300 p-4">
                     <legend className="mx-auto mb-5 text-center text-2xl font-semibold">
-                        Profile
+                        {t('profile_page.title')}
                     </legend>
 
                     <Form form={form} layout="vertical">
-                        <Form.Item label="Email" name="email">
+                        <Form.Item label={t('profile_page.email')} name="email">
                             <Input disabled />
                         </Form.Item>
 
-                        <Form.Item label="Role" name="role">
+                        <Form.Item label={t('profile_page.role')} name="role">
                             <Input disabled />
                         </Form.Item>
 
-                        <Form.Item label="Full Name" name="fullName">
+                        <Form.Item label={t('profile_page.full_name')} name="fullName">
                             <Input
                                 prefix={<UserOutlined />}
-                                placeholder="Enter your name..."
+                                placeholder={t('profile_page.full_name_placeholder')}
                             />
                         </Form.Item>
 
-                        <Form.Item label="Avatar">
+                        <Form.Item label={t('profile_page.avatar')}>
                             <Upload
                                 listType="picture-card"
                                 showUploadList={false}
@@ -164,19 +166,19 @@ const ProfilePage = () => {
                                 loading={loading}
                                 block
                             >
-                                Update Profile
+                                {t('profile_page.update_profile')}
                             </Button>
                         </Form.Item>
                     </Form>
 
                     <Link to={auth?.user?.role === "admin" ? "/" : "/"}>
-                        <ArrowLeftOutlined /> Back
+                        <ArrowLeftOutlined /> {t('profile_page.back')}
                     </Link>
 
                     <Divider />
 
                     <div className="text-center text-gray-500">
-                        Update your personal information
+                        {t('profile_page.update_personal_info')}
                     </div>
                 </fieldset>
             </Col>

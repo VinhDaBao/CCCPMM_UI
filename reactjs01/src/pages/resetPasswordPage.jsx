@@ -4,10 +4,12 @@ import { Button, Form, Input, notification } from 'antd';
 import { ArrowLeftOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { resetPasswordApi } from '../util/api';
+import { useTranslation } from 'react-i18next';
 
 const ResetPasswordPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
 
     const email =
         location?.state?.email ||
@@ -24,8 +26,8 @@ const ResetPasswordPage = () => {
 
         if (password !== confirmPassword) {
             notification.error({
-                message: "RESET PASSWORD",
-                description: "Passwords do not match",
+                message: t('auth_reset.reset_password'),
+                description: t('auth_reset.password_not_match'),
             });
             return;
         }
@@ -37,7 +39,7 @@ const ResetPasswordPage = () => {
             );
 
             notification.success({
-                message: "RESET PASSWORD",
+                message: t('auth_reset.reset_password'),
                 description: res.message,
             });
 
@@ -46,18 +48,18 @@ const ResetPasswordPage = () => {
             navigate("/login");
         } catch (error) {
             notification.error({
-                message: "RESET PASSWORD FAILED",
+                message: t('auth_reset.reset_password_failed'),
                 description:
                     error?.response?.data?.message ||
                     error?.message ||
-                    "System error",
+                    t('auth_reset.system_error'),
             });
         }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4">
-            <div className="w-full max-w-md bg-white/80 backdrop-blur-lg shadow-2xl rounded-3xl p-8 border border-white/40">
+            <div className="w-full max-w-md backdrop-blur-lg shadow-2xl rounded-3xl p-8" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
 
                 {/* Logo & Tiêu đề */}
                 <div className="text-center mb-8">
@@ -66,31 +68,31 @@ const ResetPasswordPage = () => {
                             <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
                         </svg>
                     </div>
-                    <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Reset Password</h1>
-                    <p className="text-gray-500 mt-2 text-sm">Enter your new password below</p>
+                    <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">{t('auth_reset.page_title')}</h1>
+                    <p className="text-gray-500 mt-2 text-sm">{t('auth_reset.subtitle')}</p>
                 </div>
 
                 <Form layout="vertical" onFinish={onFinish} autoComplete="off">
 
                     <Form.Item
-                        label="New Password"
+                        label={t('auth_reset.new_password_label')}
                         name="password"
                         rules={[
-                            { required: true, message: "Please input new password!" },
-                            { min: 6, message: "Password must be at least 6 characters!" }
+                            { required: true, message: t('auth_reset.new_password_required') },
+                            { min: 6, message: t('auth_reset.password_min') }
                         ]}
                     >
-                        <Input.Password size="large" prefix={<LockOutlined className="text-gray-400" />} placeholder="Enter new password" className="!rounded-xl !py-2.5" />
+                        <Input.Password size="large" prefix={<LockOutlined className="text-gray-400" />} placeholder={t('auth_reset.new_password_placeholder')} className="!rounded-xl !py-2.5" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Confirm Password"
+                        label={t('auth_reset.confirm_password_label')}
                         name="confirmPassword"
                         rules={[
-                            { required: true, message: "Please confirm password!" }
+                            { required: true, message: t('auth_reset.confirm_password_required') }
                         ]}
                     >
-                        <Input.Password size="large" prefix={<LockOutlined className="text-gray-400" />} placeholder="Confirm password" className="!rounded-xl !py-2.5" />
+                        <Input.Password size="large" prefix={<LockOutlined className="text-gray-400" />} placeholder={t('auth_reset.confirm_password_placeholder')} className="!rounded-xl !py-2.5" />
                     </Form.Item>
 
                     <Form.Item className="mt-8 mb-0">
@@ -101,17 +103,17 @@ const ResetPasswordPage = () => {
                             size="large"
                             className="!h-12 !rounded-xl !font-semibold !text-lg !bg-gradient-to-r !from-orange-500 !to-amber-600 !border-none hover:!opacity-95"
                         >
-                            Reset Password
+                            {t('auth_reset.reset_password_button')}
                         </Button>
                     </Form.Item>
                 </Form>
 
                 <div className="text-center mt-6 text-gray-500 text-sm">
                     <div className="mb-4">
-                        Your password will be updated immediately.
+                        {t('auth_reset.note')}
                     </div>
                     <Link to="/login" className="inline-flex items-center gap-2 text-sm hover:text-orange-600 transition-colors">
-                        <ArrowLeftOutlined /> Back to Login
+                        <ArrowLeftOutlined /> {t('auth_reset.back_login')}
                     </Link>
                 </div>
             </div>

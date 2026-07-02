@@ -4,9 +4,11 @@ import { CrownOutlined, DeleteOutlined, LoadingOutlined } from '@ant-design/icon
 import useWorkspaceMembers from '../../hooks/useWorkspaceMember';
 import useChangeMemberRole from '../../hooks/useChangeRole';
 import useRemoveMember from '../../hooks/useRemoveMember';
+import { useTranslation } from 'react-i18next';
 
 const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
   const workspaceId = workspace?._id || workspace?.id;
+  const { t } = useTranslation();
 
   const { data: members = [], isLoading } = useWorkspaceMembers(workspaceId);
   const changeRole = useChangeMemberRole();
@@ -56,7 +58,7 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
 
   return (
     <Modal
-      title="Workspace members"
+      title={t('workspace_members.title')}
       open={open}
       onCancel={onCancel}
       footer={null}
@@ -67,7 +69,7 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
           <Spin indicator={<LoadingOutlined spin />} />
         </div>
       ) : members.length === 0 ? (
-        <Empty description="No members" />
+        <Empty description={t('workspace_members.no_members')} />
       ) : (
         <div className="flex flex-col gap-2">
           {members.map((m) => (
@@ -88,7 +90,7 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
               {/* ROLE SELECT */}
               <div className="flex justify-center">
                 {m.role === 'OWNER' ? (
-                  <span className="text-amber-500 font-semibold">OWNER</span>
+                  <span className="text-amber-500 font-semibold">{t('workspace_members.owner')}</span>
                 ) : (
                   <Select
                     value={m.role}
@@ -127,7 +129,7 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
                       relative
                       group
                     "
-                    title="Transfer owner"
+                    title={t('workspace_members.transfer_owner')}
                   >
                     <CrownOutlined className="text-lg group-hover:scale-110 transition" />
                   </button>
@@ -148,7 +150,7 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
                       transition
                       text-base
                     "
-                    title="Remove member"
+                    title={t('workspace_members.remove_member')}
                   >
                     <DeleteOutlined className="text-lg group-hover:scale-110 transition" />
                   </button>
@@ -167,21 +169,20 @@ const WorkspaceMembersModal = ({ open, onCancel, workspace, user }) => {
           setConfirmState({ open: false, type: null, member: null })
         }
         onOk={handleConfirm}
-        okText="Confirm"
-        cancelText="Cancel"
+        okText={t('workspace_members.confirm_ok')}
+        cancelText={t('workspace_members.confirm_cancel')}
         centered
       >
         {confirmState.type === 'remove' && (
           <p>
-            Remove <b>{confirmState.member?.userId?.fullName}</b> from workspace?
+            {t('workspace_members.remove_confirm', { name: confirmState.member?.userId?.fullName })}
           </p>
         )}
 
         {confirmState.type === 'transfer' && (
           <p>
-            Transfer <b>OWNER</b> role to{' '}
-            <b>{confirmState.member?.userId?.fullName}</b>?<br />
-            You will lose owner permissions.
+            {t('workspace_members.transfer_confirm', { name: confirmState.member?.userId?.fullName })}<br />
+            {t('workspace_members.transfer_notice')}
           </p>
         )}
       </Modal>

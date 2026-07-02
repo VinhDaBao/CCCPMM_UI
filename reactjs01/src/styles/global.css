@@ -60,7 +60,35 @@ button {
     --accent-ice:     #2260a0;
 
     --tag-bg:         #eef0f8;
+    --badge-bg:       rgba(255,255,255,0.85);
 }
+
+/* Dark mode variables (applied via .mode-dark on html) */
+.mode-dark {
+    --bg-void:    #0f1724;
+    --bg-base:    #071226;
+    --bg-surface: #0b1320;
+    --bg-raised:  #0b1320;
+    --bg-hover:   #071827;
+    --bg-active:  #0b2230;
+    --border:     #123141;
+    --border-lit: #1b3a4a;
+
+    --text-primary:   #e6eef6;
+    --text-secondary: #bcd0e6;
+    --text-muted:     #89a3bd;
+
+    --accent-amber:   #c47b08;
+    --accent-rust:    #ff7a5a;
+    --accent-sage:    #5ad07a;
+    --accent-ice:     #66a7ff;
+
+    --tag-bg:         #07182a;
+    --badge-bg:       rgba(255,255,255,0.06);
+}
+
+/* Light mode class to be explicit (optional) */
+.mode-light { }
 
 /* --- Custom Scrollbar cho Workspace --- */
 ::-webkit-scrollbar { width: 4px; height: 4px; }

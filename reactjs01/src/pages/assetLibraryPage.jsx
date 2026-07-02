@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { notification, Spin, Modal, Input, Select, Button, Dropdown, Progress } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import TopBar from '../components/creator-layout/topBar';
 import Icon from '../components/creator-layout/Icons';
 import { getAllAssetsApi, uploadAssetApi, getWorkspaceTagsApi, updateAssetApi, deleteAssetApi, getAssetUrl, getBillingInfoApi } from '../util/api';
@@ -97,6 +98,7 @@ const AssetCard = ({ data, onClickCard, onEdit, onDelete }) => {
 const AssetLibraryPage = () => {
   const user = useSelector(state => state.auth.user);
   const { activeWorkspaceId } = useOutletContext();
+  const { t } = useTranslation();
   const CURRENT_WORKSPACE_ID = activeWorkspaceId;
   const [assets, setAssets] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
@@ -159,7 +161,7 @@ const AssetLibraryPage = () => {
       setAssets(assets?.data || assets);
     } catch (error) {
       notification.error({
-        message: "Error loading data",
+        message: t('asset_library.load_data_error'),
         description: error?.response?.data?.message,
       });
     } finally {
@@ -174,7 +176,7 @@ const AssetLibraryPage = () => {
       setAvailableTags(tags?.data || tags);
     } catch (error) {
       notification.error({
-        message: "Error loading tags",
+        message: t('asset_library.load_tags_error'),
         description: error?.response?.data?.message,
       });
     }
@@ -201,12 +203,12 @@ const AssetLibraryPage = () => {
       const safeFile = new File([file], safeFileName, { type: file.type });
       await uploadAssetApi(CURRENT_WORKSPACE_ID, safeFile, "new_upload");
 
-      notification.success({ message: "Upload successful!" });
+      notification.success({ message: t('asset_library.upload_success') });
       fetchAssets();
       fetchAvailableTags();
     } catch (error) {
       notification.error({
-        message: "Upload error",
+        message: t('asset_library.upload_error'),
         description: error?.response?.data?.message,
       });
     } finally {
@@ -224,17 +226,17 @@ const AssetLibraryPage = () => {
 
   const handleSaveEdit = async () => {
     if (!editFileName.trim()) {
-      return notification.warning({ message: "File name cannot be empty!" });
+      return notification.warning({ message: t('asset_library.file_name_empty') });
     }
     try {
       await updateAssetApi(editingAssetId, { fileName: editFileName, tags: editTags });
-      notification.success({ message: "Asset updated successfully!" });
+      notification.success({ message: t('asset_library.updated_success') });
       setIsEditModalVisible(false);
       fetchAssets();
       fetchAvailableTags();
     } catch (error) {
       notification.error({
-        message: "Update error",
+        message: t('asset_library.update_error'),
         description: error?.response?.data?.message,
       });
     }
@@ -242,20 +244,20 @@ const AssetLibraryPage = () => {
 
   const handleDelete = (asset) => {
     confirm({
-      title: "Are you sure you want to delete this file?",
+      title: t('asset_library.delete_confirm_title'),
       icon: <ExclamationCircleOutlined />,
-      content: `File "${asset.fileName}" will be permanently deleted.`,
-      okText: "Delete",
+      content: t('asset_library.delete_confirm_content', { name: asset.fileName }),
+      okText: t('asset_library.delete_ok'),
       okType: "danger",
-      cancelText: "Cancel",
+      cancelText: t('asset_library.delete_cancel'),
       onOk: async () => {
         try {
           await deleteAssetApi(asset._id);
-          notification.success({ message: "Deleted successfully!" });
+          notification.success({ message: t('asset_library.delete_success') });
           fetchAssets();
         } catch (error) {
           notification.error({
-            message: "Error deleting file",
+            message: t('asset_library.delete_error'),
             description: error?.response?.data?.message,
           });
         }
@@ -265,7 +267,7 @@ const AssetLibraryPage = () => {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
-      <TopBar title="Asset Library" subtitle={`Storage & Management · ${assets.length} files`} />
+      <TopBar title={t('asset_library.title')} subtitle={t('asset_library.subtitle', { count: assets.length })} />
 
       <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 16, background: "var(--bg-base)", flexWrap: "wrap" }}>
         <div style={{ display: "flex", background: "var(--bg-raised)", borderRadius: 8, padding: 4, border: "1px solid var(--border)" }}>
@@ -281,11 +283,11 @@ const AssetLibraryPage = () => {
           ))}
         </div>
 
-        <Search placeholder="Search file name or #tag..." allowClear onSearch={(value) => fetchAssets(value)} onChange={(e) => setSearchText(e.target.value)} style={{ width: 250 }} />
+        <Search placeholder={t('asset_library.search_placeholder')} allowClear onSearch={(value) => fetchAssets(value)} onChange={(e) => setSearchText(e.target.value)} style={{ width: 250 }} />
 
         <Select defaultValue="newest" onChange={(value) => setSortOrder(value)} style={{ width: 140 }}>
-          <Option value="newest">Newest</Option>
-          <Option value="oldest">Oldest</Option>
+          <Option value="newest">{t('asset_library.newest')}</Option>
+          <Option value="oldest">{t('asset_library.oldest')}</Option>
         </Select>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 20 }}>
@@ -299,7 +301,7 @@ const AssetLibraryPage = () => {
               marginBottom: 4, 
               fontFamily: "'JetBrains Mono', monospace" 
             }}>
-              <span>Storage:</span>
+              <span>{t('asset_library.storage_label')}</span>
               <span style={{ color: percentUsed >= 90 ? '#ff4d4f' : 'var(--text-primary)' }}>
                 {formatBytes(totalUsedBytes)} / {dynamicLimitMB} MB
               </span>
@@ -324,7 +326,7 @@ const AssetLibraryPage = () => {
             }}
           >
             <Icon name="upload" size={14} color="#0d0d0f" />
-            {isUploading ? "Uploading..." : "Upload Media"}
+            {isUploading ? t('asset_library.uploading') : t('asset_library.upload_media')}
           </button>
         </div>
       </div>
@@ -339,24 +341,24 @@ const AssetLibraryPage = () => {
         )}
         {!isLoading && assets.length === 0 && (
           <div style={{ textAlign: "center", color: "var(--text-muted)", marginTop: 40, fontFamily: "'Lato', sans-serif", fontSize: 14 }}>
-            No assets found.
+            {t('asset_library.empty_assets')}
           </div>
         )}
       </div>
 
-      <Modal title="Asset Details" open={isModalVisible} onCancel={() => { setIsModalVisible(false); setTimeout(() => setSelectedAsset(null), 200); }} footer={null} centered destroyOnClose={true}>
+      <Modal title={t('asset_library.details_title')} open={isModalVisible} onCancel={() => { setIsModalVisible(false); setTimeout(() => setSelectedAsset(null), 200); }} footer={null} centered destroyOnClose={true}>
         {selectedAsset && (
           <div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-              <p style={{ margin: 0 }}><strong>File Name:</strong> {selectedAsset.fileName}</p>
+              <p style={{ margin: 0 }}><strong>{t('asset_library.field_file_name')}</strong> {selectedAsset.fileName}</p>
               <p style={{ margin: 0 }}>
-                <strong>Workspace:</strong> <span style={{ color: "var(--accent-ice)", fontWeight: "bold" }}>
-                  {selectedAsset.workspaceId?.name || "Unknown"}
+                <strong>{t('asset_library.field_workspace')}</strong> <span style={{ color: "var(--accent-ice)", fontWeight: "bold" }}>
+                  {selectedAsset.workspaceId?.name || t('asset_library.unknown')}
                 </span>
               </p>
-              <p style={{ margin: 0 }}><strong>Format Type:</strong> <span style={{ color: "var(--accent-amber)", fontWeight: "bold" }}>{selectedAsset.type}</span></p>
-              <p style={{ margin: 0 }}><strong>Upload Date:</strong> {new Date(selectedAsset.createdAt).toLocaleString('en-US')}</p>
-              <p style={{ margin: 0 }}><strong>Tags:</strong> {selectedAsset.tags?.join(", ") || "None"}</p>
+              <p style={{ margin: 0 }}><strong>{t('asset_library.field_format_type')}</strong> <span style={{ color: "var(--accent-amber)", fontWeight: "bold" }}>{selectedAsset.type}</span></p>
+              <p style={{ margin: 0 }}><strong>{t('asset_library.field_upload_date')}</strong> {new Date(selectedAsset.createdAt).toLocaleString('en-US')}</p>
+              <p style={{ margin: 0 }}><strong>{t('asset_library.field_tags')}</strong> {selectedAsset.tags?.join(", ") || t('asset_library.none')}</p>
             </div>
             <div style={{ padding: '16px', background: 'var(--bg-hover)', borderRadius: 8, textAlign: 'center' }}>
               {selectedAsset.type === 'IMAGE' ? (
@@ -366,36 +368,36 @@ const AssetLibraryPage = () => {
                   <Icon name="music" size={48} color="var(--accent-ice)" />
                   <audio controls autoPlay src={getAssetUrl(selectedAsset.url)} style={{ width: "100%", outline: "none" }} controlsList="nodownload" />
                 </div>
-              ) : <div style={{ color: "var(--text-muted)" }}>Format not supported.</div>}
+              ) : <div style={{ color: "var(--text-muted)" }}>{t('asset_library.format_not_supported')}</div>}
             </div>
           </div>
         )}
       </Modal>
 
       <Modal
-        title="Edit Asset"
+        title={t('asset_library.edit_title')}
         open={isEditModalVisible}
         onOk={handleSaveEdit}
         onCancel={() => setIsEditModalVisible(false)}
-        okText="Save Changes"
-        cancelText="Cancel"
+        okText={t('asset_library.save_changes')}
+        cancelText={t('asset_library.cancel')}
         centered
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 10 }}>
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>File Name</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('asset_library.file_name_label')}</label>
             <Input
               value={editFileName}
               onChange={(e) => setEditFileName(e.target.value)}
-              placeholder="Enter file name..."
+              placeholder={t('asset_library.file_name_placeholder')}
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Tags</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('asset_library.tags_label')}</label>
             <Select
               mode="tags"
               style={{ width: '100%' }}
-              placeholder="Select existing tags or type a new one and press Enter..."
+              placeholder={t('asset_library.tags_placeholder')}
               value={editTags}
               onChange={(value) => setEditTags(value)}
               options={availableTags.map(tag => ({ value: tag, label: tag }))}

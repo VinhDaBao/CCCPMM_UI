@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/global.css';
+import { getStoredDisplayMode, applyDisplayMode } from './util/theme';
 import { Provider } from "react-redux";
 import { store } from "./redux/store";  
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
@@ -73,6 +74,12 @@ const router = createBrowserRouter([
     ]
   }
 ]);
+
+// Apply saved display mode before rendering to avoid FOUC
+try {
+  const mode = getStoredDisplayMode();
+  applyDisplayMode(mode);
+} catch (e) { console.warn('Failed to apply display mode', e); }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

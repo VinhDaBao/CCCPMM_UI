@@ -6,6 +6,7 @@ import Icon from './Icons';
 import { Modal } from 'antd';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import { logoutApi } from '../../util/api';
+import { useTranslation } from 'react-i18next';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -13,6 +14,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   
   // Extract user details from Redux
   const auth = useSelector(state => state.auth);
@@ -24,18 +26,18 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   // Default menu items
   const navItems = [
-    { id: "dashboard", path: "/workspace/dashboard", label: "Dashboard", icon: "kanban" },
-    { id: "project", path: "/workspace/projects", label: "Project", icon: "grid" },
+    { id: "dashboard", path: "/workspace/dashboard", label: t('sidebar.dashboard'), icon: "kanban" },
+    { id: "project", path: "/workspace/projects", label: t('sidebar.project'), icon: "grid" },
     // Sử dụng dấu nháy ngược (Backticks) để truyền biến động
-    { id: "world", path: `/workspace/world/${localActiveWorkspaceId}`, label: "Relationship diagram", icon: "grid" },
-    { id: "assets", path: "/workspace/assets", label: "Assets", icon: "assets" },
-    { id: "settings", path: "/workspace/settings", label: "Settings", icon: "settings" },
+    { id: "world", path: `/workspace/world/${localActiveWorkspaceId}`, label: t('sidebar.world'), icon: "grid" },
+    { id: "assets", path: "/workspace/assets", label: t('sidebar.assets'), icon: "assets" },
+    { id: "settings", path: "/workspace/settings", label: t('sidebar.settings'), icon: "settings" },
   ];
 
   // If admin, append user management views
   if (user.role === 'admin') {
-    navItems.push({ id: "admin-analytics", path: "/admin/dashboard", label: "Revenue Chart", icon: "sparkles" });
-    navItems.push({ id: "users", path: "/user", label: "User Management", icon: "user" });
+    navItems.push({ id: "admin-analytics", path: "/admin/dashboard", label: t('sidebar.revenue_chart'), icon: "sparkles" });
+    navItems.push({ id: "users", path: "/user", label: t('sidebar.user_management'), icon: "user" });
   }
 
   const handleLogout = async () => {
@@ -59,11 +61,11 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
 
   const showLogoutConfirm = () => {
     Modal.confirm({
-      title: 'Confirm sign out',
-      content: 'Are you sure you want to sign out of this account?',
-      okText: 'Sign out',
+      title: t('sidebar.confirm_sign_out_title'),
+      content: t('sidebar.confirm_sign_out_content'),
+      okText: t('sidebar.confirm_sign_out_ok'),
       okButtonProps: { danger: true }, 
-      cancelText: 'Cancel',
+      cancelText: t('sidebar.confirm_sign_out_cancel'),
       centered: true,
       onOk: handleLogout, 
     });
@@ -72,7 +74,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
   // Avatar / Display name fallbacks
   const avatarUrl = user.avatar ? (user.avatar.startsWith("data:") ? user.avatar : `${BACKEND_URL}${user.avatar}`) : null;
   const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
-  const displayName = user.fullName && user.fullName !== "undefined" ? user.fullName : (user.email ? user.email.split('@')[0] : "Creator");
+  const displayName = user.fullName && user.fullName !== "undefined" ? user.fullName : (user.email ? user.email.split('@')[0] : t('sidebar.creator_fallback'));
 
   return (
     <aside style={{
@@ -104,7 +106,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
       {/* Nav Menu */}
       <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
         <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", padding: "8px 10px 6px", textTransform: "uppercase" }}>
-          Menu
+          {t('sidebar.menu')}
         </div>
         {navItems.map(item => {
           const active = location.pathname.includes(item.path);
@@ -143,7 +145,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}
         >
           <Icon name="x" size={15} color="var(--accent-rust)" />
-          Sign out
+          {t('sidebar.sign_out')}
         </button>
       </div>
 
@@ -170,7 +172,7 @@ const Sidebar = ({ activeWorkspaceId, setActiveWorkspaceId }) => {
             {displayName}
           </div>
           <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {user.role === 'admin' ? 'ADMINISTRATOR' : user.email}
+            {user.role === 'admin' ? t('sidebar.administrator') : user.email}
           </div>
         </div>
       </div>
