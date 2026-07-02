@@ -50,10 +50,10 @@ const AudioEmbedBlock = ({ filename, duration }) => (
 const ScriptContent = () => (
   <div className="script-editor" contentEditable suppressContentEditableWarning
     style={{ flex: 1, overflowY: "auto", padding: "24px 48px 48px", lineHeight: 1.85, outline: 'none' }}>
-    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>CẢNH 1 - NỘI - CĂN PHÒNG TỐI - ĐÊM</p>
+    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>SCENE 1 - INT. - DARK ROOM - NIGHT</p>
     
     <p style={{ color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
-      Căn phòng chìm trong bóng tối. Ánh nến leo lét từ góc bàn thờ hắt lên khuôn mặt <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>MINH</span> — một người đàn ông trung niên, mặt xanh xao, tay run run.
+      The room is swallowed by darkness. Candlelight from the altar corner falls across <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>MINH</span>'s face — a middle-aged man with a pale complexion and trembling hands.
     </p>
     
     <AudioEmbedBlock filename="tieng_gio_rit.mp3" duration="0:12" />
@@ -61,28 +61,28 @@ const ScriptContent = () => (
     
     <p style={{ color: "var(--accent-amber)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: "0.1em", textAlign: "center", marginBottom: "0.75rem" }}>MINH</p>
     <p style={{ color: "var(--text-primary)", fontStyle: "italic", paddingLeft: "2rem", borderLeft: "2px solid var(--border-lit)", marginBottom: "0.75rem" }}>
-      "Tôi đã nói rồi... đừng mở cái hộp đó ra. Nhưng anh không nghe."
+      "I told you already... don't open that box. But you wouldn't listen."
     </p>
     
-    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>MINH bước chậm về phía cửa sổ. Gió thổi mạnh. Ngọn nến tắt.</p>
+    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>MINH walks slowly toward the window. The wind picks up. The candle goes out.</p>
     
-    <p style={{ color: "var(--accent-amber)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: "0.1em", textAlign: "center", marginBottom: "0.75rem" }}>TIẾNG NÓI (O.S.)</p>
+    <p style={{ color: "var(--accent-amber)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: "0.1em", textAlign: "center", marginBottom: "0.75rem" }}>VOICE (O.S.)</p>
     <p style={{ color: "var(--text-primary)", fontStyle: "italic", paddingLeft: "2rem", borderLeft: "2px solid var(--border-lit)", marginBottom: "0.75rem" }}>
-      "Minh... Minh ơi... sao anh bỏ em lại một mình?"
+      "Minh... Minh... why did you leave me alone?"
     </p>
     
     <p style={{ color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
-      Minh đứng khựng lại. Từng sợi tóc trên gáy anh dựng đứng. Từ phía sau, bóng tối bắt đầu <span style={{ color: "var(--accent-rust)", fontStyle: "italic" }}>chuyển động.</span>
+      Minh freezes. The hair on the back of his neck stands on end. Behind him, the darkness begins to <span style={{ color: "var(--accent-rust)", fontStyle: "italic" }}>move.</span>
     </p>
     
     <AudioEmbedBlock filename="tieng_go_cua.mp3" duration="0:08" />
     <br />
     
-    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>CẮT SANG —</p>
-    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>CẢNH 2 - NỘI - HÀNH LANG - TIẾP THEO</p>
+    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>CUT TO —</p>
+    <p style={{ color: "var(--text-secondary)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace", marginBottom: "0.75rem" }}>SCENE 2 - INT. - HALLWAY - CONTINUOUS</p>
     
     <p style={{ color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
-      Hành lang dài hun hút. Ánh đèn neon nhấp nháy. Trên tường, bức ảnh gia đình... nhưng khuôn mặt tất cả đã bị <span style={{ color: "var(--accent-rust)" }}>xóa trắng</span>.
+      The hallway stretches endlessly. Neon lights flicker overhead. On the wall, a family portrait hangs... but every face has been <span style={{ color: "var(--accent-rust)" }}>blotted out</span>.
     </p>
   </div>
 );
@@ -94,10 +94,10 @@ const AiPromptTab = () => {
   const [result, setResult] = useState("");
 
   const suggestions = [
-    { icon: "wand", label: "Viết tiếp đoạn kịch bản", color: "var(--accent-amber)" },
-    { icon: "image", label: "Tạo prompt hình ảnh từ cảnh này", color: "var(--accent-ice)" },
-    { icon: "sparkles", label: "Gợi ý tên nhân vật phụ", color: "var(--accent-sage)" },
-    { icon: "star", label: "Phân tích cấu trúc 3 hồi", color: "var(--accent-rust)" },
+    { icon: "wand", label: "Continue the script", color: "var(--accent-amber)" },
+    { icon: "image", label: "Create an image prompt from this scene", color: "var(--accent-ice)" },
+    { icon: "sparkles", label: "Suggest a supporting character name", color: "var(--accent-sage)" },
+    { icon: "star", label: "Analyze the three-act structure", color: "var(--accent-rust)" },
   ];
 
   const handleGenerate = () => {
@@ -105,10 +105,10 @@ const AiPromptTab = () => {
     setGenerating(true);
     setResult("");
     
-    // Giả lập AI
+    // Simulated AI output
     setTimeout(() => {
       setGenerating(false);
-      setResult("Dưới đây là một vài câu thoại gợi ý cho nhân vật MINH:\n\nMINH (nhếch mép cười nhạt)\n'Cô tưởng cái cửa đó cản được nó sao? Nó đã ở trong này từ trước khi chúng ta đến rồi.'\n\nMINH (giọng run rẩy, lùi lại)\n'Đừng nhìn vào mắt nó... Xin cô đấy, nhắm mắt lại đi!'");
+      setResult("Here are a few suggested lines for MINH:\n\nMINH (smirking coldly)\n'Did you really think that door could stop it? It was already in here before we arrived.'\n\nMINH (voice trembling, stepping back)\n'Don't look into its eyes... Please, close your eyes!'");
     }, 1500);
   };
 
@@ -152,7 +152,7 @@ const AiPromptTab = () => {
         <textarea
           value={promptText}
           onChange={e => setPromptText(e.target.value)}
-          placeholder="Nhập yêu cầu của bạn... (VD: Viết thêm 3 câu thoại cho nhân vật MINH)"
+          placeholder="Enter your request... (e.g. Add 3 more lines for MINH)"
           style={{ 
             background: "none", border: "none", outline: "none", resize: "none", 
             color: "var(--text-primary)", fontSize: 13, fontFamily: "'Lato', sans-serif", 
@@ -162,7 +162,7 @@ const AiPromptTab = () => {
         />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
           <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 14 }}>⌘</span> Enter để gửi
+            <span style={{ fontSize: 14 }}>⌘</span> Press Enter to send
           </span>
           <button 
             onClick={handleGenerate}
@@ -177,7 +177,7 @@ const AiPromptTab = () => {
             }}
           >
             <Icon name="send" size={13} color={generating ? "var(--text-muted)" : "#0d0d0f"} /> 
-            {generating ? "Đang xử lý..." : "Gửi"}
+            {generating ? "Processing..." : "Send"}
           </button>
         </div>
       </div>
@@ -191,7 +191,7 @@ const AiPromptTab = () => {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <span style={{ fontSize: 10, color: "var(--accent-amber)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em", fontWeight: 700 }}>
-              PHẢN HỒI TỪ AI
+              AI RESPONSE
             </span>
           </div>
           <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.75, whiteSpace: "pre-wrap", fontFamily: "'Lato', sans-serif" }}>
@@ -226,7 +226,7 @@ const MediaFileRow = ({ name, type, size, used }) => (
       border: `1px solid ${used ? "rgba(90,138,106,0.3)" : "rgba(200,82,58,0.25)"}`,
       whiteSpace: "nowrap", flexShrink: 0, 
     }}>
-      {used ? "ĐÃ DÙNG" : "CHƯA DÙNG"}
+      {used ? "USED" : "NOT USED"}
     </div>
   </div>
 );
@@ -248,11 +248,11 @@ const MediaTab = () => {
         background: "var(--bg-raised)", border: "1.5px dashed var(--border-lit)",
         borderRadius: 9, padding: "11px", cursor: "pointer", color: "var(--text-secondary)", fontSize: 12, marginBottom: 14,
       }}>
-        <Icon name="upload" size={14} /> Upload file mới
+        <Icon name="upload" size={14} /> Upload new file
       </button>
 
       <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
-        <span>FILE TRONG DỰ ÁN</span>
+        <span>FILES IN PROJECT</span>
         <span>{files.length} files</span>
       </div>
 
@@ -263,7 +263,7 @@ const MediaTab = () => {
       <div style={{ marginTop: 12, padding: "10px 12px", background: "rgba(232,166,66,0.06)", borderRadius: 8, border: "1px solid rgba(232,166,66,0.15)" }}>
         <div style={{ fontSize: 11, color: "var(--accent-amber)", display: "flex", alignItems: "flex-start", gap: 6 }}>
           <span style={{ marginTop: 1 }}>💡</span>
-          <span>Kéo file vào khu vực soạn thảo để chèn vào kịch bản.</span>
+          <span>Drag files into the editor area to insert them into the script.</span>
         </div>
       </div>
     </div>
@@ -283,13 +283,13 @@ const WorkspacePage = () => {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", height: "100vh" }}>
-      <TopBar title="Mắt Âm Dương" subtitle="KỊCH BẢN · Đang viết · Chỉnh sửa lần cuối 2 phút trước" />
+      <TopBar title="Eyes of Yin and Yang" subtitle="SCRIPT · Writing · Last edited 2 minutes ago" />
 
       {/* Thanh Breadcrumb */}
       <div style={{ padding: "10px 24px", display: "flex", alignItems: "center", gap: 6, borderBottom: "1px solid var(--border)", background: "var(--bg-base)" }}>
-        <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace" }}>Dự án</span>
+        <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace" }}>Project</span>
         <Icon name="chevronRight" size={12} color="var(--text-muted)" />
-        <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace" }}>Mắt Âm Dương</span>
+        <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace" }}>Eyes of Yin and Yang</span>
         <Icon name="chevronRight" size={12} color="var(--text-muted)" />
         <span style={{ fontSize: 11, color: "var(--accent-amber)", fontFamily: "'JetBrains Mono', monospace" }}>Workspace</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
@@ -318,10 +318,10 @@ const WorkspacePage = () => {
             <ToolbarBtn icon="palette" label="Text Color"><Icon name="palette" size={14} /></ToolbarBtn>
             <div style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px" }} />
 
-            <ToolbarBtn icon="paperclip" label="Gắn file">
+            <ToolbarBtn icon="paperclip" label="Attach file">
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <Icon name="paperclip" size={13} />
-                <span style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "'Lato', sans-serif", whiteSpace: "nowrap" }}>Gắn file</span>
+                <span style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "'Lato', sans-serif", whiteSpace: "nowrap" }}>Attach file</span>
               </div>
             </ToolbarBtn>
 
@@ -349,10 +349,10 @@ const WorkspacePage = () => {
               {/* Tiêu đề nằm TRONG tờ giấy */}
               <div style={{ padding: "40px 48px 0", borderBottom: "1px solid var(--border-lit)", paddingBottom: 20 }}>
                 <div contentEditable suppressContentEditableWarning style={{ fontFamily: "'Lato', sans-serif", fontWeight: 800, fontSize: 32, color: "var(--text-primary)", outline: "none", letterSpacing: "-0.02em" }}>
-                  Mắt Âm Dương
+                  Eyes of Yin and Yang
                 </div>
                 <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", marginTop: 8, display: "flex", gap: 14 }}>
-                  <span>EP.01 — PHẦN MỞ ĐẦU</span><span>·</span><span>~12 phút đọc</span><span>·</span><span>1,847 từ</span>
+                  <span>EP.01 — INTRODUCTION</span><span>·</span><span>~12 min read</span><span>·</span><span>1,847 words</span>
                 </div>
               </div>
               

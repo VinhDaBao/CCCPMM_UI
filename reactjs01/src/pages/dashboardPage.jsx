@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { notification, Spin, Dropdown, Button, Modal } from 'antd';
-// Bổ sung các Icon cần thiết
+import { notification, Spin, Dropdown, Button, Modal, Tooltip, Avatar } from 'antd';
 import { LoadingOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import TopBar from '../components/creator-layout/TopBar';
 import Icon from '../components/creator-layout/Icons';
@@ -11,17 +10,16 @@ import useWorkspaces from '../hooks/useWorkspaces';
 import ProjectModal from '../components/creator-layout/ProjectModal';
 
 const COLUMNS_DEF = {
-  IDEA: { id: 'IDEA', title: 'Ý TƯỞNG', color: '#3b82f6' },
-  WRITING: { id: 'WRITING', title: 'ĐANG VIẾT', color: '#d97706' },
-  MEDIA: { id: 'MEDIA', title: 'LÀM MEDIA', color: '#9333ea' },
-  PUBLISHED: { id: 'PUBLISHED', title: 'ĐÃ ĐĂNG', color: '#16a34a' }
+  IDEA: { id: 'IDEA', title: 'IDEA', color: '#3b82f6' },
+  WRITING: { id: 'WRITING', title: 'WRITING', color: '#d97706' },
+  MEDIA: { id: 'MEDIA', title: 'MEDIA', color: '#9333ea' },
+  PUBLISHED: { id: 'PUBLISHED', title: 'PUBLISHED', color: '#16a34a' }
 };
 
 const KanbanPage = () => {
   const navigate = useNavigate();
   const { activeWorkspaceId } = useOutletContext();
   
-  // Kiểm tra quyền (giống ProjectsPage)
   const { data: workspaces = [] } = useWorkspaces();
   const activeWorkspace = workspaces.find(ws => String(ws._id || ws.id) === String(activeWorkspaceId));
   const memberRole = activeWorkspace?.memberRole || 'VIEWER';
@@ -32,12 +30,12 @@ const KanbanPage = () => {
     isLoading, 
     updateProject, 
     createProject,
-    deleteProject // Bổ sung deleteProject
+    deleteProject 
   } = useProjects(activeWorkspaceId);
 
   const [columns, setColumns] = useState({});
   const [projectModalOpen, setProjectModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState(null); // Quản lý dự án đang Edit
+  const [editingProject, setEditingProject] = useState(null);
   const [defaultStatus, setDefaultStatus] = useState('IDEA');
 
   useEffect(() => {
@@ -68,66 +66,61 @@ const KanbanPage = () => {
       try {
         await updateProject({ id: draggableId, data: { status: destStatus } });
       } catch (error) {
-        notification.error({ message: 'Lỗi khi cập nhật trạng thái', description: error.message });
+        notification.error({ message: 'Error updating status', description: error.message });
       }
     }
   };
 
   const handleOpenCreateModal = (status) => {
-    setEditingProject(null); // Đảm bảo là tạo mới
+    setEditingProject(null);
     setDefaultStatus(status);
     setProjectModalOpen(true);
   };
 
-  // Hàm xử lý chung cho cả Create và Edit
   const handleSaveProject = async (data) => {
     try {
       if (editingProject) {
-        // Cập nhật
         await updateProject({ id: editingProject._id || editingProject.id, data });
-        notification.success({ message: 'Cập nhật dự án thành công' });
+        notification.success({ message: 'Project updated successfully' });
       } else {
-        // Tạo mới
         const payload = { ...data, status: data.status || defaultStatus };
         await createProject(payload);
-        notification.success({ message: 'Tạo dự án thành công' });
+        notification.success({ message: 'Project created successfully' });
       }
       setProjectModalOpen(false);
       setEditingProject(null);
     } catch (error) {
-      notification.error({ message: 'Lỗi khi lưu dự án', description: error.message });
+      notification.error({ message: 'Error saving project', description: error.message });
     }
   };
 
-  // Hàm Xóa Project
   const handleDeleteProject = (project) => {
     const projectId = project._id || project.id;
     Modal.confirm({
-      title: 'Xóa dự án?',
-      content: `Bạn có chắc chắn muốn xóa "${project.title}"? Hành động này không thể hoàn tác.`,
-      okText: 'Xóa',
+      title: 'Delete Project?',
+      content: `Are you sure you want to delete "${project.title}"? This action cannot be undone.`,
+      okText: 'Delete',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: 'Cancel',
       centered: true,
       onOk: async () => {
         try {
           await deleteProject(projectId);
-          notification.success({ message: 'Xóa dự án thành công' });
+          notification.success({ message: 'Project deleted successfully' });
         } catch (error) {
-          notification.error({ message: 'Lỗi khi xóa dự án', description: error.message });
+          notification.error({ message: 'Error deleting project', description: error.message });
         }
       }
     });
   };
 
-  // Cấu hình menu 3 chấm
   const buildProjectMenu = (project) => ({
     items: [
       { key: 'edit', label: 'Edit Project', icon: <EditOutlined /> },
       { key: 'delete', label: 'Delete Project', danger: true, icon: <DeleteOutlined /> },
     ],
     onClick: (e) => {
-      e.domEvent.stopPropagation(); // CỰC KỲ QUAN TRỌNG: Ngăn chặn click lan ra thẻ
+      e.domEvent.stopPropagation();
       if (e.key === 'edit') {
         setEditingProject(project);
         setProjectModalOpen(true);
@@ -149,7 +142,7 @@ const KanbanPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-void)' }}>
-      <TopBar title="DashBoard" subtitle="Quản lý tiến độ kịch bản bằng kéo thả" />
+      <TopBar title="Dashboard" subtitle="Drag & Drop Project Management" />
 
       <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '24px', display: 'flex', gap: '20px' }}>
         <DragDropContext onDragEnd={onDragEnd}>
@@ -182,6 +175,15 @@ const KanbanPage = () => {
                   <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {columns[statusKey]?.map((project, index) => {
                       const projectId = project._id || project.id;
+                      
+                      // 1. SỐ LƯỢNG ASSET
+                      const assetCount = project.assetCount || project.assets?.length || project.projectAssets?.length || 0;
+
+                      // 2. DANH SÁCH THÀNH VIÊN
+                      const projectMembers = project.members?.length > 0 
+                        ? project.members 
+                        : (project.createdBy ? [project.createdBy] : []);
+
                       return (
                         <Draggable key={projectId} draggableId={projectId.toString()} index={index}>
                           {(provided, snapshot) => (
@@ -211,20 +213,33 @@ const KanbanPage = () => {
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-                                  <Icon name="paperclip" size={12} /> {Math.floor(Math.random() * 5)}
+                                
+                                {/* HIỂN THỊ SỐ FILE ĐÍNH KÈM */}
+                                <div style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Icon name="paperclip" size={12} /> {assetCount}
                                 </div>
                                 
-                                {/* CỤM AVATAR VÀ NÚT 3 CHẤM */}
+                                {/* HIỂN THỊ DANH SÁCH AVATAR */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-amber)', color: '#000', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {project.createdBy?.name ? project.createdBy.name.charAt(0).toUpperCase() : 'U'}
-                                  </div>
+                                  <Avatar.Group maxCount={3} size="small" maxStyle={{ color: '#000', backgroundColor: 'var(--accent-amber)' }}>
+                                    {projectMembers.map((member, idx) => {
+                                      const name = typeof member === 'object' ? (member.fullName || member.email || 'Unknown') : 'Unknown';
+                                      const initial = name.charAt(0).toUpperCase();
+                                      
+                                      return (
+                                        <Tooltip title={name} key={member._id || idx}>
+                                          <Avatar style={{ background: 'var(--accent-amber)', color: '#000', fontSize: '11px', fontWeight: 700 }}>
+                                            {initial}
+                                          </Avatar>
+                                        </Tooltip>
+                                      );
+                                    })}
+                                  </Avatar.Group>
 
                                   {canManageProjects && (
                                     <div 
                                       onClick={(e) => e.stopPropagation()} 
-                                      onPointerDown={(e) => e.stopPropagation()} // Chặn thư viện kéo thả dnd hiểu nhầm
+                                      onPointerDown={(e) => e.stopPropagation()} 
                                     >
                                       <Dropdown menu={buildProjectMenu(project)} trigger={['click']} placement="bottomRight">
                                         <Button 
@@ -237,7 +252,6 @@ const KanbanPage = () => {
                                     </div>
                                   )}
                                 </div>
-                                {/* KẾT THÚC CỤM AVATAR VÀ NÚT 3 CHẤM */}
 
                               </div>
                             </div>
@@ -279,7 +293,7 @@ const KanbanPage = () => {
           setEditingProject(null);
         }}
         onSave={handleSaveProject}
-        project={editingProject} // Truyền project đang edit vào Modal
+        project={editingProject} 
         initialValues={{ status: defaultStatus }}
         existingTags={uniqueTags}
       />

@@ -23,42 +23,42 @@ const LoginPage = () => {
                 localStorage.setItem("refresh_token", res.refreshToken);
 
                 notification.success({
-                    message: "Thành công",
-                    description: "Đăng nhập thành công!"
+                    message: "Success",
+                    description: "Login successful!"
                 });
 
                 dispatch(loginSuccess(res.user));
 
-                // 2. LOGIC CỦA TEAM: Xử lý link mời tham gia Workspace
+                // 2. Team logic: handle the workspace invitation link
                 const inviteToken = localStorage.getItem("pendingInviteToken");
                 if (inviteToken) {
                     localStorage.removeItem("pendingInviteToken");
                     navigate(`/invite/${inviteToken}`);
-                    return; // Chuyển trang xong thì dừng hàm luôn
+                    return; // Stop after navigation
                 }
 
-                // 3. LOGIC BÌNH THƯỜNG: Chuyển hướng theo role hoặc vào editor
-                if (res.redirectUrl) {
-                    navigate(res.redirectUrl);
+                // 3. Normal flow: route by role or open the editor
+                if (res.user && res.user.role === 'admin') {
+                    navigate(res.redirectUrl || "/admin/profile");
                 } else {
-                    navigate("/workspace/editor");
+                    navigate("/workspace/dashboard");
                 }
             } else {
-                // Xử lý khi Backend trả về lỗi nhưng mã HTTP vẫn là 200
+                // Handle backend error payloads that still return HTTP 200
                 notification.error({
-                    message: "Đăng nhập thất bại",
-                    description: res?.message ?? "Tài khoản hoặc mật khẩu không chính xác"
+                    message: "Login failed",
+                    description: res?.message ?? "Incorrect email or password"
                 });
             }
         } catch (error) {
-            // LOGIC CỦA MÌNH: Bắt lỗi 400, 401, 403 (Tài khoản bị khóa, sai pass...)
+            // Catch 400, 401, and 403 errors (locked account, invalid password, etc.)
             const errorMessage =
                 error.response?.data?.message ||
                 error.message ||
-                "Đã xảy ra lỗi, vui lòng thử lại!";
+                "An error occurred. Please try again.";
 
             notification.error({
-                message: "Đăng nhập thất bại",
+                message: "Login failed",
                 description: errorMessage
             });
         }
@@ -75,7 +75,7 @@ const LoginPage = () => {
                         </svg>
                     </div>
                     <h1 className="text-4xl font-bold text-gray-800 mb-2">CreatorSpace</h1>
-                    <p className="text-gray-500">Login to your account</p>
+                    <p className="text-gray-500">Sign in to your account</p>
                 </div>
 
                 <Form name="basic" onFinish={onFinish} autoComplete="off" layout='vertical'>

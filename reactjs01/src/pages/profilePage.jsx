@@ -83,10 +83,10 @@ const ProfilePage = () => {
         );
 
         notification.success({
-            message: "THÀNH CÔNG",
+            message: "SUCCESS",
             description:
                 res?.message ??
-                "Cập nhật hồ sơ thành công!",
+                "Profile updated successfully!",
         });
 
         dispatch(loginSuccess(res.user));
@@ -102,11 +102,11 @@ const ProfilePage = () => {
         }
     } catch (error) {
         notification.error({
-            message: "THẤT BẠI",
+            message: "FAILED",
             description:
                 error?.response?.data?.message ||
                 error?.message ||
-                "Cập nhật hồ sơ thất bại!",
+                "Profile update failed!",
         });
     } finally {
         setLoading(false);
@@ -133,7 +133,7 @@ const ProfilePage = () => {
                         <Form.Item label="Full Name" name="fullName">
                             <Input
                                 prefix={<UserOutlined />}
-                                placeholder="Nhập tên của bạn..."
+                                placeholder="Enter your name..."
                             />
                         </Form.Item>
 

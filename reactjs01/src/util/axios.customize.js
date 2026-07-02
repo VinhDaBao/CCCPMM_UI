@@ -58,7 +58,7 @@ instance.interceptors.response.use(
             const refreshToken = localStorage.getItem("refresh_token");
 
             if (!refreshToken) {
-                throw new Error("Không có Refresh Token");
+                throw new Error("Refresh token not available");
             }
 
             const res = await axios.post(
@@ -80,7 +80,7 @@ instance.interceptors.response.use(
             }
         } catch (refreshError) {
             console.error(
-                "Refresh Token thất bại, bắt buộc đăng nhập lại:",
+                "Refresh token refresh failed, forcing re-login:",
                 refreshError
             );
 

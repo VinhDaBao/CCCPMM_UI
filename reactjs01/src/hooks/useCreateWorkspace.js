@@ -19,9 +19,11 @@ const useCreateWorkspace = (ownerId) => {
       return createWorkspaceApi(payload);
     },
     onSuccess: async (response) => {
-      notification.success({
-        message: 'Workspace created',
-        description: response?.message ?? 'Workspace created successfully',
+      if (response && response.errCode !== 0) return; 
+
+      notification.success({ 
+        message: 'Success',
+        description: 'New workspace created successfully!' 
       });
 
       await queryClient.invalidateQueries({ queryKey: ['workspaces'] });

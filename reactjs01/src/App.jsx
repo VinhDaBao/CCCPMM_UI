@@ -23,7 +23,7 @@ function App() {
         const payload = JSON.parse(window.atob(base64Url));
         const role = payload.role; 
 
-        console.log(">>> Role lấy từ token:", role);
+        console.log(">>> Role extracted from token:", role);
 
         const apiEndpoint = role === 'admin' ? '/api/auth/admin/profile' : '/api/auth/user/profile';
         const res = await axios.get(apiEndpoint);
@@ -34,7 +34,7 @@ function App() {
           dispatch(loginSuccess(res.user));
         }
       } catch (error) {
-        console.log("Lỗi fetch account:", error);
+        console.log("Account fetch error:", error);
         localStorage.removeItem("access_token");
       } finally {
         setIsLoading(false);

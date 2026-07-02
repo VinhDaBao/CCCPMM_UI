@@ -17,7 +17,7 @@ const UserPage = () => {
 
     const handleSendSystemNotification = async () => {
         if (!systemNotiTitle.trim() || !systemNotiMessage.trim()) {
-            notification.error({ message: "Lỗi", description: "Vui lòng nhập đầy đủ tiêu đề và nội dung" });
+            notification.error({ message: "Error", description: "Please enter both title and message" });
             return;
         }
 
@@ -29,14 +29,14 @@ const UserPage = () => {
             });
 
             if (res && res.errCode === 0) {
-                notification.success({ message: "Thành công", description: "Thông báo hệ thống đã được gửi tới toàn bộ người dùng" });
+                notification.success({ message: "Success", description: "System notification sent to all users" });
                 setSystemNotiTitle('');
                 setSystemNotiMessage('');
             } else {
-                notification.error({ message: "Gửi thất bại", description: res?.message });
+                notification.error({ message: "Failed to send", description: res?.message });
             }
         } catch (error) {
-            notification.error({ message: "Lỗi hệ thống", description: error.message });
+            notification.error({ message: "System Error", description: error.message });
         } finally {
             setIsSendingNoti(false);
         }
@@ -58,10 +58,10 @@ const UserPage = () => {
                 setUsers(res.data.users);
                 setTotalUsers(res.data.pagination.totalItems);
             } else {
-                notification.error({ message: "Lỗi tải dữ liệu", description: res?.message });
+                notification.error({ message: "Data loading error", description: res?.message });
             }
         } catch (error) {
-            notification.error({ message: "Lỗi hệ thống", description: error.message });
+            notification.error({ message: "System Error", description: error.message });
         } finally {
             setIsLoading(false);
         }
@@ -107,17 +107,17 @@ const UserPage = () => {
                 fetchUsers(); 
             } else {
                 setUsers(users.map(u => u._id === userId ? { ...u, isActivated: currentStatus } : u));
-                notification.error({ message: "Thất bại", description: res?.message });
+                notification.error({ message: "Failed", description: res?.message });
             }
         } catch (error) {
             fetchUsers(); 
-            notification.error({ message: "Lỗi hệ thống khi đổi trạng thái" });
+            notification.error({ message: "System error while changing status" });
         }
     };
 
     const columns = [
         {
-            title: "Họ và Tên",
+            title: "Full Name",
             dataIndex: "fullName",
             key: "fullName",
             fontWeight: "bold",
@@ -129,7 +129,7 @@ const UserPage = () => {
             key: "email",
         },
         {
-            title: "Vai trò",
+            title: "Role",
             dataIndex: "role",
             key: "role",
             render: (role) => (
@@ -138,9 +138,8 @@ const UserPage = () => {
                 </Tag>
             )
         },
-        // 👇 CỘT GÓI DỊCH VỤ ĐÃ HOÀN THIỆN 👇
         {
-            title: "Gói dịch vụ",
+            title: "Plan",
             key: "plan",
             align: "center",
             render: (_, record) => {
@@ -158,24 +157,24 @@ const UserPage = () => {
             }
         },
         {
-            title: "Trạng thái",
+            title: "Status",
             dataIndex: "isActivated",
             key: "isActivated",
             render: (isActivated) => (
                 <Tag color={isActivated ? "success" : "error"}>
-                    {isActivated ? "ĐANG HOẠT ĐỘNG" : "BỊ KHÓA"}
+                    {isActivated ? "ACTIVE" : "LOCKED"}
                 </Tag>
             )
         },
         {
-            title: "Hành động",
+            title: "Action",
             key: "action",
             align: 'center',
             render: (_, record) => (
                 <Space size="middle">
                     <Switch
-                        checkedChildren="Mở"
-                        unCheckedChildren="Khóa"
+                        checkedChildren="Unlock"
+                        unCheckedChildren="Lock"
                         checked={record.isActivated}
                         onChange={() => handleToggleStatus(record._id, record.isActivated)}
                         disabled={record.role === 'admin'} 
@@ -187,27 +186,27 @@ const UserPage = () => {
 
     return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: "var(--bg-void)" }}>
-            <TopBar title="Quản trị Hệ thống" subtitle="Quản lý Người dùng" />
+            <TopBar title="System Admin" subtitle="User Management" />
             
             <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
                 <Card 
                     bordered={false} 
                     style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", marginBottom: 24 }}
-                    title={<span style={{ fontWeight: 700, fontSize: 16 }}>📣 Gửi Thông báo Hệ thống</span>}
+                    title={<span style={{ fontWeight: 700, fontSize: 16 }}>📣 Send System Notification</span>}
                 >
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         <div>
-                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Tiêu đề thông báo:</div>
+                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Notification Title:</div>
                             <Input 
-                                placeholder="Nhập tiêu đề (vd: Bảo trì hệ thống)..." 
+                                placeholder="Enter title (e.g., System Maintenance)..." 
                                 value={systemNotiTitle}
                                 onChange={(e) => setSystemNotiTitle(e.target.value)}
                             />
                         </div>
                         <div>
-                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Nội dung thông báo:</div>
+                            <div style={{ marginBottom: 4, fontWeight: 600 }}>Message:</div>
                             <Input.TextArea 
-                                placeholder="Nhập nội dung thông báo hệ thống..." 
+                                placeholder="Enter system notification message..." 
                                 rows={3}
                                 value={systemNotiMessage}
                                 onChange={(e) => setSystemNotiMessage(e.target.value)}
@@ -220,7 +219,7 @@ const UserPage = () => {
                                 onClick={handleSendSystemNotification}
                                 style={{ background: "var(--accent-rust)", borderColor: "var(--accent-rust)", color: "#fff", fontWeight: 600 }}
                               >
-                                Gửi thông báo tới tất cả người dùng
+                                Send to All Users
                             </Button>
                         </div>
                     </div>
@@ -229,8 +228,8 @@ const UserPage = () => {
                 <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <Title level={4} style={{ margin: 0 }}>Danh sách Tài khoản</Title>
-                            <p style={{ color: "var(--text-muted)", margin: 0 }}>Tổng số: {totalUsers} người dùng</p>
+                            <Title level={4} style={{ margin: 0 }}>Account List</Title>
+                            <p style={{ color: "var(--text-muted)", margin: 0 }}>Total: {totalUsers} users</p>
                         </div>
                         
                         <div style={{ display: 'flex', gap: '12px' }}>
@@ -239,15 +238,15 @@ const UserPage = () => {
                                 style={{ width: 160 }}
                                 onChange={handleSortChange}
                                 options={[
-                                    { value: 'createdAt_desc', label: 'Mới nhất' },
-                                    { value: 'createdAt_asc', label: 'Cũ nhất' },
-                                    { value: 'fullName_asc', label: 'Tên: A - Z' },
-                                    { value: 'fullName_desc', label: 'Tên: Z - A' },
+                                    { value: 'createdAt_desc', label: 'Newest' },
+                                    { value: 'createdAt_asc', label: 'Oldest' },
+                                    { value: 'fullName_asc', label: 'Name: A - Z' },
+                                    { value: 'fullName_desc', label: 'Name: Z - A' },
                                 ]}
                             />
                             
                             <Search 
-                                placeholder="Tìm theo Tên hoặc Email..." 
+                                placeholder="Search by Name or Email..." 
                                 allowClear 
                                 onSearch={handleSearch} 
                                 style={{ width: 250 }} 

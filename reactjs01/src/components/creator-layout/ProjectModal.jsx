@@ -58,15 +58,15 @@ const ProjectModal = ({ open, onCancel, onSave, project, loading, initialValues,
 
         <Form.Item name="status" label="Status" rules={[{ required: true, message: 'Please select a status' }]}>
           <Select placeholder="Select project status">
-            <Select.Option value="IDEA">IDEA (Ý tưởng)</Select.Option>
-            <Select.Option value="WRITING">WRITING (Đang viết)</Select.Option>
-            <Select.Option value="MEDIA">MEDIA (Làm media)</Select.Option>
-            <Select.Option value="PUBLISHED">PUBLISHED (Đã đăng)</Select.Option>
+            <Select.Option value="IDEA">IDEA (Concept)</Select.Option>
+            <Select.Option value="WRITING">WRITING (In progress)</Select.Option>
+            <Select.Option value="MEDIA">MEDIA (Media work)</Select.Option>
+            <Select.Option value="PUBLISHED">PUBLISHED (Published)</Select.Option>
           </Select>
         </Form.Item>
 
         {/* 👇 CẬP NHẬT TRƯỜNG TAGS TẠI ĐÂY 👇 */}
-        <Form.Item name="tags" label="Tags" help="Chọn tag cũ từ danh sách hoặc gõ tag mới rồi nhấn Enter">
+        <Form.Item name="tags" label="Tags" help="Select an existing tag from the list or type a new tag and press Enter">
           <Select
             mode="tags"
             style={{ width: '100%' }}

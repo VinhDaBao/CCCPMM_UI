@@ -1,4 +1,4 @@
-import { Form, Input, Modal } from 'antd';
+import { Form, Input, Modal, notification } from 'antd';
 import useCreateWorkspace from '../../hooks/useCreateWorkspace';
 
 const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
@@ -7,11 +7,23 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
 
   const handleCreateWorkspace = async (values) => {
     try {
-      await createWorkspaceMutation.mutateAsync(values);
+      const res = await createWorkspaceMutation.mutateAsync(values);
+      
+      // If the backend still returns 200 but includes errCode = 1
+      if (res && res.errCode && res.errCode !== 0) {
+        notification.error({ message: 'Workspace creation failed', description: res.message });
+        return; 
+      }
+
       form.resetFields();
       onCancel();
     } catch (submitError) {
-      return submitError;
+      // When the backend returns 400, execution lands here directly
+      const errorMsg = submitError?.response?.data?.message || 'Unable to create workspace due to a server error';
+      notification.error({ 
+        message: 'Creation rejected', 
+        description: errorMsg 
+      });
     }
   };
 
@@ -26,12 +38,7 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
       destroyOnClose
       afterClose={() => form.resetFields()}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleCreateWorkspace}
-        preserve={false}
-      >
+      <Form form={form} layout="vertical" onFinish={handleCreateWorkspace} preserve={false}>
         <Form.Item
           label="Workspace name"
           name="name"
@@ -41,12 +48,7 @@ const CreateWorkspaceModal = ({ open, onCancel, ownerId }) => {
         </Form.Item>
 
         <Form.Item label="Description" name="description">
-          <Input.TextArea
-            placeholder="Optional workspace description"
-            rows={4}
-            maxLength={500}
-            showCount
-          />
+          <Input.TextArea placeholder="Optional workspace description" rows={4} maxLength={500} showCount />
         </Form.Item>
       </Form>
     </Modal>
