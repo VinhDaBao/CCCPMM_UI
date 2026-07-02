@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Spin, notification } from 'antd';
-import { 
-  UserOutlined, 
-  DollarOutlined, 
-  CrownOutlined, 
+import {
+  UserOutlined,
+  DollarOutlined,
+  CrownOutlined,
   RiseOutlined,
   PieChartOutlined
 } from '@ant-design/icons';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
@@ -15,7 +15,7 @@ import TopBar from '../components/creator-layout/TopBar';
 import { useTranslation } from 'react-i18next';
 
 // IMPORT API
-import { getAdminDashboardStatsApi } from '../util/api'; 
+import { getAdminDashboardStatsApi } from '../util/api';
 
 // Keep 2 colors: Orange (FREE) and Blue (PRO)
 const COLORS = ['#d97706', '#3b82f6'];
@@ -98,8 +98,8 @@ const AdminDashboardPage = () => {
                 title={<span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t('admin_dashboard.total_revenue')}</span>} 
                 value={stats.totalRevenue} 
                 formatter={(value) => formatVND(value)}
-                prefix={<DollarOutlined style={{ color: 'var(--accent-amber)', marginRight: 8 }} />} 
-                valueStyle={{ color: 'var(--accent-amber)', fontFamily: "'Instrument Serif', serif", fontSize: 38, marginTop: 4 }} 
+                prefix={<DollarOutlined style={{ color: 'var(--accent-amber)', marginRight: 8 }} />}
+                valueStyle={{ color: 'var(--accent-amber)', fontFamily: "'Instrument Serif', serif", fontSize: 38, marginTop: 4 }}
               />
             </Card>
           </Col>
@@ -118,14 +118,14 @@ const AdminDashboardPage = () => {
                   <BarChart data={stats.revenueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} style={{ fontFamily: "'Lato', sans-serif", fontSize: 12 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="month" stroke="var(--text-muted)" axisLine={false} tickLine={false} dy={10} />
-                    <YAxis 
-                      stroke="var(--text-muted)" 
-                      axisLine={false} 
+                    <YAxis
+                      stroke="var(--text-muted)"
+                      axisLine={false}
                       tickLine={false}
-                      tickFormatter={(value) => value > 0 ? `${value / 1000}k` : '0'} 
+                      tickFormatter={(value) => value > 0 ? `${value / 1000}k` : '0'}
                       dx={-10}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontFamily: "'Lato', sans-serif", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                       formatter={(value) => [formatVND(value), t('admin_dashboard.revenue')]}
                       cursor={{ fill: 'var(--bg-hover)' }}
@@ -161,12 +161,12 @@ const AdminDashboardPage = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)', borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                       itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
                       formatter={(value) => [`${value} ${t('admin_dashboard.users_suffix')}${value > 1 && t('admin_dashboard.users_suffix') === 'User' ? 's' : ''}`, t('admin_dashboard.amount')]}
                     />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: 'var(--text-primary)', fontSize: 12 }}/>
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: 'var(--text-primary)', fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
