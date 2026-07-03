@@ -164,7 +164,6 @@ const ScriptEditorPage = () => {
   const prevUserIdRef = useRef(null);
   const currentUserId = user._id || user.id;
 
-  // Synchronous recreation on render if projectId or userId changes, with immediate destruction of old instances
   if (!ydocRef.current || prevProjectIdRef.current !== projectId) {
     if (providerRef.current) {
       providerRef.current.destroy();
