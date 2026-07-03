@@ -288,6 +288,14 @@ export const getAdminDashboardStatsApi = () => {
     return axios.get('/api/auth/admin/dashboard-stats'); 
 };
 
+const deleteWorldStageApi = (worldId, stageId) => {
+    return axios.delete(`/api/worlds/graph/delete-stage/${worldId}`, { params: { stageId } });
+};
+
+const updateWorldStagesApi = (worldId, stages) => {
+    return axios.put(`/api/worlds/graph/stages/${worldId}`, { stages });
+};
+
 export {
     createUserApi,
     loginApi,
@@ -374,5 +382,7 @@ export {
     synthesizeTtsApi,
     getTtsVoicesApi,
     getBillingInfoApi,
-    createPayOSLinkApi
+    createPayOSLinkApi,
+    deleteWorldStageApi,
+    updateWorldStagesApi
 };

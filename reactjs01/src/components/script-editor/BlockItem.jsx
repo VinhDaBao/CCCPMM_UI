@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Underline from '@tiptap/extension-underline';
-import { Popover, Select, Button, Space, Tooltip, Avatar } from 'antd';
+import { Popover, Select, Button, Space, Tooltip, Avatar, Modal } from 'antd';
 import { DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusOutlined, HistoryOutlined, PlusCircleOutlined, SnippetsOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined } from '@ant-design/icons';
 import { getAssetUrl } from '../../util/api';
 
@@ -34,6 +34,7 @@ const BlockItem = ({
   onDragOver,
   onDrop,
   onAddSnippet,
+  onDeleteCharacter,
 }) => {
   const blockContent = useMemo(() => {
     if (typeof block.content === 'string') {
@@ -214,54 +215,88 @@ const BlockItem = ({
         );
 
       case 'DIALOGUE':
-        return (
-          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 14, background: 'var(--bg-hover)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Character:</span>
-              <Select
-                disabled={isViewer}
-                value={blockContent?.characterId || undefined}
-                onChange={(val) => {
-                  if (val === 'create-new') {
-                    onCreateCharacterClick();
-                  } else {
-                    onUpdateBlock(block._id || block.id, {
-                      content: {
-                        characterId: val,
-                        text: blockContent?.text || '',
-                      },
-                    });
-                  }
-                }}
-                placeholder="Select Character"
-                style={{ width: 180 }}
-                dropdownRender={(menu) => (
-                  <div>
-                    {menu}
-                    <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', cursor: 'pointer', color: 'var(--accent-amber)' }} onClick={onCreateCharacterClick}>
-                      <PlusOutlined style={{ marginRight: 6 }} /> Create Character
-                    </div>
-                  </div>
-                )}
-                options={characters.map((c) => ({
-                  value: c._id || c.id,
-                  label: c.name,
-                }))}
-              />
+      return (
+        <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 14, background: 'var(--bg-hover)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Character:</span>
 
-              {selectedCharacter && (
-                <Popover content={renderCharacterPopover()} title={null} trigger="hover" placement="right">
-                  <span style={{ cursor: 'pointer', background: 'rgba(232, 166, 66, 0.1)', color: 'var(--accent-amber)', fontSize: 11, padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>
-                    {selectedCharacter.name} (Hover Info)
-                  </span>
-                </Popover>
+            {/* SỬA LẠI CÚ PHÁP THẺ MỞ VÀ THẺ ĐÓNG TẠI ĐÂY */}
+            <Select
+              disabled={isViewer}
+              value={selectedCharacter ? (blockContent?.characterId || undefined) : undefined} // Nếu selectedCharacter tìm thấy thì mới hiện ID, nếu không tìm thấy (do đã bị xóa ở tương lai) thì ép về undefined để hiện chữ Select Character
+              onChange={(val) => {
+                if (val === 'create-new') {
+                  onCreateCharacterClick();
+                } else {
+                  onUpdateBlock(block._id || block.id, {
+                    content: {
+                      characterId: val,
+                      text: blockContent?.text || '',
+                    },
+                  });
+                }
+              }}
+              placeholder="Select Character"
+              style={{ width: 180 }}
+              optionLabelProp="label"
+              dropdownRender={(menu) => (
+                <div>
+                  {menu}
+                  <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', cursor: 'pointer', color: 'var(--accent-amber)' }} onClick={onCreateCharacterClick}>
+                    <PlusOutlined style={{ marginRight: 6 }} /> Create Character
+                  </div>
+                </div>
               )}
-            </div>
-            <div className="tiptap-wrapper" style={{ borderTop: '1px dashed var(--border)', paddingTop: 10 }}>
-              <EditorContent editor={editor} />
-            </div>
+            >
+              {/* THÀNH PHẦN CON ĐÃ ĐƯỢC ĐƯA VÀO ĐÚNG GIỮA CẶP THẺ SELECT */}
+              {characters.map((char) => (
+                <Select.Option key={char._id || char.id} value={char._id || char.id} label={char.name}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <span style={{ color: 'var(--text-primary)' }}>{char.name}</span>
+
+                    {!isViewer && (
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn chặn Ant Design tự kích hoạt chọn dòng
+
+                          Modal.confirm({
+                            title: 'Delete Character?',
+                            content: `Are you sure you want to permanently delete "${char.name}" from this workspace? This action cannot be undone.`,
+                            okText: 'Yes, Delete',
+                            okType: 'danger',
+                            cancelText: 'Cancel',
+                            centered: true,
+                            onOk: () => {
+                              if (onDeleteCharacter) {
+                                onDeleteCharacter(char._id || char.id);
+                              }
+                            },
+                          });
+                        }}
+                      />
+                    )}
+                  </div>
+                </Select.Option>
+              ))}
+            </Select> {/* THẺ ĐÓNG SELECT CHUẨN */}
+
+            {selectedCharacter && (
+              <Popover content={renderCharacterPopover()} title={null} trigger="hover" placement="right">
+                <span style={{ cursor: 'pointer', background: 'rgba(232, 166, 66, 0.1)', color: 'var(--accent-amber)', fontSize: 11, padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>
+                  {selectedCharacter.name} (Hover Info)
+                </span>
+              </Popover>
+            )}
           </div>
-        );
+          <div className="tiptap-wrapper" style={{ borderTop: '1px dashed var(--border)', paddingTop: 10 }}>
+            <EditorContent editor={editor} />
+          </div>
+        </div>
+      );
 
       case 'IMAGE':
         return (

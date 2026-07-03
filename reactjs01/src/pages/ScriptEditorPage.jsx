@@ -89,7 +89,7 @@ const ScriptEditorPage = () => {
 
   // Các hooks React Query
   const { data: blocks = [], createBlock, updateBlock, deleteBlock, isLoading: isBlocksLoading } = useBlocks(activeWorkspaceId, projectId);
-  const { data: characters = [], createCharacter } = useCharacters(activeWorkspaceId);
+  const { data: characters = [], createCharacter, deleteCharacter, isDeleting } = useCharacters(activeWorkspaceId);
   const { data: projectAssets = [], attachAssets, deleteProjectAsset } = useProjectAssets(activeWorkspaceId, projectId);
   const { data: snippets = [], createSnippet } = useSnippets(activeWorkspaceId);
   const { createSnapshot } = useProjectSnapshots(activeWorkspaceId, projectId);
@@ -1250,6 +1250,14 @@ const ScriptEditorPage = () => {
                     notification.info({ message: t('script_editor.reading_pointer_moved') });
                   }}
                   onCreateCharacterClick={() => setCharModalOpen(true)}
+                  onDeleteCharacter={async (id) => {
+                    try {
+                      await deleteCharacter(id);
+                      notification.success({ message: t('script_editor.delete_character_success') });
+                    } catch (error) {
+                      notification.error({ message: t('script_editor.delete_character_error') });
+                    }
+                  }}
                   onDragStart={handleBlockDragStart}
                   onAddSnippet={handleAddSnippet}
                   onDragOver={(e) => e.preventDefault()}
@@ -1658,6 +1666,8 @@ const ScriptEditorPage = () => {
       <CharacterModal
         open={charModalOpen}
         onCancel={() => setCharModalOpen(false)}
+        // component cha có state quản lý nhân vật đang chọn để sửa (nếu có)
+        character={null}
         onSave={async (data) => {
           try {
             await createCharacter(data);
@@ -1667,6 +1677,18 @@ const ScriptEditorPage = () => {
             notification.error({ message: t('script_editor.character_create_failed') });
           }
         }}
+        //  Luồng tiếp nhận sự kiện xóa từ Modal con gửi lên
+        onDelete={async (id) => {
+          try {
+            await deleteCharacter(id);
+            notification.success({ message: t('script_editor.delete_character_success') });
+            setCharModalOpen(false);
+          } catch (error) {
+            notification.error({ message: t('script_editor.delete_character_error') });
+          }
+        }}
+        // Cập nhật cờ hiệu loading khi đang xử lý xóa ngầm
+        loading={isDeleting}
       />
 
       <ActivityLogModal
