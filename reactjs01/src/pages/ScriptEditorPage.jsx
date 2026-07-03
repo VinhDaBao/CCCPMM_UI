@@ -89,7 +89,7 @@ const ScriptEditorPage = () => {
 
   // Các hooks React Query
   const { data: blocks = [], createBlock, updateBlock, deleteBlock, isLoading: isBlocksLoading } = useBlocks(activeWorkspaceId, projectId);
-  const { data: characters = [], createCharacter, deleteCharacter, isDeleting } = useCharacters(activeWorkspaceId);
+  const { data: characters = [], createCharacter, updateCharacter, deleteCharacter, isDeleting } = useCharacters(activeWorkspaceId);
   const { data: projectAssets = [], attachAssets, deleteProjectAsset } = useProjectAssets(activeWorkspaceId, projectId);
   const { data: snippets = [], createSnippet } = useSnippets(activeWorkspaceId);
   const { createSnapshot } = useProjectSnapshots(activeWorkspaceId, projectId);
@@ -130,6 +130,7 @@ const ScriptEditorPage = () => {
 
   // Modals
   const [charModalOpen, setCharModalOpen] = useState(false);
+  const [editingCharacter, setEditingCharacter] = useState(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [snapshotModalOpen, setSnapshotModalOpen] = useState(false);
   const [attachModalOpen, setAttachModalOpen] = useState(false);
@@ -1249,7 +1250,14 @@ const ScriptEditorPage = () => {
                     setReadingBlockId(id);
                     notification.info({ message: t('script_editor.reading_pointer_moved') });
                   }}
-                  onCreateCharacterClick={() => setCharModalOpen(true)}
+                  onCreateCharacterClick={() => {
+                    setEditingCharacter(null);
+                    setCharModalOpen(true);
+                  }}
+                  onEditCharacterClick={(char) => {
+                    setEditingCharacter(char);
+                    setCharModalOpen(true);
+                  }}
                   onDeleteCharacter={async (id) => {
                     try {
                       await deleteCharacter(id);
@@ -1665,16 +1673,29 @@ const ScriptEditorPage = () => {
       {/* Sub modals */}
       <CharacterModal
         open={charModalOpen}
-        onCancel={() => setCharModalOpen(false)}
+        onCancel={() => {
+          setCharModalOpen(false);
+          setEditingCharacter(null);
+        }}
         // component cha có state quản lý nhân vật đang chọn để sửa (nếu có)
-        character={null}
+        character={editingCharacter}
         onSave={async (data) => {
           try {
-            await createCharacter(data);
-            notification.success({ message: t('script_editor.character_created') });
+            if (editingCharacter) {
+              await updateCharacter({ id: editingCharacter._id || editingCharacter.id, data });
+              notification.success({ message: t('script_editor.character_updated') || 'Character updated successfully' });
+            } else {
+              await createCharacter(data);
+              notification.success({ message: t('script_editor.character_created') });
+            }
             setCharModalOpen(false);
+            setEditingCharacter(null);
           } catch (error) {
-            notification.error({ message: t('script_editor.character_create_failed') });
+            notification.error({
+              message: editingCharacter
+                ? (t('script_editor.character_update_failed') || 'Failed to update character')
+                : t('script_editor.character_create_failed')
+            });
           }
         }}
         //  Luồng tiếp nhận sự kiện xóa từ Modal con gửi lên
@@ -1683,6 +1704,7 @@ const ScriptEditorPage = () => {
             await deleteCharacter(id);
             notification.success({ message: t('script_editor.delete_character_success') });
             setCharModalOpen(false);
+            setEditingCharacter(null);
           } catch (error) {
             notification.error({ message: t('script_editor.delete_character_error') });
           }

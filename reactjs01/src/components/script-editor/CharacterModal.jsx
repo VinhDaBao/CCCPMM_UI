@@ -3,7 +3,7 @@ import { Form, Input, Modal, Button, Select } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
-const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
+const CharacterModal = ({ open, onCancel, onSave, onDelete, character, loading }) => {
   const [form] = Form.useForm();
   const [attributes, setAttributes] = useState([{ key: '', value: '' }]);
   const { t } = useTranslation(); //khai báo hook dịch vụ

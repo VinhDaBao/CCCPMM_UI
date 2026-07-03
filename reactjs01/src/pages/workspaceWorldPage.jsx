@@ -120,7 +120,8 @@ useEffect(() => {
               role: node.tags?.[0] || 'Character',
               description: node.description || '',
               avatarUrl: node.avatarUrl || '',
-              characterId: node.avatarUrl ? '' : node._id // Giữ vết tránh mất
+              characterId: node.avatarUrl ? '' : node._id, // Giữ vết tránh mất
+              keyValues: node.keyValues || []
             },
           }));
 
@@ -227,7 +228,8 @@ useEffect(() => {
           role: character.role || 'Character',
           description: character.description || '',
           avatarUrl: character.avatarUrl || '',
-          characterId: character._id
+          characterId: character._id,
+          keyValues: character.attributes || []
         },
       };
 

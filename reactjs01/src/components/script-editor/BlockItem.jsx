@@ -5,7 +5,7 @@ import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Underline from '@tiptap/extension-underline';
 import { Popover, Select, Button, Space, Tooltip, Avatar, Modal } from 'antd';
-import { DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusOutlined, HistoryOutlined, PlusCircleOutlined, SnippetsOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusOutlined, HistoryOutlined, PlusCircleOutlined, SnippetsOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined } from '@ant-design/icons';
 import { getAssetUrl } from '../../util/api';
 
 const isHtmlEmpty = (html) => {
@@ -35,6 +35,7 @@ const BlockItem = ({
   onDrop,
   onAddSnippet,
   onDeleteCharacter,
+  onEditCharacterClick,
 }) => {
   const blockContent = useMemo(() => {
     if (typeof block.content === 'string') {
@@ -167,8 +168,25 @@ const BlockItem = ({
           <Avatar style={{ background: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}>
             {selectedCharacter.name.charAt(0).toUpperCase()}
           </Avatar>
-          <div>
-            <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: 14 }}>{selectedCharacter.name}</h4>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: 14 }}>{selectedCharacter.name}</h4>
+              {!isViewer && (
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EditOutlined style={{ fontSize: 12 }} />}
+                  style={{ padding: 0, height: 'auto', color: 'var(--accent-amber)' }}
+                  onClick={() => {
+                    if (onEditCharacterClick) {
+                      onEditCharacterClick(selectedCharacter);
+                    }
+                  }}
+                >
+                  Edit
+                </Button>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Character Info</div>
           </div>
         </div>
@@ -251,33 +269,55 @@ const BlockItem = ({
               {/* THÀNH PHẦN CON ĐÃ ĐƯỢC ĐƯA VÀO ĐÚNG GIỮA CẶP THẺ SELECT */}
               {characters.map((char) => (
                 <Select.Option key={char._id || char.id} value={char._id || char.id} label={char.name}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>{char.name}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', overflow: 'hidden' }}>
+                    <span style={{ 
+                      color: 'var(--text-primary)', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap', 
+                      marginRight: 8,
+                      flex: 1
+                    }}>
+                      {char.name}
+                    </span>
 
                     {!isViewer && (
-                      <Button
-                        type="text"
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation(); // Ngăn chặn Ant Design tự kích hoạt chọn dòng
+                      <Space size={4} style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onEditCharacterClick) {
+                              onEditCharacterClick(char);
+                            }
+                          }}
+                        />
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Ngăn chặn Ant Design tự kích hoạt chọn dòng
 
-                          Modal.confirm({
-                            title: 'Delete Character?',
-                            content: `Are you sure you want to permanently delete "${char.name}" from this workspace? This action cannot be undone.`,
-                            okText: 'Yes, Delete',
-                            okType: 'danger',
-                            cancelText: 'Cancel',
-                            centered: true,
-                            onOk: () => {
-                              if (onDeleteCharacter) {
-                                onDeleteCharacter(char._id || char.id);
-                              }
-                            },
-                          });
-                        }}
-                      />
+                            Modal.confirm({
+                              title: 'Delete Character?',
+                              content: `Are you sure you want to permanently delete "${char.name}" from this workspace? This action cannot be undone.`,
+                              okText: 'Yes, Delete',
+                              okType: 'danger',
+                              cancelText: 'Cancel',
+                              centered: true,
+                              onOk: () => {
+                                if (onDeleteCharacter) {
+                                  onDeleteCharacter(char._id || char.id);
+                                }
+                              },
+                            });
+                          }}
+                        />
+                      </Space>
                     )}
                   </div>
                 </Select.Option>

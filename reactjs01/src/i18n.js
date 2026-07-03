@@ -448,6 +448,8 @@ const resources = {
         dialogue_block: "Dialogue Block",
         character_created: "Character created successfully",
         character_create_failed: "Failed to create character",
+        character_updated: "Character updated successfully",
+        character_update_failed: "Failed to update character",
         save_as_snippet: "Save as Snippet",
         snippet_title_required: "Title is required",
         snippet_created: "Snippet created successfully",
@@ -952,6 +954,8 @@ const resources = {
         dialogue_block: "Block hội thoại",
         character_created: "Tạo nhân vật thành công",
         character_create_failed: "Tạo nhân vật thất bại",
+        character_updated: "Cập nhật nhân vật thành công",
+        character_update_failed: "Cập nhật nhân vật thất bại",
         save_as_snippet: "Lưu thành snippet",
         snippet_title_required: "Tiêu đề là bắt buộc",
         snippet_created: "Tạo snippet thành công",
@@ -1070,7 +1074,7 @@ i18n
     lng: getInitialLanguage(),
     fallbackLng: "en",
     interpolation: {
-      escapeValue: false 
+      escapeValue: false
     }
   });
 
