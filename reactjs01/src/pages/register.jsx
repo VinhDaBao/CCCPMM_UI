@@ -12,6 +12,7 @@ const RegisterPage = () => {
 
     const onFinish = async (values) => {
         const { name, email, password } = values;
+        dispatch(registerStart());
 
         setIsLoading(true);
 
