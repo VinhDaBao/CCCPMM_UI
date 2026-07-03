@@ -258,7 +258,6 @@ const ScriptEditorPage = () => {
     };
   }, []);
 
-  // 1. Audio Cleanup Effect on Unmount
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
