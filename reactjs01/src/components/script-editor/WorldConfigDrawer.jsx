@@ -1,5 +1,6 @@
 import React from 'react';
 import { Drawer, Input, Button, Select } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 
@@ -66,6 +67,54 @@ const WorldConfigDrawer = ({
                 value={selectedElement?.data?.description || ''}
                 onChange={(e) => handleUpdateNodeField('description', e.target.value)}
               />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-2">ATTRIBUTES (KEY / VALUE)</label>
+              <div style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(selectedElement?.data?.keyValues || []).map((attr, index) => (
+                  <div key={index} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Input
+                      placeholder="Key (e.g. Age)"
+                      value={attr.key}
+                      onChange={(e) => {
+                        const updated = [...(selectedElement?.data?.keyValues || [])];
+                        updated[index] = { ...updated[index], key: e.target.value };
+                        handleUpdateNodeField('keyValues', updated);
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    <Input
+                      placeholder="Value (e.g. 30)"
+                      value={attr.value}
+                      onChange={(e) => {
+                        const updated = [...(selectedElement?.data?.keyValues || [])];
+                        updated[index] = { ...updated[index], value: e.target.value };
+                        handleUpdateNodeField('keyValues', updated);
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => {
+                        const updated = (selectedElement?.data?.keyValues || []).filter((_, i) => i !== index);
+                        handleUpdateNodeField('keyValues', updated);
+                      }}
+                    />
+                  </div>
+                ))}
+                <Button
+                  type="dashed"
+                  className="w-full"
+                  onClick={() => {
+                    const updated = [...(selectedElement?.data?.keyValues || []), { key: '', value: '' }];
+                    handleUpdateNodeField('keyValues', updated);
+                  }}
+                >
+                  + Add Attribute
+                </Button>
+              </div>
             </div>
           </div>
           <div className="pt-6 border-t border-gray-100 mt-auto">

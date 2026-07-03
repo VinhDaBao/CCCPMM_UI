@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Form, Input, Modal, Button, Select } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
-const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
+const CharacterModal = ({ open, onCancel, onSave, onDelete, character, loading }) => {
   const [form] = Form.useForm();
   const [attributes, setAttributes] = useState([{ key: '', value: '' }]);
+  const { t } = useTranslation(); //khai báo hook dịch vụ
 
   useEffect(() => {
     if (open) {
@@ -62,6 +64,22 @@ const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
     });
   };
 
+   const handleDeleteClick = () => {
+        if (!character || !onDelete) return;
+
+        Modal.confirm({
+          title: t('script_editor.delete_character_confirm_title'),
+          content: t('script_editor.delete_character_confirm_content', { name: character.name }),
+          okText: 'Yes, Delete',
+          okType: 'danger',
+          cancelText: 'Cancel',
+          centered: true,
+          onOk: () => {
+            onDelete(character._id);
+         },
+      });
+    };
+
   return (
     <Modal
       title={character ? 'Edit Character' : 'Create Character'}
@@ -72,6 +90,27 @@ const CharacterModal = ({ open, onCancel, onSave, character, loading }) => {
       width={600}
       centered
       destroyOnClose
+      footer={[
+          character && (
+            <Button
+              key="delete"
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleDeleteClick}
+              style={{ float: 'left' }}
+              className="font-sans rounded-lg"
+            >
+              {t('script_editor.delete_character')}
+            </Button>
+          ),
+          <Button key="cancel" className="font-sans rounded-lg" onClick={onCancel}>
+            Cancel
+          </Button>,
+          <Button key="submit" type="primary" className="font-sans rounded-lg" loading={loading} onClick={handleOk}>
+            Confirm
+          </Button>
+        ].filter(Boolean)}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
         <Form.Item

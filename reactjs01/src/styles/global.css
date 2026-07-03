@@ -107,6 +107,15 @@ button {
 .script-editor .action { color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace; }
 .script-editor .character { color: var(--accent-amber); font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.1em; text-align: center; }
 
+/* Page hero background: light gradient in light mode, variable-based background in dark mode */
+.page-hero {
+    background: linear-gradient(135deg, #fff7f1 0%, #ffffff 40%, #fffaf0 100%);
+}
+
+.mode-dark .page-hero {
+    background: var(--bg-base) !important;
+}
+
 /* --- Animations --- */
 .fade-up { animation: fadeUp 0.35s ease forwards; }
 @keyframes fadeUp {
@@ -116,3 +125,280 @@ button {
 
 .pulse { animation: pulse 2s ease infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* --- Ant Design Components Styling for Dark Mode --- */
+.mode-dark .ant-tabs-tab {
+    color: var(--text-secondary) !important;
+}
+
+.mode-dark .ant-tabs-tab-active {
+    color: var(--accent-amber) !important;
+}
+
+.mode-dark .ant-tabs-tab:hover {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-tabs-ink-bar {
+    background: var(--accent-amber) !important;
+}
+
+.mode-dark .ant-input,
+.mode-dark .ant-input-affix-wrapper,
+.mode-dark .ant-input-affix-wrapper-focused,
+.mode-dark .ant-select-selector,
+.mode-dark .ant-select-selection-item,
+.mode-dark .ant-select-selection-placeholder,
+.mode-dark .ant-select-selection-search-input {
+    background: var(--bg-base) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-input::placeholder,
+.mode-dark .ant-input-affix-wrapper .ant-input::placeholder,
+.mode-dark .ant-select-selection-placeholder {
+    color: var(--text-muted) !important;
+}
+
+.mode-dark .ant-select-dropdown,
+.mode-dark .ant-select-dropdown .ant-select-item-option,
+.mode-dark .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.mode-dark .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+.mode-dark .ant-select-dropdown .ant-select-item-option-content,
+.mode-dark .ant-select-dropdown .ant-select-item-option-grouped {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.mode-dark .ant-dropdown-menu-item-active,
+.mode-dark .ant-dropdown-menu-item-selected {
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-dropdown-menu,
+.mode-dark .ant-select-dropdown {
+    background: var(--bg-surface) !important;
+    border-color: var(--border) !important;
+}
+
+.mode-dark .ant-btn {
+    background: var(--bg-base) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-btn:hover,
+.mode-dark .ant-btn:focus,
+.mode-dark .ant-btn:active {
+    background: var(--bg-hover) !important;
+    border-color: var(--border-lit) !important;
+}
+
+.mode-dark .ant-btn-primary {
+    background: var(--accent-amber) !important;
+    border-color: var(--accent-amber) !important;
+    color: #000 !important;
+}
+
+.mode-dark .ant-select,
+.mode-dark .ant-select-single .ant-select-selector,
+.mode-dark .ant-select-selector,
+.mode-dark .ant-select-selection-item,
+.mode-dark .ant-select-selection-placeholder,
+.mode-dark .ant-select-selector:hover,
+.mode-dark .ant-select-open .ant-select-selector,
+.mode-dark .ant-select-focused .ant-select-selector,
+.mode-dark .ant-select:not(.ant-select-disabled) .ant-select-selector {
+    background: var(--bg-base) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select .ant-select-selector .ant-select-selection-item,
+.mode-dark .ant-select .ant-select-selector .ant-select-selection-placeholder,
+.mode-dark .ant-select .ant-select-selector input {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select-arrow,
+.mode-dark .ant-select .anticon {
+    color: var(--text-muted) !important;
+}
+
+.mode-dark .ant-dropdown-menu-item,
+.mode-dark .ant-dropdown-menu-item a {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-dropdown-menu-item:hover,
+.mode-dark .ant-dropdown-menu-item-active,
+.mode-dark .ant-dropdown-menu-item-selected {
+    background: var(--bg-hover) !important;
+}
+
+/* Ensure Ant Form labels and inline form links follow dark theme colors */
+.mode-dark .ant-form-item-label,
+.mode-dark .ant-form-item-label > label {
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-form-item-explain,
+.mode-dark .ant-form-item-extra {
+    color: var(--text-muted) !important;
+}
+
+/* Links inside small form areas (e.g., forgot password / create account) */
+.mode-dark .ant-form-item .text-orange-600,
+.mode-dark .ant-form-item a {
+    color: var(--accent-amber) !important;
+}
+
+/* Target Links inside Ant Form (e.g., Forgot Password / Create Account) */
+.mode-dark .ant-form a,
+.mode-dark .ant-form .text-orange-600,
+.mode-dark .ant-form .text-orange-600:hover {
+    color: var(--accent-amber) !important;
+}
+.mode-dark .ant-form a:hover {
+    color: var(--accent-rust) !important;
+}
+
+/* Generic utility class override so orange text respects dark mode outside forms */
+.mode-dark .text-orange-600 {
+    color: var(--accent-amber) !important;
+}
+.mode-dark .text-orange-600:hover {
+    color: var(--accent-rust) !important;
+}
+
+/* Ant Popover (notifications) dark-mode overrides */
+.mode-dark .ant-popover {
+    color: var(--text-primary);
+}
+
+.mode-dark .ant-popover-inner,
+.mode-dark .ant-popover-inner-content,
+.mode-dark .ant-popover-content {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-popover-title {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+/* List items inside popover */
+.mode-dark .ant-list-item,
+.mode-dark .ant-list-item a {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-list-item .ant-empty-description,
+.mode-dark .ant-empty-description {
+    color: var(--text-muted) !important;
+}
+
+/* Buttons inside popover */
+.mode-dark .ant-popover .ant-btn,
+.mode-dark .ant-popover .ant-btn-link {
+    color: var(--text-secondary) !important;
+}
+
+/* Badge panel background */
+.mode-dark .ant-popover .ant-badge-count {
+    background: var(--accent-amber) !important;
+}
+
+/* Dark-mode overrides for Ant Card containers */
+.mode-dark .ant-card,
+.mode-dark .ant-card-bordered {
+    background: var(--bg-surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18) !important;
+}
+
+.mode-dark .ant-card-head,
+.mode-dark .ant-card-head .ant-card-head-title,
+.mode-dark .ant-card-head .ant-card-head-title * {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+}
+
+.mode-dark .ant-card-body {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Ant Typography dark mode support for card bodies */
+.mode-dark .ant-card-body .ant-typography,
+.mode-dark .ant-card-body .ant-typography h1,
+.mode-dark .ant-card-body .ant-typography h2,
+.mode-dark .ant-card-body .ant-typography h3,
+.mode-dark .ant-card-body .ant-typography h4,
+.mode-dark .ant-card-body .ant-typography h5,
+.mode-dark .ant-card-body .ant-typography h6,
+.mode-dark .ant-card-body .ant-typography strong,
+.mode-dark .ant-card-body .ant-typography span,
+.mode-dark .ant-card-body .ant-typography p,
+.mode-dark .ant-card-body .ant-typography div {
+    color: var(--text-primary) !important;
+}
+
+/* Dark-mode overrides for Ant Table in the Account List */
+.mode-dark .ant-table,
+.mode-dark .ant-table-container,
+.mode-dark .ant-table-wrapper,
+.mode-dark .ant-table-thead > tr > th,
+.mode-dark .ant-table-tbody > tr > td,
+.mode-dark .ant-table-thead > tr > th .ant-table-cell,
+.mode-dark .ant-table-tbody > tr > td .ant-table-cell {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border) !important;
+}
+
+.mode-dark .ant-table-thead > tr > th {
+    background: rgba(255,255,255,0.04) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-table-tbody > tr > td {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-table-tbody > tr.ant-table-row:hover > td {
+    background: rgba(255,255,255,0.05) !important;
+}
+
+.mode-dark .ant-table-container table > tbody > tr > td,
+.mode-dark .ant-table-container table > thead > tr > th {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.mode-dark .ant-pagination,
+.mode-dark .ant-pagination .ant-pagination-item,
+.mode-dark .ant-pagination .ant-pagination-prev,
+.mode-dark .ant-pagination .ant-pagination-next,
+.mode-dark .ant-pagination-options {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.mode-dark .ant-select-dropdown,
+.mode-dark .ant-select-item-option {
+    background: var(--bg-surface) !important;
+}
+
+.mode-dark .ant-table-pagination .ant-select-selector {
+    background: var(--bg-base) !important;
+    color: var(--text-primary) !important;
+}

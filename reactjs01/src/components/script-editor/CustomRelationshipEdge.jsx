@@ -51,13 +51,13 @@ const CustomRelationshipEdge = ({
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX + labelOffset.x}px, ${labelY + labelOffset.y}px)`,
-            background: 'white',
+            background: 'var(--bg-surface)',
             padding: '4px 8px',
-            border: `2px solid ${style.stroke || '#3b82f6'}`,
+            border: `2px solid ${style.stroke || 'var(--accent-ice)'}`,
             borderRadius: '6px',
             fontSize: '11px',
             fontWeight: 'bold',
-            color: '#1f2937',
+            color: 'var(--text-primary)',
             cursor: 'move',
             pointerEvents: 'all',
           }}

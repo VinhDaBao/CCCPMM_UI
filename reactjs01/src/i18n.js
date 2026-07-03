@@ -369,7 +369,14 @@ const resources = {
         new_stage_label: "Stage {{number}}",
         new_character_label: "New Character",
         connected_edge_label: "Connected --> │ <-- Connected",
-        load_character_success: "Successfully loaded {{name}} into the diagram!"
+        load_character_success: "Successfully loaded {{name}} into the diagram!",
+        delete_stage: "Delete Stage",
+        delete_stage_confirm_title: "Delete Phân Cảnh / Stage?",
+        delete_stage_confirm_content: "All characters and relationship links within this stage will be permanently removed. This action cannot be undone.",
+        delete_stage_success: "Stage and its relationships deleted successfully!",
+        delete_stage_error: "Failed to delete this stage from the server!",
+        cannot_delete_default_stage: "The default stage (Main Stage) cannot be deleted!",
+        add_character_tooltip: "Create New Character",
       },
       script_editor: {
         online: "Online",
@@ -441,6 +448,8 @@ const resources = {
         dialogue_block: "Dialogue Block",
         character_created: "Character created successfully",
         character_create_failed: "Failed to create character",
+        character_updated: "Character updated successfully",
+        character_update_failed: "Failed to update character",
         save_as_snippet: "Save as Snippet",
         snippet_title_required: "Title is required",
         snippet_created: "Snippet created successfully",
@@ -452,7 +461,12 @@ const resources = {
         content_preview: "Content Preview",
         dialogue_label: "DIALOGUE:",
         no_block_selected: "No block selected",
-        collaborator_fallback: "Collaborator"
+        collaborator_fallback: "Collaborator",
+        delete_character: "Delete Character",
+        delete_character_confirm_title: "Delete Character?",
+        delete_character_confirm_content: "Are you sure you want to permanently delete \"{{name}}\"? This action cannot be undone.",
+        delete_character_success: "Character deleted successfully!",
+        delete_character_error: "Failed to delete character!",
       },
       admin_dashboard: {
         title: "Admin Dashboard",
@@ -888,7 +902,14 @@ const resources = {
         confirm: "Xác nhận",
         cancel: "Hủy",
         stage_name: "Tên phân cảnh",
-        stage_name_placeholder: "vd. Hồi 1: Cuộc tụ họp..."
+        stage_name_placeholder: "vd. Hồi 1: Cuộc tụ họp...",
+        delete_stage: "Xóa phân cảnh",
+        delete_stage_confirm_title: "Xóa phân cảnh này?",
+        delete_stage_confirm_content: "Toàn bộ nhân vật và mối quan hệ thuộc phân cảnh này sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.",
+        delete_stage_success: "Đã xóa phân cảnh và dữ liệu liên quan thành công!",
+        delete_stage_error: "Xóa phân cảnh thất bại do lỗi hệ thống!",
+        cannot_delete_default_stage: "Không thể xóa phân cảnh mặc định!",
+        add_character_tooltip: "Tạo nhân vật mới",
       },
       script_editor: {
         online: "Trực tuyến",
@@ -933,6 +954,8 @@ const resources = {
         dialogue_block: "Block hội thoại",
         character_created: "Tạo nhân vật thành công",
         character_create_failed: "Tạo nhân vật thất bại",
+        character_updated: "Cập nhật nhân vật thành công",
+        character_update_failed: "Cập nhật nhân vật thất bại",
         save_as_snippet: "Lưu thành snippet",
         snippet_title_required: "Tiêu đề là bắt buộc",
         snippet_created: "Tạo snippet thành công",
@@ -944,7 +967,12 @@ const resources = {
         content_preview: "Xem trước nội dung",
         dialogue_label: "HỘI THOẠI:",
         no_block_selected: "Chưa chọn block",
-        collaborator_fallback: "Cộng tác viên"
+        collaborator_fallback: "Cộng tác viên",
+        delete_character: "Xóa nhân vật",
+        delete_character_confirm_title: "Xóa nhân vật?",
+        delete_character_confirm_content: "Bạn có chắc chắn muốn xóa vĩnh viễn \"{{name}}\"? Hành động này không thể hoàn tác.",
+        delete_character_success: "Xóa nhân vật thành công!",
+        delete_character_error: "Xóa nhân vật thất bại!",
       },
       admin_dashboard: {
         title: "Bảng điều khiển quản trị",
@@ -1046,7 +1074,7 @@ i18n
     lng: getInitialLanguage(),
     fallbackLng: "en",
     interpolation: {
-      escapeValue: false 
+      escapeValue: false
     }
   });
 
