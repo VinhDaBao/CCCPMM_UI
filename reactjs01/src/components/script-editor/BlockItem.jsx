@@ -384,7 +384,6 @@ const BlockItem = ({
         borderRadius: 12,
         background: isCurrentlyReading ? 'rgba(232, 166, 66, 0.01)' : 'var(--bg-base)',
         border: `1px solid ${isCurrentlyReading ? 'var(--accent-amber)' : 'var(--border)'}`,
-        marginBottom: 20,
         position: 'relative',
         transition: 'all 0.2s',
       }}
@@ -491,7 +490,7 @@ const BlockItem = ({
                 </Tooltip>
               )}
               <Tooltip title="Add new block below">
-                <Button type="text" shape="circle" icon={<PlusCircleOutlined />} onClick={() => onAddBlockClick(block.position)} />
+                <Button type="text" shape="circle" icon={<PlusCircleOutlined />} onClick={() => onAddBlockClick(block._id || block.id)} />
               </Tooltip>
               <Tooltip title="Delete block">
                 <Button type="text" shape="circle" danger icon={<DeleteOutlined />} onClick={() => onDeleteBlock(block._id || block.id)} />

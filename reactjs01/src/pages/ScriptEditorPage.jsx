@@ -595,8 +595,22 @@ const ScriptEditorPage = () => {
   };
 
   // Add block from modal/button
-  const handleAddBlockClick = (position) => {
-    setAddBlockPosition(position);
+  const handleAddBlockClick = (blockIdOrZero) => {
+    if (blockIdOrZero === 0) {
+      setAddBlockPosition(1000);
+    } else {
+      const index = blocks.findIndex(b => (b._id || b.id) === blockIdOrZero);
+      if (index !== -1) {
+        const currentBlock = blocks[index];
+        const nextBlock = blocks[index + 1];
+        const nextPosition = nextBlock
+          ? (currentBlock.position + nextBlock.position) / 2
+          : currentBlock.position + 1000;
+        setAddBlockPosition(nextPosition);
+      } else {
+        setAddBlockPosition(1000);
+      }
+    }
     setBlockTypeModalOpen(true);
   };
 
@@ -607,6 +621,7 @@ const ScriptEditorPage = () => {
 
   const handleBlockDrop = async (e, targetBlockId) => {
     e.preventDefault();
+    e.stopPropagation();
     if (isViewer) return;
 
     const draggedBlockId = e.dataTransfer.getData('blockId');
@@ -640,6 +655,7 @@ const ScriptEditorPage = () => {
   // Drop project asset to create media block
   const handleAssetDropOnBlock = async (e, targetBlockId) => {
     e.preventDefault();
+    e.stopPropagation();
     if (isViewer) return;
 
     const dragData = e.dataTransfer.getData('text/plain');
@@ -676,10 +692,10 @@ const ScriptEditorPage = () => {
         return;
       }
 
-      const prevBlock = blocks[targetIndex - 1];
-      const nextPosition = prevBlock
-        ? (prevBlock.position + targetBlock.position) / 2
-        : targetBlock.position / 2;
+      const nextBlock = blocks[targetIndex + 1];
+      const nextPosition = nextBlock
+        ? (targetBlock.position + nextBlock.position) / 2
+        : targetBlock.position + 1000;
 
       await createBlock({
         type: blockType,
@@ -844,7 +860,7 @@ const ScriptEditorPage = () => {
   const handleSendChatMessage = async (presetMessage = null) => {
     // Prefer the clicked suggestion (presetMessage); otherwise use the chat input text
     const userMessage = typeof presetMessage === 'string' ? presetMessage : chatInput;
-    
+
     if (!userMessage.trim()) return;
 
     setChatMessages((prev) => [...prev, { sender: 'User', text: userMessage }]);
@@ -855,9 +871,9 @@ const ScriptEditorPage = () => {
       const response = await fetch('http://localhost:8088/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: userMessage,
-          scriptContext: blocks 
+          scriptContext: blocks
         })
       });
 
@@ -871,7 +887,7 @@ const ScriptEditorPage = () => {
     } catch (err) {
       notification.error({ message: t('script_editor.ai_error'), description: t('script_editor.ai_connection_error') });
       setChatMessages((prev) => [
-        ...prev, 
+        ...prev,
         { sender: 'AI', text: t('script_editor.ai_busy') }
       ]);
     } finally {
@@ -919,641 +935,656 @@ const ScriptEditorPage = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
           {/* Navigation & Title */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={handleExit} />
-          <div>
-            <h2 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-              {currentProject?.title || t('script_editor.script_editor_title')}
-            </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {t('script_editor.collaborative_editor')}
-              </div>
-
-              {/* Hiển thị danh sách Tags của Project */}
-              {currentProject?.tags && currentProject.tags.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {/* Dấu chấm phân cách UI cho đẹp */}
-                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border-lit)' }} />
-                  
-                  {currentProject.tags.map((tag, idx) => (
-                    <span 
-                      key={idx} 
-                      style={{ 
-                        background: 'var(--bg-hover)', 
-                        border: '1px solid var(--border-lit)',
-                        color: 'var(--text-secondary)', 
-                        fontSize: '11px', 
-                        padding: '2px 8px', 
-                        borderRadius: '12px' 
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+            <Button icon={<ArrowLeftOutlined />} onClick={handleExit} />
+            <div>
+              <h2 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {currentProject?.title || t('script_editor.script_editor_title')}
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {t('script_editor.collaborative_editor')}
                 </div>
-              )}
-            </div>
-          </div>
-          {/* Online Presence Indicator */}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-            {(() => {
-              const maxVisible = 5;
-              const visibleMembers = members.slice(0, maxVisible);
-              const remainingMembers = members.slice(maxVisible);
 
-              const renderMemberAvatar = (m, size = 'default') => {
-                const mUserId = m.userId?._id || m.userId?.id;
-                const mEmail = m.userId?.email;
-                const mName = m.userId?.fullName;
+                {/* Hiển thị danh sách Tags của Project */}
+                {currentProject?.tags && currentProject.tags.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Dấu chấm phân cách UI cho đẹp */}
+                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border-lit)' }} />
 
-                const presenceUser = presenceUsers.find((p) => {
-                  const pUserId = p.userId;
-                  const pEmail = p.email;
-                  const pName = p.name;
-
-                  return (
-                    (pUserId && mUserId && String(pUserId) === String(mUserId)) ||
-                    (pEmail && mEmail && String(pEmail).toLowerCase() === String(mEmail).toLowerCase()) ||
-                    (pName && mName && String(pName).toLowerCase() === String(mName).toLowerCase())
-                  );
-                });
-
-                const isSelf = String(mUserId) === String(user?._id || user?.id);
-                const isOnline = !!presenceUser || (isSelf && connectionStatus === 'connected');
-                const name = mName || mEmail || 'Collaborator';
-
-                // Stable custom color for each member's avatar border
-                const colors = ['#f783ac', '#da77f2', '#9775fa', '#748ffc', '#3bc9db', '#38d9a9', '#69db7c', '#ffd43b', '#ff922b'];
-                const idStr = String(mUserId || 'guest');
-                let hash = 0;
-                for (let i = 0; i < idStr.length; i++) {
-                  hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const stableColor = colors[Math.abs(hash) % colors.length];
-                const avatarColor = presenceUser?.color || stableColor;
-
-                const tooltipTitle = (
-                  <div style={{ padding: '4px 8px' }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{getRoleLabel(m.role, t) || m.role}</div>
-                    <div style={{ fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: isOnline ? '#52c41a' : '#bfbfbf',
-                        display: 'inline-block',
-                        boxShadow: isOnline ? '0 0 8px #52c41a' : 'none'
-                      }} />
-                      <span style={{ color: isOnline ? '#52c41a' : '#bfbfbf', fontWeight: 500 }}>
-                        {isOnline ? t('script_editor.online') : t('script_editor.offline')}
+                    {currentProject.tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          background: 'var(--bg-hover)',
+                          border: '1px solid var(--border-lit)',
+                          color: 'var(--text-secondary)',
+                          fontSize: '11px',
+                          padding: '2px 8px',
+                          borderRadius: '12px'
+                        }}
+                      >
+                        {tag}
                       </span>
-                    </div>
+                    ))}
                   </div>
-                );
+                )}
+              </div>
+            </div>
+            {/* Online Presence Indicator */}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+              {(() => {
+                const maxVisible = 5;
+                const visibleMembers = members.slice(0, maxVisible);
+                const remainingMembers = members.slice(maxVisible);
 
-                if (size === 'list') {
+                const renderMemberAvatar = (m, size = 'default') => {
+                  const mUserId = m.userId?._id || m.userId?.id;
+                  const mEmail = m.userId?.email;
+                  const mName = m.userId?.fullName;
+
+                  const presenceUser = presenceUsers.find((p) => {
+                    const pUserId = p.userId;
+                    const pEmail = p.email;
+                    const pName = p.name;
+
+                    return (
+                      (pUserId && mUserId && String(pUserId) === String(mUserId)) ||
+                      (pEmail && mEmail && String(pEmail).toLowerCase() === String(mEmail).toLowerCase()) ||
+                      (pName && mName && String(pName).toLowerCase() === String(mName).toLowerCase())
+                    );
+                  });
+
+                  const isSelf = String(mUserId) === String(user?._id || user?.id);
+                  const isOnline = !!presenceUser || (isSelf && connectionStatus === 'connected');
+                  const name = mName || mEmail || 'Collaborator';
+
+                  // Stable custom color for each member's avatar border
+                  const colors = ['#f783ac', '#da77f2', '#9775fa', '#748ffc', '#3bc9db', '#38d9a9', '#69db7c', '#ffd43b', '#ff922b'];
+                  const idStr = String(mUserId || 'guest');
+                  let hash = 0;
+                  for (let i = 0; i < idStr.length; i++) {
+                    hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+                  }
+                  const stableColor = colors[Math.abs(hash) % colors.length];
+                  const avatarColor = presenceUser?.color || stableColor;
+
+                  const tooltipTitle = (
+                    <div style={{ padding: '4px 8px' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{getRoleLabel(m.role, t) || m.role}</div>
+                      <div style={{ fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: isOnline ? '#52c41a' : '#bfbfbf',
+                          display: 'inline-block',
+                          boxShadow: isOnline ? '0 0 8px #52c41a' : 'none'
+                        }} />
+                        <span style={{ color: isOnline ? '#52c41a' : '#bfbfbf', fontWeight: 500 }}>
+                          {isOnline ? t('script_editor.online') : t('script_editor.offline')}
+                        </span>
+                      </div>
+                    </div>
+                  );
+
+                  if (size === 'list') {
+                    return (
+                      <div key={m._id || m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                        <Badge
+                          dot
+                          status={isOnline ? 'success' : 'default'}
+                          offset={[-2, 24]}
+                          style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
+                        >
+                          <Avatar
+                            size="small"
+                            style={{
+                              background: 'var(--badge-bg)',
+                              color: 'var(--text-primary)',
+                              border: `2px solid ${isOnline ? avatarColor : 'var(--border-lit)'}`,
+                              opacity: isOnline ? 1 : 0.6,
+                            }}
+                          >
+                            {name.charAt(0).toUpperCase()}
+                          </Avatar>
+                        </Badge>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            {name}
+                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                            {getRoleLabel(m.role, t) || m.role} • {isOnline ? t('script_editor.online') : t('script_editor.offline')}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div key={m._id || m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                    <Tooltip key={m._id || m.id} title={tooltipTitle} placement="bottom">
                       <Badge
                         dot
                         status={isOnline ? 'success' : 'default'}
-                        offset={[-2, 24]}
+                        offset={[-2, 28]}
                         style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
                       >
                         <Avatar
-                          size="small"
                           style={{
                             background: 'var(--badge-bg)',
                             color: 'var(--text-primary)',
                             border: `2px solid ${isOnline ? avatarColor : 'var(--border-lit)'}`,
-                            opacity: isOnline ? 1 : 0.6,
+                            opacity: isOnline ? 1 : 0.45,
+                            transition: 'all 0.2s',
+                            cursor: 'pointer'
                           }}
                         >
                           {name.charAt(0).toUpperCase()}
                         </Avatar>
                       </Badge>
-                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                          {name}
-                        </span>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                          {getRoleLabel(m.role, t) || m.role} • {isOnline ? t('script_editor.online') : t('script_editor.offline')}
-                        </span>
-                      </div>
-                    </div>
+                    </Tooltip>
                   );
-                }
+                };
 
                 return (
-                  <Tooltip key={m._id || m.id} title={tooltipTitle} placement="bottom">
-                    <Badge
-                      dot
-                      status={isOnline ? 'success' : 'default'}
-                      offset={[-2, 28]}
-                      style={isOnline ? { boxShadow: '0 0 6px #52c41a' } : undefined}
-                    >
-                      <Avatar
-                        style={{
-                          background: 'var(--badge-bg)',
-                          color: 'var(--text-primary)',
-                          border: `2px solid ${isOnline ? avatarColor : 'var(--border-lit)'}`,
-                          opacity: isOnline ? 1 : 0.45,
-                          transition: 'all 0.2s',
-                          cursor: 'pointer'
-                        }}
+                  <>
+                    {visibleMembers.map((m) => renderMemberAvatar(m))}
+                    {remainingMembers.length > 0 && (
+                      <Popover
+                        content={
+                          <div style={{ maxHeight: 240, overflowY: 'auto', width: 220, padding: '4px 8px' }}>
+                            {remainingMembers.map((m) => renderMemberAvatar(m, 'list'))}
+                          </div>
+                        }
+                        title={<div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>{t('script_editor.more_members')}</div>}
+                        trigger="click"
+                        placement="bottomRight"
+                        overlayStyle={{ zIndex: 1050 }}
                       >
-                        {name.charAt(0).toUpperCase()}
-                      </Avatar>
-                    </Badge>
-                  </Tooltip>
+                        <Avatar
+                          style={{
+                            background: 'var(--bg-hover)',
+                            border: '1px solid var(--border)',
+                            cursor: 'pointer',
+                            color: 'var(--text-muted)',
+                            fontSize: 12,
+                            fontWeight: 600
+                          }}
+                        >
+                          +{remainingMembers.length}
+                        </Avatar>
+                      </Popover>
+                    )}
+                  </>
                 );
-              };
+              })()}
+            </div>
+          </div>
 
-              return (
-                <>
-                  {visibleMembers.map((m) => renderMemberAvatar(m))}
-                  {remainingMembers.length > 0 && (
-                    <Popover
-                      content={
-                        <div style={{ maxHeight: 240, overflowY: 'auto', width: 220, padding: '4px 8px' }}>
-                          {remainingMembers.map((m) => renderMemberAvatar(m, 'list'))}
-                        </div>
+          {/* Project Toolbar */}
+          <div style={{
+            padding: '10px 14px',
+            background: 'var(--bg-base)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            marginBottom: 16,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10
+          }}>
+            <Space size="middle">
+              <Select
+                value={voiceEngine}
+                onChange={(val) => {
+                  setVoiceEngine(val);
+                }}
+                options={[
+                  { value: 'WEB_SPEECH', label: t('script_editor.voice_browser') },
+                  { value: 'GOOGLE_CLOUD', label: t('script_editor.voice_google') }
+                ]}
+                style={{ width: 200 }}
+              />
+
+              {voices.length > 0 && (
+                <Select
+                  showSearch
+                  value={selectedVoice || undefined}
+                  onChange={(val) => setSelectedVoice(val)}
+                  options={voices.map(v => ({
+                    value: v.name,
+                    label: voiceEngine === 'GOOGLE_CLOUD'
+                      ? `${v.name} (${v.ssmlGender || 'NEUTRAL'})`
+                      : `${v.name} (${v.lang || v.languageCodes?.join(', ')})`
+                  }))}
+                  placeholder={t('script_editor.choose_voice')}
+                  style={{ width: 220 }}
+                />
+              )}
+
+              <Button
+                icon={(!isVoiceActive || isVoicePaused) ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
+                onClick={handleTogglePauseVoice}
+              >
+                {!isVoiceActive ? t('script_editor.play_voice') : (isVoicePaused ? t('script_editor.resume_voice') : t('script_editor.pause_voice'))}
+              </Button>
+
+              {isVoiceActive && (
+                <Button
+                  icon={<StopOutlined />}
+                  onClick={handleStopReading}
+                  danger
+                >
+                  {t('script_editor.stop')}
+                </Button>
+              )}
+            </Space>
+
+            <Space size="middle">
+              <Button icon={<CameraOutlined />} disabled={isViewer} onClick={handleSaveSnapshot}>
+                {t('script_editor.save_snapshot')}
+              </Button>
+              <Button icon={<HistoryOutlined />} onClick={() => setSnapshotModalOpen(true)}>
+                {t('script_editor.history')}
+              </Button>
+              <Button icon={<ProfileOutlined />} onClick={() => setLogModalOpen(true)}>
+                {t('script_editor.timeline_log')}
+              </Button>
+              <Button icon={<CopyOutlined />} disabled={isViewer} onClick={handleDuplicateProject}>
+                {t('script_editor.duplicate')}
+              </Button>
+              <Button
+                icon={sidebarVisible ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+                onClick={() => setSidebarVisible(!sidebarVisible)}
+              >
+                {sidebarVisible ? t('script_editor.hide_sidebar') : t('script_editor.show_sidebar')}
+              </Button>
+            </Space>
+          </div>
+
+          {/* Blocks Editor container */}
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleAppendMediaBlock}
+            style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}
+          >
+            {isBlocksLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+                <Spin indicator={<LoadingOutlined spin />} size="large" />
+              </div>
+            ) : blocks.length === 0 ? (
+              <div
+                style={{
+                  height: '70%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  border: '2px dashed var(--border)',
+                  borderRadius: 12
+                }}
+              >
+                <h3 style={{ color: 'var(--text-muted)' }}>{t('script_editor.no_blocks')}</h3>
+                {!isViewer && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => handleAddBlockClick(0)}
+                    style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
+                  >
+                    {t('script_editor.create_first_block')}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div>
+                {blocks.map((block) => (
+                  <div
+                    key={block._id || block.id}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.stopPropagation();
+                      // Detect if dragging media asset or sorting block
+                      if (e.dataTransfer.getData('blockId')) {
+                        handleBlockDrop(e, block._id || block.id);
+                      } else {
+                        handleAssetDropOnBlock(e, block._id || block.id);
                       }
-                      title={<div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>{t('script_editor.more_members')}</div>}
-                      trigger="click"
-                      placement="bottomRight"
-                      overlayStyle={{ zIndex: 1050 }}
-                    >
-                      <Avatar
-                        style={{
-                          background: 'var(--bg-hover)',
-                          border: '1px solid var(--border)',
-                          cursor: 'pointer',
-                          color: 'var(--text-muted)',
-                          fontSize: 12,
-                          fontWeight: 600
-                        }}
-                      >
-                        +{remainingMembers.length}
-                      </Avatar>
-                    </Popover>
-                  )}
-                </>
-              );
-            })()}
+                    }}
+                    style={{ paddingBottom: 20 }}
+                  >
+                    <BlockItem
+                      block={block}
+                      ydoc={ydoc}
+                      provider={provider}
+                      user={user}
+                      characters={characters}
+                      isViewer={isViewer}
+                      isCurrentlyReading={readingBlockId === (block._id || block.id)}
+                      isVoiceActive={isVoiceActive}
+                      isVoicePaused={isVoicePaused}
+                      onUpdateBlock={handleUpdateBlock}
+                      onDeleteBlock={handleDeleteBlock}
+                      onPlayBlock={playBlock}
+                      onAddBlockClick={handleAddBlockClick}
+                      onResetReading={(id) => {
+                        window.speechSynthesis.cancel();
+                        if (audioRef.current) {
+                          audioRef.current.pause();
+                          audioRef.current = null;
+                        }
+                        setIsVoiceActive(false);
+                        setIsVoicePaused(false);
+                        setReadingBlockId(id);
+                        notification.info({ message: t('script_editor.reading_pointer_moved') });
+                      }}
+                      onCreateCharacterClick={() => {
+                        setEditingCharacter(null);
+                        setCharModalOpen(true);
+                      }}
+                      onEditCharacterClick={(char) => {
+                        setEditingCharacter(char);
+                        setCharModalOpen(true);
+                      }}
+                      onDeleteCharacter={async (id) => {
+                        try {
+                          await deleteCharacter(id);
+                          notification.success({ message: t('script_editor.delete_character_success') });
+                        } catch (error) {
+                          notification.error({ message: t('script_editor.delete_character_error') });
+                        }
+                      }}
+                      onDragStart={handleBlockDragStart}
+                      onAddSnippet={handleAddSnippet}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e, targetId) => {
+                        e.stopPropagation();
+                        // Detect if dragging media asset or sorting block
+                        if (e.dataTransfer.getData('blockId')) {
+                          handleBlockDrop(e, targetId);
+                        } else {
+                          handleAssetDropOnBlock(e, targetId);
+                        }
+                      }}
+                    />
+                  </div>
+                ))}
+
+                {/* Append block drop target helper */}
+                {!isViewer && (
+                  <div style={{
+                    padding: 16,
+                    border: '1px dashed var(--border)',
+                    borderRadius: 10,
+                    textAlign: 'center',
+                    background: 'var(--bg-hover)',
+                    color: 'var(--text-muted)',
+                    fontSize: 12,
+                    marginTop: 20
+                  }}>
+                    {t('script_editor.append_media_hint')}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Project Toolbar */}
-        <div style={{
-          padding: '10px 14px',
-          background: 'var(--bg-base)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
-          marginBottom: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 10
-        }}>
-          <Space size="middle">
-            <Select
-              value={voiceEngine}
-              onChange={(val) => {
-                setVoiceEngine(val);
-              }}
-              options={[
-                { value: 'WEB_SPEECH', label: t('script_editor.voice_browser') },
-                { value: 'GOOGLE_CLOUD', label: t('script_editor.voice_google') }
-              ]}
-              style={{ width: 200 }}
-            />
-
-            {voices.length > 0 && (
-              <Select
-                showSearch
-                value={selectedVoice || undefined}
-                onChange={(val) => setSelectedVoice(val)}
-                options={voices.map(v => ({
-                  value: v.name,
-                  label: voiceEngine === 'GOOGLE_CLOUD'
-                    ? `${v.name} (${v.ssmlGender || 'NEUTRAL'})`
-                    : `${v.name} (${v.lang || v.languageCodes?.join(', ')})`
-                }))}
-                placeholder={t('script_editor.choose_voice')}
-                style={{ width: 220 }}
-              />
-            )}
-
-            <Button
-              icon={(!isVoiceActive || isVoicePaused) ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
-              onClick={handleTogglePauseVoice}
-            >
-              {!isVoiceActive ? t('script_editor.play_voice') : (isVoicePaused ? t('script_editor.resume_voice') : t('script_editor.pause_voice'))}
-            </Button>
-
-            {isVoiceActive && (
-              <Button
-                icon={<StopOutlined />}
-                onClick={handleStopReading}
-                danger
-              >
-                {t('script_editor.stop')}
-              </Button>
-            )}
-          </Space>
-
-          <Space size="middle">
-            <Button icon={<CameraOutlined />} disabled={isViewer} onClick={handleSaveSnapshot}>
-              {t('script_editor.save_snapshot')}
-            </Button>
-            <Button icon={<HistoryOutlined />} onClick={() => setSnapshotModalOpen(true)}>
-              {t('script_editor.history')}
-            </Button>
-            <Button icon={<ProfileOutlined />} onClick={() => setLogModalOpen(true)}>
-              {t('script_editor.timeline_log')}
-            </Button>
-            <Button icon={<CopyOutlined />} disabled={isViewer} onClick={handleDuplicateProject}>
-              {t('script_editor.duplicate')}
-            </Button>
-            <Button
-              icon={sidebarVisible ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
-              onClick={() => setSidebarVisible(!sidebarVisible)}
-            >
-              {sidebarVisible ? t('script_editor.hide_sidebar') : t('script_editor.show_sidebar')}
-            </Button>
-          </Space>
-        </div>
-
-        {/* Blocks Editor container */}
-        <div
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleAppendMediaBlock}
-          style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}
-        >
-          {isBlocksLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
-              <Spin indicator={<LoadingOutlined spin />} size="large" />
-            </div>
-          ) : blocks.length === 0 ? (
-            <div
-              style={{
-                height: '70%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                border: '2px dashed var(--border)',
-                borderRadius: 12
-              }}
-            >
-              <h3 style={{ color: 'var(--text-muted)' }}>{t('script_editor.no_blocks')}</h3>
-              {!isViewer && (
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => handleAddBlockClick(0)}
-                  style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
-                >
-                  {t('script_editor.create_first_block')}
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div>
-              {blocks.map((block) => (
-                <BlockItem
-                  key={block._id || block.id}
-                  block={block}
-                  ydoc={ydoc}
-                  provider={provider}
-                  user={user}
-                  characters={characters}
-                  isViewer={isViewer}
-                  isCurrentlyReading={readingBlockId === (block._id || block.id)}
-                  isVoiceActive={isVoiceActive}
-                  isVoicePaused={isVoicePaused}
-                  onUpdateBlock={handleUpdateBlock}
-                  onDeleteBlock={handleDeleteBlock}
-                  onPlayBlock={playBlock}
-                  onAddBlockClick={handleAddBlockClick}
-                  onResetReading={(id) => {
-                    window.speechSynthesis.cancel();
-                    if (audioRef.current) {
-                      audioRef.current.pause();
-                      audioRef.current = null;
-                    }
-                    setIsVoiceActive(false);
-                    setIsVoicePaused(false);
-                    setReadingBlockId(id);
-                    notification.info({ message: t('script_editor.reading_pointer_moved') });
-                  }}
-                  onCreateCharacterClick={() => {
-                    setEditingCharacter(null);
-                    setCharModalOpen(true);
-                  }}
-                  onEditCharacterClick={(char) => {
-                    setEditingCharacter(char);
-                    setCharModalOpen(true);
-                  }}
-                  onDeleteCharacter={async (id) => {
-                    try {
-                      await deleteCharacter(id);
-                      notification.success({ message: t('script_editor.delete_character_success') });
-                    } catch (error) {
-                      notification.error({ message: t('script_editor.delete_character_error') });
-                    }
-                  }}
-                  onDragStart={handleBlockDragStart}
-                  onAddSnippet={handleAddSnippet}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e, targetId) => {
-                    // Detect if dragging media asset or sorting block
-                    if (e.dataTransfer.getData('blockId')) {
-                      handleBlockDrop(e, targetId);
-                    } else {
-                      handleAssetDropOnBlock(e, targetId);
-                    }
-                  }}
-                />
-              ))}
-
-              {/* Append block drop target helper */}
-              {!isViewer && (
-                <div style={{
-                  padding: 16,
-                  border: '1px dashed var(--border)',
-                  borderRadius: 10,
-                  textAlign: 'center',
-                  background: 'var(--bg-hover)',
-                  color: 'var(--text-muted)',
-                  fontSize: 12,
-                  marginTop: 20
-                }}>
-                  {t('script_editor.append_media_hint')}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* RIGHT SIDEBAR: Tabs Pane (AI Chat, Snippets, Assets) */}
+        {/* RIGHT SIDEBAR: Tabs Pane (AI Chat, Snippets, Assets) */}
         {sidebarVisible && (
           <div style={{ width: 340, minWidth: 340, background: 'var(--bg-base)', borderLeft: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            style={{ padding: '0 16px' }}
-            items={[
-              {
-                key: 'chat',
-                label: t('script_editor.ai_chat'),
-                children: (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                    <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {chatMessages.map((msg, idx) => (
-                        <div key={idx} style={{ alignSelf: msg.sender === 'AI' ? 'flex-start' : 'flex-end', maxWidth: '85%' }}>
-                          <div style={{
-                            padding: '8px 12px',
-                            borderRadius: msg.sender === 'AI' ? '12px 12px 12px 0' : '12px 12px 0 12px',
-                            background: msg.sender === 'AI' ? 'var(--bg-hover)' : 'var(--accent-amber)',
-                            color: msg.sender === 'AI' ? 'var(--text-primary)' : '#000',
-                            fontSize: 13,
-                          }}>
-                            {msg.text}
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              style={{ padding: '0 16px' }}
+              items={[
+                {
+                  key: 'chat',
+                  label: t('script_editor.ai_chat'),
+                  children: (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
+                      <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {chatMessages.map((msg, idx) => (
+                          <div key={idx} style={{ alignSelf: msg.sender === 'AI' ? 'flex-start' : 'flex-end', maxWidth: '85%' }}>
+                            <div style={{
+                              padding: '8px 12px',
+                              borderRadius: msg.sender === 'AI' ? '12px 12px 12px 0' : '12px 12px 0 12px',
+                              background: msg.sender === 'AI' ? 'var(--bg-hover)' : 'var(--accent-amber)',
+                              color: msg.sender === 'AI' ? 'var(--text-primary)' : '#000',
+                              fontSize: 13,
+                            }}>
+                              {msg.text}
+                            </div>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2, textAlign: msg.sender === 'AI' ? 'left' : 'right' }}>
+                              {msg.sender}
+                            </div>
                           </div>
-                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2, textAlign: msg.sender === 'AI' ? 'left' : 'right' }}>
-                            {msg.sender}
+                        ))}
+                        {isAiTyping && (
+                          <div style={{ padding: '8px 12px', background: 'var(--bg-hover)', borderRadius: 12, width: 60, textAlign: 'center' }}>
+                            <Spin indicator={<LoadingOutlined spin />} size="small" />
                           </div>
-                        </div>
-                      ))}
-                      {isAiTyping && (
-                        <div style={{ padding: '8px 12px', background: 'var(--bg-hover)', borderRadius: 12, width: 60, textAlign: 'center' }}>
-                          <Spin indicator={<LoadingOutlined spin />} size="small" />
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }}>
-                      {[
-                        "Summarize the script", 
-                        "Suggest a suspenseful, eerie plot twist", 
-                        "Fix spelling and grammar", 
-                        "Continue a line of dialogue"
-                      ].map((suggestion, index) => (
-                        <Button 
-                          key={index} 
-                          size="small" 
-                          onClick={() => handleSendChatMessage(suggestion)}
-                          style={{ 
-                            borderRadius: 12, 
-                            fontSize: 12, 
-                            background: 'var(--bg-hover)', 
-                            color: 'var(--text-secondary)', 
-                            border: '1px solid var(--border)' 
-                          }}
-                        >
-                          {suggestion}
-                        </Button>
-                      ))}
-                      
-                      {/* Nút Xóa lịch sử nằm cuối thanh gợi ý */}
-                      <Tooltip title={t('script_editor.clear_ai_memory_title')}>
-                        <Button 
-                          size="small" 
-                          icon={<DeleteOutlined />} 
-                          danger
-                          onClick={handleClearChat}
-                          style={{ borderRadius: 12 }}
-                        />
-                      </Tooltip>
-                    </div>
-
-                    {/* Khối Input cũ của ông giữ nguyên */}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <Input
-                        placeholder={t('script_editor.ai_input_placeholder')}
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onPressEnter={() => handleSendChatMessage()}
-                      />
-                      <Button 
-                        type="primary" 
-                        icon={<SendOutlined />} 
-                        onClick={() => handleSendChatMessage()} 
-                        style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000' }} 
-                      />
-                    </div>
-                  </div>
-                )
-              },
-              {
-                key: 'assets',
-                label: t('script_editor.assets_tab'),
-                children: (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>{t('script_editor.attached_media')}</h4>
-                      {!isViewer && (
-                        <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleOpenAttachModal} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}>
-                          {t('script_editor.add_asset')}
-                        </Button>
-                      )}
-                    </div>
-
-                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
-                      {projectAssets.length === 0 ? (
-                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                          {t('script_editor.no_assets_attached')}
-                        </div>
-                      ) : (
-                        projectAssets.map((assetItem) => {
-                          const originalAsset = assetItem.assetId;
-                          if (!originalAsset) return null;
-                          const isUsed = assetItem.status === 'USED';
-
-                          return (
-                            <Tooltip
-                              key={assetItem._id || assetItem.id}
-                              title={
-                                originalAsset.tags && originalAsset.tags.length > 0
-                                  ? `${t('script_editor.tags_prefix')} ${originalAsset.tags.join(', ')}`
-                                  : t('script_editor.no_tags')
-                              }
-                              placement="left"
-                            >
-                              <div
-                                draggable
-                                onDragStart={(e) => {
-                                  e.dataTransfer.setData('text/plain', JSON.stringify({
-                                    assetId: originalAsset._id || originalAsset.id,
-                                    url: originalAsset.url,
-                                    name: originalAsset.fileName,
-                                    type: originalAsset.type
-                                  }));
-                                }}
-                                style={{
-                                  padding: '10px 12px',
-                                  background: 'rgba(255,255,255,0.01)',
-                                  border: '1px solid var(--border)',
-                                  borderRadius: 8,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 10,
-                                  marginBottom: 8,
-                                  cursor: 'grab',
-                                  position: 'relative'
-                                }}
-                              >
-                                {/* Asset Preview Thumbnail */}
-                                <div style={{
-                                  width: 40,
-                                  height: 40,
-                                  background: 'var(--bg-hover)',
-                                  borderRadius: 6,
-                                  overflow: 'hidden',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}>
-                                  {originalAsset.type?.toUpperCase() === 'IMAGE' && originalAsset.url ? (
-                                    <img src={getAssetUrl(originalAsset.url)} alt={originalAsset.fileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  ) : (
-                                    <CloudUploadOutlined style={{ fontSize: 18 }} />
-                                  )}
-                                </div>
-
-                                <div style={{ flex: 1, overflow: 'hidden' }}>
-                                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {originalAsset.fileName}
-                                  </div>
-                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                                    <span>{originalAsset.type}</span>
-                                    <Badge status={isUsed ? 'success' : 'default'} text={isUsed ? `${t('script_editor.used')} (${assetItem.usageCount || 0})` : t('script_editor.unused')} />
-                                  </div>
-                                </div>
-
-                                {!isViewer && (
-                                  <Tooltip title={isUsed ? t('script_editor.cannot_delete_used') : t('script_editor.remove_asset')}>
-                                    <Button
-                                      type="text"
-                                      danger
-                                      disabled={isUsed}
-                                      size="small"
-                                      icon={<DeleteOutlined />}
-                                      onClick={() => deleteProjectAsset(assetItem._id || assetItem.id)}
-                                    />
-                                  </Tooltip>
-                                )}
-                              </div>
-                            </Tooltip>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )
-              },
-              {
-                key: 'snippets',
-                label: t('script_editor.snippets_tab'),
-                children: (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>{t('script_editor.workspace_snippets')}</h4>
-                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
-                      {snippets.length === 0 ? (
-                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                          {t('script_editor.no_snippets')}
-                        </div>
-                      ) : (
-                        snippets.map((snip) => (
-                          <div
-                            key={snip._id || snip.id}
-                            onClick={() => handleSnippetClick(snip)}
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }}>
+                        {[
+                          "Summarize the script",
+                          "Suggest a suspenseful, eerie plot twist",
+                          "Fix spelling and grammar",
+                          "Continue a line of dialogue"
+                        ].map((suggestion, index) => (
+                          <Button
+                            key={index}
+                            size="small"
+                            onClick={() => handleSendChatMessage(suggestion)}
                             style={{
-                              padding: '10px 12px',
+                              borderRadius: 12,
+                              fontSize: 12,
                               background: 'var(--bg-hover)',
-                              border: '1px solid var(--border)',
-                              borderRadius: 8,
-                              marginBottom: 8,
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--bg-base)';
-                              e.currentTarget.style.borderColor = 'var(--border-lit)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'var(--bg-hover)';
-                              e.currentTarget.style.borderColor = 'var(--border)';
+                              color: 'var(--text-secondary)',
+                              border: '1px solid var(--border)'
                             }}
                           >
-                            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{snip.title}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {Array.isArray(snip.content) && snip.content[0]
-                                ? (snip.content[0].type === 'DIALOGUE' ? snip.content[0].data?.text : snip.content[0].data)?.replace(/<[^>]*>/g, '')
-                                : typeof snip.content === 'string' ? snip.content?.replace(/<[^>]*>/g, '') : ''}
-                            </div>
-                            {snip.tags && snip.tags.length > 0 && (
-                              <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
-                                {snip.tags.map((tag, i) => (
-                                  <span key={i} style={{ fontSize: 9, background: 'var(--bg-base)', padding: '1px 5px', borderRadius: 4, color: 'var(--text-muted)' }}>{tag}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
+                            {suggestion}
+                          </Button>
+                        ))}
+
+                        {/* Nút Xóa lịch sử nằm cuối thanh gợi ý */}
+                        <Tooltip title={t('script_editor.clear_ai_memory_title')}>
+                          <Button
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            danger
+                            onClick={handleClearChat}
+                            style={{ borderRadius: 12 }}
+                          />
+                        </Tooltip>
+                      </div>
+
+                      {/* Khối Input cũ của ông giữ nguyên */}
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <Input
+                          placeholder={t('script_editor.ai_input_placeholder')}
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onPressEnter={() => handleSendChatMessage()}
+                        />
+                        <Button
+                          type="primary"
+                          icon={<SendOutlined />}
+                          onClick={() => handleSendChatMessage()}
+                          style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000' }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )
-              }
-            ]}
-          />
-        </div>
-      )}
+                  )
+                },
+                {
+                  key: 'assets',
+                  label: t('script_editor.assets_tab'),
+                  children: (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>{t('script_editor.attached_media')}</h4>
+                        {!isViewer && (
+                          <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleOpenAttachModal} style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}>
+                            {t('script_editor.add_asset')}
+                          </Button>
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+                        {projectAssets.length === 0 ? (
+                          <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+                            {t('script_editor.no_assets_attached')}
+                          </div>
+                        ) : (
+                          projectAssets.map((assetItem) => {
+                            const originalAsset = assetItem.assetId;
+                            if (!originalAsset) return null;
+                            const isUsed = assetItem.status === 'USED';
+
+                            return (
+                              <Tooltip
+                                key={assetItem._id || assetItem.id}
+                                title={
+                                  originalAsset.tags && originalAsset.tags.length > 0
+                                    ? `${t('script_editor.tags_prefix')} ${originalAsset.tags.join(', ')}`
+                                    : t('script_editor.no_tags')
+                                }
+                                placement="left"
+                              >
+                                <div
+                                  draggable
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                                      assetId: originalAsset._id || originalAsset.id,
+                                      url: originalAsset.url,
+                                      name: originalAsset.fileName,
+                                      type: originalAsset.type
+                                    }));
+                                  }}
+                                  style={{
+                                    padding: '10px 12px',
+                                    background: 'rgba(255,255,255,0.01)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: 8,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    marginBottom: 8,
+                                    cursor: 'grab',
+                                    position: 'relative'
+                                  }}
+                                >
+                                  {/* Asset Preview Thumbnail */}
+                                  <div style={{
+                                    width: 40,
+                                    height: 40,
+                                    background: 'var(--bg-hover)',
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}>
+                                    {originalAsset.type?.toUpperCase() === 'IMAGE' && originalAsset.url ? (
+                                      <img src={getAssetUrl(originalAsset.url)} alt={originalAsset.fileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                      <CloudUploadOutlined style={{ fontSize: 18 }} />
+                                    )}
+                                  </div>
+
+                                  <div style={{ flex: 1, overflow: 'hidden' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {originalAsset.fileName}
+                                    </div>
+                                    <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                                      <span>{originalAsset.type}</span>
+                                      <Badge status={isUsed ? 'success' : 'default'} text={isUsed ? `${t('script_editor.used')} (${assetItem.usageCount || 0})` : t('script_editor.unused')} />
+                                    </div>
+                                  </div>
+
+                                  {!isViewer && (
+                                    <Tooltip title={isUsed ? t('script_editor.cannot_delete_used') : t('script_editor.remove_asset')}>
+                                      <Button
+                                        type="text"
+                                        danger
+                                        disabled={isUsed}
+                                        size="small"
+                                        icon={<DeleteOutlined />}
+                                        onClick={() => deleteProjectAsset(assetItem._id || assetItem.id)}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </div>
+                              </Tooltip>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'snippets',
+                  label: t('script_editor.snippets_tab'),
+                  children: (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 0' }}>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>{t('script_editor.workspace_snippets')}</h4>
+                      <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+                        {snippets.length === 0 ? (
+                          <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+                            {t('script_editor.no_snippets')}
+                          </div>
+                        ) : (
+                          snippets.map((snip) => (
+                            <div
+                              key={snip._id || snip.id}
+                              onClick={() => handleSnippetClick(snip)}
+                              style={{
+                                padding: '10px 12px',
+                                background: 'var(--bg-hover)',
+                                border: '1px solid var(--border)',
+                                borderRadius: 8,
+                                marginBottom: 8,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-base)';
+                                e.currentTarget.style.borderColor = 'var(--border-lit)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-hover)';
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                              }}
+                            >
+                              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{snip.title}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {Array.isArray(snip.content) && snip.content[0]
+                                  ? (snip.content[0].type === 'DIALOGUE' ? snip.content[0].data?.text : snip.content[0].data)?.replace(/<[^>]*>/g, '')
+                                  : typeof snip.content === 'string' ? snip.content?.replace(/<[^>]*>/g, '') : ''}
+                              </div>
+                              {snip.tags && snip.tags.length > 0 && (
+                                <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+                                  {snip.tags.map((tag, i) => (
+                                    <span key={i} style={{ fontSize: 9, background: 'var(--bg-base)', padding: '1px 5px', borderRadius: 4, color: 'var(--text-muted)' }}>{tag}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+              ]}
+            />
+          </div>
+        )}
 
       </div>
 
@@ -1651,7 +1682,7 @@ const ScriptEditorPage = () => {
             type="primary"
             onClick={async () => {
               setBlockTypeModalOpen(false);
-              await createBlock({ type: 'TEXT', position: addBlockPosition + 1, content: '<p></p>' });
+              await createBlock({ type: 'TEXT', position: addBlockPosition, content: '<p></p>' });
             }}
             style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
           >
@@ -1661,7 +1692,7 @@ const ScriptEditorPage = () => {
             type="primary"
             onClick={async () => {
               setBlockTypeModalOpen(false);
-              await createBlock({ type: 'DIALOGUE', position: addBlockPosition + 1, content: { characterId: '', text: '<p></p>' } });
+              await createBlock({ type: 'DIALOGUE', position: addBlockPosition, content: { characterId: '', text: '<p></p>' } });
             }}
             style={{ background: 'var(--accent-amber)', borderColor: 'var(--accent-amber)', color: '#000', fontWeight: 600 }}
           >
